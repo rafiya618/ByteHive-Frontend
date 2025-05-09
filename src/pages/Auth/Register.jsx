@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/auth";
+import { useAuth } from "../../context/auth";
 import toast from "react-hot-toast";
 
 const Register = () => {
@@ -63,7 +63,7 @@ const Register = () => {
                 toast.success("Registration Successful!");
                 setAuth({...auth, token: res.data.token})
                 localStorage.setItem('Auth', JSON.stringify(res.data))
-                console.log(res.data.message)
+                console.log(res.data.msg)
                 navigate('/')
             }
         } catch (error) {
