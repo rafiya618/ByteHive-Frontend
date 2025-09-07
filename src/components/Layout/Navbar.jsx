@@ -4,22 +4,24 @@ import "./Navbar.css";
 import { useAuth } from "../../context/auth";
 import toast from "react-hot-toast";
 import { useProfile } from "../../context/profileContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 const Navbar = () => {
 
     const [isOpen, setIsOpen] = useState(false);
-    const [auth, setAuth] = useAuth()
-    const {profile, setProfile} = useProfile()
+    const {auth, setAuth} = useAuth()
+    const { profile, setProfile } = useProfile()
+    const { unReadCount } = useNotifications()
 
     const profileImage = profile?.profileImage;
-    
+
     const HandleLogout = () => {
         localStorage.removeItem("Auth")
         setAuth({ ...auth, token: '' })
         toast.success("User logout successfully.")
     }
 
-    
+
     return (
         <nav className="navbar">
             <div className="nav-container">
@@ -36,6 +38,13 @@ const Navbar = () => {
                                 <li><Link to="/register">Register</Link></li>
                             </>
                             : <>
+                                <li><Link to="/comment">Comment</Link></li>
+                                <li>
+                                    <Link to="/notification" >
+                                        🔔 {unReadCount > 0 ?  `(${unReadCount})` : ""}
+                                    </Link>
+                                </li>
+
                                 <li ><Link to="/login" onClick={HandleLogout}>Logout</Link></li>
                             </>
 
@@ -43,21 +52,21 @@ const Navbar = () => {
 
                 </ul>
                 {
-                     (auth?.token && profileImage) &&
+                    (auth?.token && profileImage) &&
                     (
                         <img
                             src={profileImage}
                             alt="Image"
                             className="nav-avatar"
-                            // style={{
-                            //     width: "50px",
-                            //     height: "50px",
-                            //     borderRadius: "50%",
-                            //     objectFit: "cover",
-                            //     marginLeft: '85px'
-                            // }}
+                        // style={{
+                        //     width: "50px",
+                        //     height: "50px",
+                        //     borderRadius: "50%",
+                        //     objectFit: "cover",
+                        //     marginLeft: '85px'
+                        // }}
                         />
-                        )
+                    )
                 }
             </div>
         </nav>

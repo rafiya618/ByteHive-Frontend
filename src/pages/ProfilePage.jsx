@@ -12,7 +12,7 @@ import { useProfile } from '../context/profileContext';
 const ProfilePage = () => {
   // const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [auth, setAuth] = useAuth()
+  const {auth, setAuth} = useAuth()
   const { profile, setProfile, fetchProfile } = useProfile();
   
   const userId = auth?.token ? jwtDecode(auth.token)?.id : null;

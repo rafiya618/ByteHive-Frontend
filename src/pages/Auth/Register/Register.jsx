@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/auth";
+import { useAuth } from "../../../context/auth";
 import toast from "react-hot-toast";
 
 const Register = () => {
     const [step, setStep] = useState(1);
-    const [name, setName] = useState("");
+    const [username, setusername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [otp, setOtp] = useState("");
     const [isResending, setIsResending] = useState(false);
     const [timer, setTimer] = useState(60);
     const [verifyDisabled, setVerifyDisabled] = useState(false);
-    const [auth, setAuth] = useAuth()
+    const {auth, setAuth} = useAuth()
     const navigate = useNavigate();
+
+    
 
     // Countdown timer logic
     useEffect(() => {
@@ -33,7 +35,7 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/register`, { name, email, password });
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/register`, { username, email, password });
             if (res.data.success) {
                 // alert("OTP sent to your email");
                 toast.success("OTP sent to your email")
@@ -58,13 +60,13 @@ const Register = () => {
             return;
         }
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/verify-otp`, { name, email, password, otp });
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/verify-otp`, { username, email, password, otp });
             if (res.data.success) {
                 toast.success("Registration Successful!");
                 setAuth({...auth, token: res.data.token})
-                localStorage.setItem('Auth', JSON.stringify(res.data))
+                localStorage.setItem('Auth', JSON.stringify({ token: res.data.token}))
                 console.log(res.data.msg)
-                navigate('/')
+                navigate('/setup-profile')
             }
         } catch (error) {
             toast.error(error.response?.data?.msg || "Error verifying OTP");
@@ -76,7 +78,7 @@ const Register = () => {
     const handleResendOTP = async () => {
         try {
             setIsResending(true);
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/resend-otp`, { email });
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/resend-otp`, { email });
             if (res.data.success) {
                 toast.success("OTP resent successfully");
                 setOtp('');
@@ -99,8 +101,8 @@ const Register = () => {
                 <form onSubmit={handleRegister}>
                     <input
                         type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={username}
+                        onChange={(e) => setusername(e.target.value)}
                         placeholder="Enter Name"
                         required
                     /><br/>
@@ -122,7 +124,7 @@ const Register = () => {
                 </form>
 
                 <br/>
-                <button onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google?mode=register`}>
+                <button onClick={() => window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/google?mode=register`}>
                     Continue with Google
                 </button>
                 </>

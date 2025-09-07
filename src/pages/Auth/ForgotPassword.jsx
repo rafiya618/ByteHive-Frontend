@@ -18,7 +18,7 @@ const ForgotPassword = () => {
 
     const sendOtp = async () => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/forgot-password`, { email });
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_URL}/auth/forgot-password`, { email });
             toast.success(res.data.message);
             setStep(2);
             setTimer(60); // Reset timer without creating duplicate intervals
@@ -29,7 +29,7 @@ const ForgotPassword = () => {
 
     const verifyOtp = async () => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/verify-reset-otp`, { email, otp });
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_URL}/auth/verify-reset-otp`, { email, otp });
             toast.success(res.data.message);
             setStep(3);
             setTimer(0); // Stop timer when OTP is verified
@@ -40,7 +40,7 @@ const ForgotPassword = () => {
 
     const resetPassword = async () => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/reset-password`, { email, password });
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_URL}/auth/reset-password`, { email, password });
             toast.success(res.data.message);
             window.location.href = '/login';
         } catch (error) {

@@ -15,9 +15,10 @@ const GoogleAuth = () => {
             toast.error(error)
             navigate("/");
         } else if (token) {
-          localStorage.setItem("Auth", JSON.stringify({ token }));
+          localStorage.setItem("Auth", JSON.stringify({ token: token }));
+          
           toast.success("Authentication successfull!")
-          navigate("/");
+          navigate("/setup-profile");
         }
     }, []);
 

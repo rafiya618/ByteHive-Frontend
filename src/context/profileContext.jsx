@@ -10,21 +10,20 @@ const ProfileContext = createContext();
 export const ProfileProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [auth] = useAuth();
+  const {auth} = useAuth();
 
-  let userId = null;
   try {
-    userId = auth?.token ? jwtDecode(auth.token)?.id : null;
+    
   } catch (err) {
     console.error("Invalid token", err);
   }
   const fetchProfile = async () => {
     try {
-      if (!userId) return;
+      if (!auth?.user?._id) return;
   
       setLoading(true);
-      const res = await getProfile(userId);
-      setProfile(res.data);
+      const res = await getProfile(auth?.user?._id);
+      setProfile(res?.data);
     } catch (err) {
       console.error("Failed to fetch profile:", err);
     } finally {

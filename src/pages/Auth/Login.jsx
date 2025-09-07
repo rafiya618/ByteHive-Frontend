@@ -9,16 +9,16 @@ const Login = () => {
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [auth, setAuth] = useAuth()
+    const {auth, setAuth} = useAuth()
     const navigate = useNavigate()
 
     const HandleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, { email, password});
+            const res = await axios.post(`${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/login`, { email, password});
             setAuth({...auth, token: res.data.token})
-            localStorage.setItem('Auth', JSON.stringify(res.data))
+            localStorage.setItem('Auth', JSON.stringify({token: res.data}))
             console.log(res.data.message)
             toast.success(res.data.message)
             navigate('/')
@@ -47,7 +47,7 @@ const Login = () => {
             
             <button onClick={() => navigate("/forgot-password")}>Forgot Password?</button>
             <br />
-            <button onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google?mode=login`}>
+            <button onClick={() => window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/google?mode=login`}>
                     Continue with Google
             </button>
         </div>
