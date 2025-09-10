@@ -1,82 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import InputField from "../../shared/InputField";
 
 const ForgotPassword = () => {
-    const [step, setStep] = useState(1);
-    const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState('');
-    const [password, setPassword] = useState('');
-    const [timer, setTimer] = useState(0);
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [timer, setTimer] = useState(0);
 
-    useEffect(() => {
-        if (timer > 0) {
-            const interval = setTimeout(() => setTimer(timer - 1), 1000);
-            return () => clearTimeout(interval); // Cleanup on unmount or when timer updates
-        }
-    }, [timer]); // Runs when `timer` changes
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setTimeout(() => setTimer(timer - 1), 1000);
+      return () => clearTimeout(interval);
+    }
+  }, [timer]);
 
-    const sendOtp = async () => {
-        try {
-            const res = await axios.post(`${import.meta.env.VITE_AUTH_URL}/auth/forgot-password`, { email });
-            toast.success(res.data.message);
-            setStep(2);
-            setTimer(60); // Reset timer without creating duplicate intervals
-        } catch (error) {
-            console.error(error);
-        }
-    };
+  const sendOtp = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/forgot-password`,
+        { email }
+      );
+      toast.success(res.data.message);
+      setStep(2);
+      setTimer(60);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error sending OTP");
+    }
+  };
 
-    const verifyOtp = async () => {
-        try {
-            const res = await axios.post(`${import.meta.env.VITE_AUTH_URL}/auth/verify-reset-otp`, { email, otp });
-            toast.success(res.data.message);
-            setStep(3);
-            setTimer(0); // Stop timer when OTP is verified
-        } catch (error) {
-            console.error(error);
-        }
-    };
+  const verifyOtp = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/verify-reset-otp`,
+        { email, otp }
+      );
+      toast.success(res.data.message);
+      setStep(3);
+      setTimer(0);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid OTP");
+    }
+  };
 
-    const resetPassword = async () => {
-        try {
-            const res = await axios.post(`${import.meta.env.VITE_AUTH_URL}/auth/reset-password`, { email, password });
-            toast.success(res.data.message);
-            window.location.href = '/login';
-        } catch (error) {
-            console.error(error);
-        }
-    };
+  const resetPassword = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/reset-password`,
+        { email, password }
+      );
+      toast.success(res.data.message);
+      window.location.href = "/login";
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error resetting password");
+    }
+  };
 
-    return (
-        <div>
-            {step === 1 && (
-                <>
-                    <h3>Forgot Password</h3>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" required />
-                    <button onClick={sendOtp}>Send OTP</button>
-                </>
-            )}
+  return (
+    <div className="bg-navbar-bg text-white w-full flex items-center justify-center min-h-screen px-4">
+      <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border transition-shadow hover:shadow-xl">
+        {step === 1 && (
+          <>
+            <h3 className="text-xl md:text-2xl font-bold text-center mb-6">
+              Forgot Password
+            </h3>
+            <InputField
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+            <button
+              onClick={sendOtp}
+              className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 py-2 rounded-md font-semibold transition duration-200 cursor-pointer"
+            >
+              Send OTP
+            </button>
+          </>
+        )}
 
-            {step === 2 && (
-                <>
-                    <h3>Enter OTP</h3>
-                    <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter OTP" required />
-                    <p>Expires in: {timer}s</p>
-                    <button onClick={verifyOtp} disabled={timer === 0}>Verify OTP</button>
-                    <button onClick={sendOtp}>Resend OTP</button>
-                </>
-            )}
+        {step === 2 && (
+          <>
+            <h3 className="text-xl md:text-2xl font-bold text-center mb-6">
+              Enter OTP
+            </h3>
+            <InputField
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter OTP"
+              required
+            />
+            <p className="text-sm text-gray-400 mt-2">
+              Expires in:{" "}
+              <span className="text-white font-semibold">{timer}s</span>
+            </p>
+            <button
+              onClick={verifyOtp}
+              disabled={timer === 0}
+              className={`mt-4 w-full py-2 rounded-md font-semibold transition duration-200 cursor-pointer ${
+                timer === 0
+                  ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+              }`}
+            >
+              {timer === 0 ? "OTP Expired" : "Verify OTP"}
+            </button>
 
-            {step === 3 && (
-                <>
-                    <h3>Reset Password</h3>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter new password" required />
-                    <button onClick={resetPassword}>Reset Password</button>
-                </>
-            )}
-        </div>
-    );
+            <button
+              onClick={sendOtp}
+              className="mt-3 w-full bg-dark-indigo text-gray-200 border border-faint-greyish-overlay py-2 px-3 rounded-md font-medium hover:bg-[#2f2f4a] active:bg-[#181628] transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+            >
+              Resend OTP
+            </button>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <h3 className="text-xl md:text-2xl font-bold text-center mb-6">
+              Reset Password
+            </h3>
+            <InputField
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter new password"
+              required
+            />
+            <button
+              onClick={resetPassword}
+              className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 py-2 rounded-md font-semibold transition duration-200 cursor-pointer"
+            >
+              Reset Password
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ForgotPassword;

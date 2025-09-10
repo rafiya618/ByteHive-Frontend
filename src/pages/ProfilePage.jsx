@@ -1,32 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { getProfile, updateProfile } from '../api/ProfileApi';
-import ProfileView from '../components/Profile/ProfileView';
-import ProfileEdit from '../components/Profile/ProfileEdit';
-import Layout from '../components/Layout/Layout'
-import { useAuth } from '../context/auth';
-import { jwtDecode } from 'jwt-decode';
-import { useProfile } from '../context/profileContext';
-
-
+import React, { useEffect, useState } from "react";
+import { updateProfile } from "../api/ProfileApi";
+import ProfileView from "../components/Profile/ProfileView";
+import ProfileEdit from "../components/Profile/ProfileEdit";
+import Layout from "../components/Layout/Layout";
+import { useAuth } from "../context/auth";
+import { jwtDecode } from "jwt-decode";
+import { useProfile } from "../context/profileContext";
 
 const ProfilePage = () => {
-  // const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const {auth, setAuth} = useAuth()
-  const { profile, setProfile, fetchProfile } = useProfile();
-  
-  const userId = auth?.token ? jwtDecode(auth.token)?.id : null;
-  
+  const { auth } = useAuth();
+  const { profile, fetchProfile } = useProfile();
+
+  const userId = auth;
+
   useEffect(() => {
     if (!profile && userId) {
       fetchProfile();
     }
   }, [userId]);
-  
+
   const handleSave = async (formData) => {
     try {
-      const res = await updateProfile(userId, formData);
-      // setProfile(res.data);
+      await updateProfile(userId, formData);
       await fetchProfile();
       setEditing(false);
     } catch (err) {
@@ -35,18 +31,26 @@ const ProfilePage = () => {
   };
 
   return (
-    <Layout className="profile-page">
-      <h1>User Profile</h1>
-      <hr />
-      {profile ? (
-        editing ? (
-          <ProfileEdit profile={profile} onSave={handleSave} onCancel={() => setEditing(false)} />
+    <Layout>
+      <div className="flex flex-col items-center gap-6 mt-6">
+        <h1 className="text-2xl font-bold">User Profile</h1>
+        {profile ? (
+          editing ? (
+            <ProfileEdit
+              profile={profile}
+              onSave={handleSave}
+              onCancel={() => setEditing(false)}
+            />
+          ) : (
+            <ProfileView
+              profile={profile}
+              onEdit={() => setEditing(true)}
+            />
+          )
         ) : (
-          <ProfileView profile={profile} onEdit={() => setEditing(true)} />
-        )
-      ) : (
-        <p>Loading...</p>
-      )}
+          <p>Loading...</p>
+        )}
+      </div>
     </Layout>
   );
 };

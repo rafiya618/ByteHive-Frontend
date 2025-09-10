@@ -1,68 +1,71 @@
+@import "tailwindcss";
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --rich-black: #0C0C16;
+  --rich-black-light: #161625;
+  --dark-navy-purple: #171626;
+  --faint-greyish-overlay: #FFFFFF33;
+  --dark-indigo: #201F31;
+  --navbar-bg: #11101E;
+  --periwinkle: #B0BAFF;
+  --periwinkle-light: rgba(176, 186, 255, 0.2);
+  --columbia-blue: #C9E8FF;
+  --celadon: #B9F0D7;
+  --medium-slate-blue: #6866FF;
+  --medium-slate-blue-dark: #5755D6;
+  --periwinkle-dark: #9a98e0;
+  --celadon-dark: #a0d8c0;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --navbar-border: rgba(176, 186, 255, 0.1);
+  --pinkish: #D9467C;
+  --pinkish-dark: #C0396B;
+  --card-button-bg: #2A2A3E;
+  --card-button-hover-bg: #383850;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Custom radial gradient utility for background */
+.bg-gradient-radial-custom {
+  background: radial-gradient(110% 90% at 0% 0%, #22213b 60%, #18162D 100%);
 }
 
-body {
-  margin: 0;
-  display: flex;
-  /* place-items: center; */
-  min-width: 320px;
-  min-height: 100vh;
+
+.bg-rich-black {
+  background: #0C0C16;
+}
+.font-fenix {
+  font-family: 'Fenix', serif;
+}
+.border-periwinkle-light{
+  color: var(--periwinkle-light); 
+}
+/* index.css additions */
+.text-periwinkle { color: var(--periwinkle); }   
+.text-celadon-dark { color: var(--celadon-dark); }            /* you were using this class but it wasn't defined */
+.bg-chip { background-color: #374053; }                   /* matches the pill bg */
+.icon-periwinkle { color: #B0BAFF !important; }           /* force Material Icons color */
+.text-desc { color: #FFFFFFB2; }                          /* description color */
+
+.bg-navbar-bg { background-color: var(--navbar-bg); }
+.bg-dark-navy-purple { background-color: var(--dark-navy-purple); }
+.bg-dark-indigo {
+  background-color: var(--dark-indigo);
+  transition: background-color 0.3s ease;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.bg-dark-indigo:hover {
+  background-color: color-mix(in srgb, var(--dark-indigo) 95%, white);
 }
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+.border-navbar-border { border-color: var(--navbar-border);}
+.border-faint-greyish-overlay { border-color: var(--faint-greyish-overlay);}
+.bg-rich-black-light { background-color: var(--rich-black-light);}
+.text-columbia-blue { color: var(--columbia-blue);}
+.text-pinkish { color: var(--pinkish);}
+.bg-medium-slate-blue { background-color: var(--medium-slate-blue);}
+.hover\:bg-white\/10:hover { background-color: rgba(255,255,255,0.10);}
+.hover\:border-periwinkle:hover { border-color: var(--periwinkle);}
+.font-fenix { font-family: 'Fenix', serif; }

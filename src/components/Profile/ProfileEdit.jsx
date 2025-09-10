@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
-import './ProfileEdit.css'; // optional: if you're using external CSS
+import React, { useState } from "react";
+import InputField from "../../shared/InputField"; // adjust path if needed
 
 const ProfileEdit = ({ profile, onSave, onCancel }) => {
-
   const [formData, setFormData] = useState({
-    name: profile.name || '',
-    bio: profile.bio || '',
+    name: profile.name || "",
+    bio: profile.bio || "",
     profileImage: null,
     socialLinks: {
-      Linkedin: profile.socialLinks?.Linkedin || '',
-      X: profile.socialLinks?.X || '',
-      Github: profile.socialLinks?.Github || '',
-      Youtube: profile.socialLinks?.Youtube || '',
-      Instagram: profile.socialLinks?.Instagram || '',
-      Facebook: profile.socialLinks?.Facebook || '',
-      Threads: profile.socialLinks?.Threads || '',
-      Websites: profile.socialLinks?.Websites || '',
+      Linkedin: profile.socialLinks?.Linkedin || "",
+      X: profile.socialLinks?.X || "",
+      Github: profile.socialLinks?.Github || "",
+      Youtube: profile.socialLinks?.Youtube || "",
+      Instagram: profile.socialLinks?.Instagram || "",
+      Facebook: profile.socialLinks?.Facebook || "",
+      Threads: profile.socialLinks?.Threads || "",
+      Websites: profile.socialLinks?.Websites || "",
     },
   });
 
@@ -24,7 +23,7 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
     if (name.startsWith("socials.")) {
       setFormData({
         ...formData,
-        socialLinks: { ...formData.socialLinks, [name.split(".")[1]]: value }
+        socialLinks: { ...formData.socialLinks, [name.split(".")[1]]: value },
       });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -38,10 +37,10 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const updatedForm = new FormData();
-    updatedForm.append('name', formData.name);
-    updatedForm.append('bio', formData.bio);
+    updatedForm.append("name", formData.name);
+    updatedForm.append("bio", formData.bio);
     if (formData.profileImage) {
-      updatedForm.append('profileImage', formData.profileImage);
+      updatedForm.append("profileImage", formData.profileImage);
     }
     Object.entries(formData.socialLinks).forEach(([platform, link]) => {
       updatedForm.append(`socialLinks[${platform}]`, link);
@@ -50,153 +49,81 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="profile-form">
-      <div className="form-group">
-        <label htmlFor="name">Name</label>
-        <input
-          id="name"
+    <form
+      onSubmit={handleSubmit}
+      className="bg-dark-navy-purple w-[90%] sm:w-full max-w-2xl mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border text-white flex flex-col gap-5"
+    >
+      <h2 className="text-xl md:text-2xl font-bold text-center">Edit Profile</h2>
+
+      {/* Name */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Name</label>
+        <InputField
           type="text"
           name="name"
           value={formData.name}
           onChange={handleChange}
-          className="form-control"
           placeholder="Your Name"
         />
       </div>
 
-      <div className="form-group">
-        <label htmlFor="bio">Bio</label>
-        <textarea
-          id="bio"
+      {/* Bio */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Bio</label>
+        <InputField
+          type="textarea"
           name="bio"
           value={formData.bio}
           onChange={handleChange}
-          className="form-control"
           placeholder="Tell us about yourself"
+          rows={4} // optional override
         />
       </div>
 
-      <div className="form-group">
-        <label htmlFor="profileImage">Profile Image</label>
-        <input
-          id="profileImage"
+      {/* Profile Image */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Profile Image</label>
+        <InputField
           type="file"
+          id="profileImage"
           onChange={handleFileChange}
-          className="form-control"
-          accept='image/*'
+          accept="image/*"
         />
       </div>
 
-      <div className="form-group">
-        <label htmlFor="Linkedin">Linkedin URL</label>
-        <input
-          id="Linkedin"
-          type="text"
-          name="socials.Linkedin"
-          value={formData.socialLinks.Linkedin}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Linkedin.com/yourhandle"
-        />
+      {/* Social Links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {Object.keys(formData.socialLinks).map((platform) => (
+          <div key={platform}>
+            <label className="block text-sm font-medium mb-1">
+              {platform} URL
+            </label>
+            <InputField
+              type="text"
+              name={`socials.${platform}`}
+              value={formData.socialLinks[platform]}
+              onChange={handleChange}
+              placeholder={`https://${platform.toLowerCase()}.com/yourhandle`}
+            />
+          </div>
+        ))}
       </div>
 
-      <div className="form-group">
-        <label htmlFor="X">X URL</label>
-        <input
-          id="X"
-          type="text"
-          name="socials.X"
-          value={formData.socialLinks.X}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://X.com/yourhandle"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="Github">GitHub URL</label>
-        <input
-          id="Github"
-          type="text"
-          name="socials.Github"
-          value={formData.socialLinks.Github}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Github.com/yourusername"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="Youtube">Youtube URL</label>
-        <input
-          id="Youtube"
-          type="text"
-          name="socials.Youtube"
-          value={formData.socialLinks.Youtube}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Youtube.com/yourhandle"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="Instagram">Instagram URL</label>
-        <input
-          id="Instagram"
-          type="text"
-          name="socials.Instagram"
-          value={formData.socialLinks.Instagram}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Instagram.com/yourhandle"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="Facebook">Facebook URL</label>
-        <input
-          id="Facebook"
-          type="text"
-          name="socials.Facebook"
-          value={formData.socialLinks.Facebook}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Facebook.com/yourhandle"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="Threads">Threads URL</label>
-        <input
-          id="Threads"
-          type="text"
-          name="socials.Threads"
-          value={formData.socialLinks.Threads}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Threads.com/yourhandle"
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="Websites">Websites URL</label>
-        <input
-          id="Websites"
-          type="text"
-          name="socials.Websites"
-          value={formData.socialLinks.Websites}
-          onChange={handleChange}
-          className="form-control"
-          placeholder="https://Websites.com/yourhandle"
-        />
-      </div>
-
-
-      
-
-      <div className="form-actions">
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
-        <button type="submit" className="btn btn-primary">Save</button>
+      {/* Buttons */}
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-700 text-white font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+        >
+          Save
+        </button>
       </div>
     </form>
   );

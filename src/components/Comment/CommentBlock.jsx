@@ -1,145 +1,218 @@
-import dayjs from 'dayjs';
-import React, { forwardRef } from 'react'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import React, { forwardRef } from "react";
+import InputField from "../../shared/InputField";
 
-const CommentBlock = forwardRef(({
-  c,
-  decoded,
-  triggerId,
-  editingComment,
-  setEditingComment,
-  editingText,
-  setEditingText,
-  handleUpdateComment,
-  replyingTo,
-  setReplyingTo,
-  reply,
-  setReply,
-  handleAddComment,
-  handleLike,
-  handleDislike,
-  replies,
-  expandReplies,
-  setExpandReplies,
-  handleReplies, 
-  handleDelete,
-  isReply = false
-}, ref) => (
+dayjs.extend(relativeTime);
 
-  <div id={`comment-${c._id}`} key={c._id} style={{ display: "flex", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-    {/* ✅ Show profile image */}
-    <img
-      src={c.user.profileImage || "/default-avatar.png"}
-      alt="Profile"
-      style={{
-        width: "40px",
-        height: "40px",
-        borderRadius: "50%",
-        objectFit: "cover",
-        marginRight: "10px"
-      }}
-    />
+const CommentBlock = forwardRef(
+  (
+    {
+      c,
+      decoded,
+      triggerId,
+      editingComment,
+      setEditingComment,
+      editingText,
+      setEditingText,
+      handleUpdateComment,
+      replyingTo,
+      setReplyingTo,
+      reply,
+      setReply,
+      handleAddComment,
+      handleLike,
+      handleDislike,
+      replies,
+      expandReplies,
+      setExpandReplies,
+      handleReplies,
+      handleDelete,
+      isReply = false,
+    },
+    ref
+  ) => (
+    <div
+      id={`comment-${c._id}`}
+      className={`flex flex-col sm:flex-row gap-3 mb-2 ${c.parentId ? "ml-6 sm:ml-12" : ""
+        }`}
+    >
+      {/* Profile Image */}
+      <img
+        src={c.user.profileImage || "/default-avatar.png"}
+        alt="Profile"
+        className="w-10 h-10 rounded-full object-cover"
+      />
 
-    <div>
-      <div ref={(el) => { if (c._id === triggerId) ref.current = el; }}>
-        {
-          editingComment[c._id] == c._id ? (
-            <>
-              <input
+      {/* Comment Content */}
+      <div className={`flex-1 ${!c.parentId ? "bg-dark-indigo border border-faint-greyish-overlay rounded-md p-3" : ""}`}>
+        {/* <div className={`${!c.parentId ? "bg-dark-indigo p-3" : ""}`}> */}
+
+          <div ref={(el) => c._id === triggerId && (ref.current = el)} >
+            {/* Editing Mode */}
+          
+          {editingComment[c._id] === c._id ? (
+            <div className="flex flex-col sm:flex-row gap-2 ">
+              <InputField
                 type="text"
-                onChange={(e) => setEditingText(prev => ({ ...prev, [c._id]: e.target.value }))}
                 value={editingText[c._id] ?? ""}
+                onChange={(e) =>
+                  setEditingText((prev) => ({ ...prev, [c._id]: e.target.value }))
+                }
+                placeholder="Edit your comment..."
               />
-              <button onClick={() => handleUpdateComment(c._id)}>Post</button>
-              <button onClick={() => {
-                setEditingComment(prev => ({...prev, [c._id]: ""}))
-                setEditingText(prev => ({ ...prev, [c._id]: "" }))
-              }}>Cancel</button>
-            </>
-          ) :
+              <div className="flex gap-2 mt-2 sm:mt-0">
+                <button
+                  onClick={() => handleUpdateComment(c._id)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white transition"
+                >
+                  Post
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingComment((prev) => ({ ...prev, [c._id]: "" }));
+                    setEditingText((prev) => ({ ...prev, [c._id]: "" }));
+                  }}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
             <>
-              <p style={{ margin: 0 }}>
-                <strong>{c.user.username}  {c._id}</strong> &middot; <small>{dayjs(c.createdAt).fromNow()}</small>
+              <p className="text-sm sm:text-base mb-1">
+                <strong>{c.user.username}</strong>{" "}
+                <span className="text-gray-400 text-xs sm:text-sm">
+                  &middot; {dayjs(c.createdAt).fromNow()}
+                </span>
               </p>
+              <p className="mb-2">{c.text}</p>
 
-              <p style={{ margin: "5px 0" }}>{c.text}</p>
-              <p>
-                <span onClick={() => handleLike(c._id, decoded?._id)} style={{ cursor: "pointer", marginRight: "35px" }}>👍   {c.likes?.length || 0}</span>
-                <span onClick={() => handleDislike(c._id, decoded?._id)} style={{ cursor: "pointer", marginRight: "35px" }}>👎   {c.dislikes?.length || 0}</span>
-                <span onClick={() => {
-                  setReplyingTo(prev => ({...prev, [c._id]: c._id}))
-                  setReply(prev => ({...prev, [c._id]: `@${c.user.username} `}))
-                  }} style={{ cursor: "pointer", marginRight: "35px" }}>reply</span>
-                <span onClick={() => {
-                  setEditingText(prev => ({ ...prev, [c._id]: c.text }))
-                  setEditingComment(prev => ({...prev, [c._id]: c._id}))
-                }}
-                  style={{ cursor: "pointer", marginRight: "35px"  }}>Edit</span>
-                <span style={{ cursor: "pointer"}} onClick={() =>  handleDelete(c._id)} >Delete</span>
-              </p>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-4 text-sm text-gray-300 mt-2">
+                <span
+                  onClick={() => handleLike(c._id, decoded?._id)}
+                  className="cursor-pointer hover:text-blue-400 transition"
+                >
+                  👍 {c.likes?.length || 0}
+                </span>
+                <span
+                  onClick={() => handleDislike(c._id, decoded?._id)}
+                  className="cursor-pointer hover:text-red-400 transition"
+                >
+                  👎 {c.dislikes?.length || 0}
+                </span>
+                <span
+                  onClick={() => {
+                    setReplyingTo((prev) => ({ ...prev, [c._id]: c._id }));
+                    setReply((prev) => ({ ...prev, [c._id]: `@${c.user.username} ` }));
+                  }}
+                  className="cursor-pointer hover:text-green-400 transition"
+                >
+                  Reply
+                </span>
+                <span
+                  onClick={() => {
+                    setEditingText((prev) => ({ ...prev, [c._id]: c.text }));
+                    setEditingComment((prev) => ({ ...prev, [c._id]: c._id }));
+                  }}
+                  className="cursor-pointer hover:text-yellow-400 transition"
+                >
+                  Edit
+                </span>
+                <span
+                  onClick={() => handleDelete(c._id)}
+                  className="cursor-pointer hover:text-red-500 transition"
+                >
+                  Delete
+                </span>
+              </div>
             </>
-
-        }
-
-
-      </div>
-
-      {
-        replyingTo[c._id] == c._id &&
-        <>
-          <input
-            type="text"
-            value={reply?.[c._id] ?? ""}
-            placeholder="Write a reply..."
-            onChange={(e) => setReply(prev => ({...prev, [c._id]: e.target.value }))}
-          />
-          <button onClick={(e) => handleAddComment(e, c)}>Post</button>
-          <button onClick={ ()=> {
-            setReply(prev => ({...prev, [c._id]: ""}))
-            setReplyingTo(prev => ({...prev, [c._id]: null}))
-          }}>Cancel</button>
-        </>
-      }
-
-
-
-      { !isReply && c.replyCount > 0 && (
-        expandReplies[c._id] ? (<div onClick={() => setExpandReplies(prev => ({ ...prev, [c._id]: false }))} style={{ cursor: "pointer" }}>Hide Replies </div>) : (<div onClick={() => handleReplies(c._id)} style={{ cursor: "pointer" }}>View Replies ({c.replyCount})</div>)
-      )}
-
-      {expandReplies[c._id] &&
-        <div style={{ marginLeft: "20px", marginTop: "25px" }}>
-          {replies[c._id]?.map((c) => <CommentBlock
-            key={c._id}
-            c={c}
-            ref={c._id === triggerId ? ref : null}
-            triggerId={triggerId}
-            decoded={decoded}
-            editingComment={editingComment}
-            setEditingComment={setEditingComment}
-            editingText={editingText}
-            setEditingText={setEditingText}
-            handleUpdateComment={handleUpdateComment}
-            replyingTo={replyingTo}
-            setReplyingTo={setReplyingTo}
-            reply={reply}
-            setReply={setReply}
-            handleAddComment={handleAddComment}
-            handleLike={handleLike}
-            handleDislike={handleDislike}
-            replies={replies}
-            expandReplies={expandReplies}
-            setExpandReplies={setExpandReplies}
-            handleReplies={handleReplies}
-            handleDelete={handleDelete}
-            isReply={true}
-
-
-          />)}
+          )}
         </div>
-      }
-    </div>
-  </div>
-))
+        {/* </div> */}
 
-export default CommentBlock
+        {/* Reply Input */}
+        {replyingTo[c._id] === c._id && (
+          <div className="flex flex-col sm:flex-row gap-2 mt-2">
+            <InputField
+              type="text"
+              value={reply?.[c._id] ?? ""}
+              onChange={(e) =>
+                setReply((prev) => ({ ...prev, [c._id]: e.target.value }))
+              }
+              placeholder="Write a reply..."
+            />
+            <div className="flex gap-2 mt-2 sm:mt-0">
+              <button
+                onClick={(e) => handleAddComment(e, c)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white transition"
+              >
+                Post
+              </button>
+              <button
+                onClick={() => {
+                  setReply((prev) => ({ ...prev, [c._id]: "" }));
+                  setReplyingTo((prev) => ({ ...prev, [c._id]: null }));
+                }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* View/Hide Replies */}
+        {!isReply && c.replyCount > 0 && (
+          <div
+            onClick={() =>
+              expandReplies[c._id]
+                ? setExpandReplies((prev) => ({ ...prev, [c._id]: false }))
+                : handleReplies(c._id)
+            }
+            className="mt-2 text-sm text-blue-400 cursor-pointer hover:underline"
+          >
+            {expandReplies[c._id] ? "Hide Replies" : `View Replies (${c.replyCount})`}
+          </div>
+        )}
+
+        {/* Nested Replies */}
+        {expandReplies[c._id] && (
+          <div className="mt-4">
+            {replies[c._id]?.map((replyComment) => (
+              <CommentBlock
+                key={replyComment._id}
+                c={replyComment}
+                ref={replyComment._id === triggerId ? ref : null}
+                triggerId={triggerId}
+                decoded={decoded}
+                editingComment={editingComment}
+                setEditingComment={setEditingComment}
+                editingText={editingText}
+                setEditingText={setEditingText}
+                handleUpdateComment={handleUpdateComment}
+                replyingTo={replyingTo}
+                setReplyingTo={setReplyingTo}
+                reply={reply}
+                setReply={setReply}
+                handleAddComment={handleAddComment}
+                handleLike={handleLike}
+                handleDislike={handleDislike}
+                replies={replies}
+                expandReplies={expandReplies}
+                setExpandReplies={setExpandReplies}
+                handleReplies={handleReplies}
+                handleDelete={handleDelete}
+                isReply={true}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+);
+
+export default CommentBlock;

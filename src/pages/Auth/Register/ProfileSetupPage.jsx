@@ -5,11 +5,11 @@ import { useAuth } from "../../../context/auth";
 import toast from "react-hot-toast";
 import { createProfile } from "../../../api/ProfileApi";
 import { jwtDecode } from "jwt-decode";
+import InputField from "../../../shared/InputField";
 
 const ProfileSetupPage = () => {
   const {auth, setAuth} = useAuth();
   const navigate = useNavigate();
-  console.log('auth?.user', auth?.user)
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -41,31 +41,39 @@ const ProfileSetupPage = () => {
   };
 
   return (
-    <div>
-      auth?.user: { JSON.stringify(auth?.user) }
-      <h1>Complete Your Profile</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Enter name"
-          value={formData.name}
-          onChange={(e) =>
-            setFormData({ ...formData, name: e.target.value })
-          }
-        />
-        <br />
-        <input
-          type="text"
-          placeholder="Enter username"
-          value={formData.username}
-          onChange={(e) =>
-            setFormData({ ...formData, username: e.target.value })
-          }
-        />
-        <br />
-        <button type="submit">Save & Continue</button>
-      </form>
-    </div>
+    <div className="bg-navbar-bg text-white w-full min-h-screen flex items-center justify-center px-4 py-8">
+  <div className="w-full max-w-md bg-dark-navy-purple rounded-xl shadow-lg border border-navbar-border p-6 sm:p-8 flex flex-col items-center transition-all">
+
+    <h1 className="text-2xl font-semibold mb-6 text-center">Complete Your Profile</h1>
+
+    <form
+      onSubmit={handleSubmit}
+      className="w-full flex flex-col gap-4"
+    >
+      <InputField
+        type="text"
+        placeholder="Enter name"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+      />
+
+      <InputField
+        type="text"
+        placeholder="Enter username"
+        value={formData.username}
+        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+      />
+
+      <button
+        type="submit"
+        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
+      >
+        Save & Continue
+      </button>
+    </form>
+  </div>
+</div>
+
   );
 };
 

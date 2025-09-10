@@ -9,5 +9,6 @@ export const getProfile = (userId) => API.get(`/profile/${userId}`);
 
 export const updateProfile = (userId, formData) =>
   API.put(`/profile/${userId}`, formData);
+
 export const createProfile = (userId, formData) =>
   API.post(`/profile/setup/${userId}`, formData);

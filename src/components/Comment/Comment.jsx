@@ -19,6 +19,7 @@ import CommentBlock from './CommentBlock';
 import { useLocation } from 'react-router-dom';
 import { useParams } from "react-router-dom";
 import "./comment.css"
+import InputField from "../../shared/InputField";
 
 dayjs.extend(relativeTime);
 
@@ -48,7 +49,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
 
   // ⬅️ added: extract query params
   let { triggerType, triggerId, entityId, isAggregation } = location.state || {};
-  console.log('triggerId in comment', triggerId)
+  // console.log('triggerId in comment', triggerId)
   // const searchParams = new URLSearchParams(location.search);
   // const triggerType = searchParams.get("triggerType");
   // const entityId = searchParams.get("entityId");
@@ -405,44 +406,57 @@ const Comment = ({ postId = 34534903493030330 }) => {
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: "1rem" }}>
-        <label>Sort by: </label>
+    <div className="w-full max-w-3xl mx-auto mt-6 px-4 sm:px-6">
+      {/* Sort Dropdown */}
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <label className="text-sm font-medium">Sort by:</label>
         <select
           value={sortOrder}
           onChange={(e) => {
             setSortOrder(e.target.value);
-            setComments([]);       // reset list
-            setCursor(null);
-            setHasMore(true);
-            fetchTopComments(e.target.value); // refetch with new sort
+            setMsg("");
+            fetchTopComments(e.target.value);
           }}
+          className="px-3 py-2 rounded-md bg-dark-indigo border border-faint-greyish-overlay text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="latest">Latest Comments</option>
           <option value="oldest">Oldest Comments</option>
         </select>
       </div>
 
-      <div>
-        <input
+      {/* Input Section */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <InputField
           type="text"
-          value={msg ?? ""}
-          placeholder="Add a comment..."
+          value={msg}
           onChange={(e) => setMsg(e.target.value)}
+          placeholder="Add a comment..."
         />
-        <button onClick={(e) => handleAddComment(e, null)}>Post</button>
-        <button onClick={() => setMsg("")}>Cancel</button>
+        <div className="flex gap-2 mt-2 sm:mt-0">
+          <button
+            onClick={(e) => handleAddComment(e, null)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white transition"
+          >
+            Post
+          </button>
+          {/* <button
+            onClick={() => setMsg("")}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition"
+          >
+            Cancel
+          </button> */}
+        </div>
       </div>
 
-      <div>
-        {isLoading && <p>Loading more...</p>}
+      {/* Comments List */}
+      <div className="flex flex-col gap-4">
+        {isLoading && <p className="text-center text-gray-400">Loading more...</p>}
 
         {comments.map((c) => (
           <CommentBlock
             key={c._id}
             c={c}
             ref={targetRef}
-            triggerId={triggerId}
             decoded={decoded}
             editingComment={editingComment}
             setEditingComment={setEditingComment}
@@ -465,9 +479,10 @@ const Comment = ({ postId = 34534903493030330 }) => {
         ))}
 
         <div ref={loaderRef} style={{ height: "1px" }}></div>
-        {!hasMore && <p>No more comments.</p>}
+        {!hasMore && <p className="text-center text-gray-400">No more comments.</p>}
       </div>
     </div>
+
   );
 };
 
