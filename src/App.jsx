@@ -38,7 +38,7 @@ function App() {
 }
 
 function getRedirectPath(step) {
-  if (!step) return "/register";
+  if (!step) return "/login";
   if (step === 1) return "/register";
   if (step === 2) return "/setup-profile";
   if (step === 3) return "/select-tags";

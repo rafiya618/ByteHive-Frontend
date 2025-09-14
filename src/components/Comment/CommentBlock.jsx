@@ -9,7 +9,7 @@ const CommentBlock = forwardRef(
   (
     {
       c,
-      decoded,
+      auth,
       triggerId,
       editingComment,
       setEditingComment,
@@ -92,13 +92,13 @@ const CommentBlock = forwardRef(
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-4 text-sm text-gray-300 mt-2">
                 <span
-                  onClick={() => handleLike(c._id, decoded?._id)}
+                  onClick={() => handleLike(c._id, auth?.user?._id)}
                   className="cursor-pointer hover:text-blue-400 transition"
                 >
                   👍 {c.likes?.length || 0}
                 </span>
                 <span
-                  onClick={() => handleDislike(c._id, decoded?._id)}
+                  onClick={() => handleDislike(c._id, auth?.user?._id)}
                   className="cursor-pointer hover:text-red-400 transition"
                 >
                   👎 {c.dislikes?.length || 0}
@@ -187,7 +187,7 @@ const CommentBlock = forwardRef(
                 c={replyComment}
                 ref={replyComment._id === triggerId ? ref : null}
                 triggerId={triggerId}
-                decoded={decoded}
+                auth={auth}
                 editingComment={editingComment}
                 setEditingComment={setEditingComment}
                 editingText={editingText}

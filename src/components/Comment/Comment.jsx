@@ -30,7 +30,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
   const [msg, setMsg] = useState("");
   const { auth } = useAuth();
   const { profile } = useProfile();
-  const [decoded, setDecoded] = useState(null);
+  // const [decoded, setDecoded] = useState(null);
   const [comments, setComments] = useState([]);
   const [replyingTo, setReplyingTo] = useState({});
   const [reply, setReply] = useState({});
@@ -115,17 +115,17 @@ const Comment = ({ postId = 34534903493030330 }) => {
   }, [entityId, triggerType, triggerId]);
 
 
-  // Decode JWT
-  useEffect(() => {
-    if (auth?.token) {
-      try {
-        const decodedToken = jwtDecode(auth?.token);
-        setDecoded(decodedToken);
-      } catch (error) {
-        console.error("Failed to decode token:", error);
-      }
-    }
-  }, [auth?.token]);
+  // // Decode JWT
+  // useEffect(() => {
+  //   if (auth?.user) {
+  //     try {
+        
+  //       setDecoded(auth?.user);
+  //     } catch (error) {
+  //       console.error("Failed to decode token:", error);
+  //     }
+  //   }
+  // }, [auth?.user]);
 
   // Socket listeners
   useEffect(() => {
@@ -286,7 +286,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
   const handleAddComment = async (e, comment) => {
     e.preventDefault();
 
-    if (!decoded?._id || !(comment ? (reply[comment._id]?.trim()) : msg.trim())) {
+    if (!auth?.user?._id || !(comment ? (reply[comment._id]?.trim()) : msg.trim())) {
       console.warn("Missing user ID or empty message.");
       return;
     }
@@ -295,11 +295,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
       parentId: comment
         ? (comment.parentId ? comment.parentId : comment._id)
         : null,
-      user: {
-        _id: decoded._id,
-        username: profile?.username,
-        profileImage: profile?.profileImage
-      },
+      userId: auth?.user?._id,
       text: comment ? reply[comment._id] : msg,
       receiverId: comment ? comment.user._id : "postId",
       receiverName: comment ? comment.user.username : "post_owner",
@@ -457,7 +453,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
             key={c._id}
             c={c}
             ref={targetRef}
-            decoded={decoded}
+            auth={auth}
             editingComment={editingComment}
             setEditingComment={setEditingComment}
             editingText={editingText}

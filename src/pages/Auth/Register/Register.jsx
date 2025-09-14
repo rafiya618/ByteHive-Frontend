@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/auth";
@@ -61,9 +62,10 @@ const Register = () => {
         { email, password, otp }
       );
       if (res.data.success) {
-        toast.success("Registration Successful!");
-        setAuth({ ...auth, token: res.data.token });
+        const decoded = jwtDecode(res.data.token); // decode token to get user info
+        setAuth({ token: res.data.token, user: decoded }); // set both token and user
         localStorage.setItem("Auth", JSON.stringify({ token: res.data.token }));
+        toast.success("Registration Successful!");
         navigate("/setup-profile");
       }
     } catch (error) {
@@ -125,6 +127,12 @@ const Register = () => {
             </button>
           </form>
 
+          <p
+            onClick={() => navigate("/login")}
+            className="text-sm text-blue-500 hover:text-blue-400 cursor-pointer text-center mt-4"
+          >
+            Already have an account? Log in
+          </p>
           {/* Divider */}
           <div className="flex items-center my-5">
             <div className="flex-grow border-t border-gray-600"></div>
@@ -173,11 +181,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={verifyDisabled}
-              className={`mt-3 w-full py-2 rounded-md font-semibold transition duration-200 cursor-pointer ${
-                verifyDisabled
-                  ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
-              }`}
+              className={`mt-3 w-full py-2 rounded-md font-semibold transition duration-200 cursor-pointer ${verifyDisabled
+                ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+                }`}
             >
               {verifyDisabled ? "OTP Expired" : "Verify OTP & Register"}
             </button>

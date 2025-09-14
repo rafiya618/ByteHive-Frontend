@@ -4,24 +4,24 @@ import ProfileView from "../components/Profile/ProfileView";
 import ProfileEdit from "../components/Profile/ProfileEdit";
 import Layout from "../components/Layout/Layout";
 import { useAuth } from "../context/auth";
-import { jwtDecode } from "jwt-decode";
 import { useProfile } from "../context/profileContext";
 
 const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
   const { auth } = useAuth();
-  const { profile, fetchProfile } = useProfile();
+  const { profile, fetchProfile, loading } = useProfile();
 
-  const userId = auth;
+  const userId = auth?.user?._id;
 
   useEffect(() => {
-    if (!profile && userId) {
+    if (userId && !profile && !loading) {
       fetchProfile();
     }
-  }, [userId]);
+  }, [userId, profile, loading, fetchProfile]);
 
   const handleSave = async (formData) => {
     try {
+      if (!userId) return;
       await updateProfile(userId, formData);
       await fetchProfile();
       setEditing(false);
@@ -34,7 +34,9 @@ const ProfilePage = () => {
     <Layout>
       <div className="flex flex-col items-center gap-6 mt-6">
         <h1 className="text-2xl font-bold">User Profile</h1>
-        {profile ? (
+        {loading ? (
+          <p>Loading...</p>
+        ) : profile ? (
           editing ? (
             <ProfileEdit
               profile={profile}
@@ -42,13 +44,10 @@ const ProfilePage = () => {
               onCancel={() => setEditing(false)}
             />
           ) : (
-            <ProfileView
-              profile={profile}
-              onEdit={() => setEditing(true)}
-            />
+            <ProfileView profile={profile} onEdit={() => setEditing(true)} />
           )
         ) : (
-          <p>Loading...</p>
+          <p>No profile data found.</p>
         )}
       </div>
     </Layout>

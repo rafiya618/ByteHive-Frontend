@@ -4,6 +4,7 @@ import { useAuth } from '../../context/auth'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import InputField from '../../shared/InputField'
+import { jwtDecode } from "jwt-decode";
 
 
 const Login = () => {
@@ -18,9 +19,9 @@ const Login = () => {
 
         try {
             const res = await axios.post(`${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/login`, { email, password });
-            setAuth({ ...auth, token: res.data.token })
-            localStorage.setItem('Auth', JSON.stringify({ token: res.data }))
-            console.log(res.data.message)
+            const decoded = jwtDecode(res.data.token); // decode the token
+            setAuth({ token: res.data.token, user: decoded }); // set both token and user
+            localStorage.setItem('Auth', JSON.stringify({ token: res.data.token })); // still store token
             toast.success(res.data.message)
             navigate('/')
         } catch (error) {

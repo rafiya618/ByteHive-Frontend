@@ -10,17 +10,13 @@ const ProfileContext = createContext();
 export const ProfileProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const {auth} = useAuth();
+  const { auth } = useAuth();
 
-  try {
-    
-  } catch (err) {
-    console.error("Invalid token", err);
-  }
+
   const fetchProfile = async () => {
     try {
       if (!auth?.user?._id) return;
-  
+
       setLoading(true);
       const res = await getProfile(auth?.user?._id);
       setProfile(res?.data);
@@ -32,10 +28,12 @@ export const ProfileProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (auth?.token) {
+    if (auth?.token && auth?.user?._id) {
       fetchProfile();
     }
   }, [auth]);
+
+
 
   return (
     <ProfileContext.Provider value={{ profile, setProfile, loading, fetchProfile }}>

@@ -30,7 +30,7 @@ const ProfileSetupPage = () => {
       console.log('data', data)
       const decoded = jwtDecode(data.token);
       localStorage.removeItem('Auth')
-      localStorage.setItem('Auth', JSON.stringify(data.token))
+      localStorage.setItem('Auth', JSON.stringify({token : data.token}))
       // const decoded = jwtDecode(data.token);
       setAuth({token: data.token, user: decoded?.user})
       console.log('', )

@@ -76,11 +76,24 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
           value={formData.bio}
           onChange={handleChange}
           placeholder="Tell us about yourself"
-          rows={4} // optional override
+          rows={4}
         />
       </div>
 
-      {/* Profile Image */}
+      {/* Profile Image Preview */}
+      <div className="flex flex-col items-center">
+        <img
+          src={
+            formData.profileImage
+              ? URL.createObjectURL(formData.profileImage)
+              : profile.profileImage || "/default-profile.png"
+          }
+          alt="Profile Preview"
+          className="w-28 h-28 rounded-full object-cover border-2 border-blue-600 shadow-md mb-3"
+        />
+      </div>
+
+      {/* Profile Image Input */}
       <div>
         <label className="block text-sm font-medium mb-1">Profile Image</label>
         <InputField

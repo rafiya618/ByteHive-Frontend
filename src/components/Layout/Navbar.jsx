@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import { useAuth } from "../../context/auth";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ const Navbar = () => {
     const {auth, setAuth} = useAuth()
     const { profile, setProfile } = useProfile()
     const { unReadCount } = useNotifications()
+    const navigate = useNavigate
 
     const profileImage = profile?.profileImage;
 
@@ -19,6 +20,7 @@ const Navbar = () => {
         localStorage.removeItem("Auth")
         setAuth({ ...auth, token: '' })
         toast.success("User logout successfully.")
+        navigate('/login')
     }
 
 
