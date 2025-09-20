@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import InputField from "../../shared/InputField";
+import { validateEmail, validatePassword, validateOtp } from "../../helpers/validators";
 
 const ForgotPassword = () => {
   const [step, setStep] = useState(1);
@@ -10,6 +11,7 @@ const ForgotPassword = () => {
   const [password, setPassword] = useState("");
   const [timer, setTimer] = useState(0);
 
+  // countdown timer
   useEffect(() => {
     if (timer > 0) {
       const interval = setTimeout(() => setTimer(timer - 1), 1000);
@@ -17,7 +19,11 @@ const ForgotPassword = () => {
     }
   }, [timer]);
 
+  // step 1 → send OTP
   const sendOtp = async () => {
+    const emailError = validateEmail(email);
+    if (emailError) return toast.error(emailError);
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/forgot-password`,
@@ -31,7 +37,11 @@ const ForgotPassword = () => {
     }
   };
 
+  // step 2 → verify OTP
   const verifyOtp = async () => {
+    const otpError = validateOtp(otp);
+    if (otpError) return toast.error(otpError);
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/verify-reset-otp`,
@@ -45,7 +55,11 @@ const ForgotPassword = () => {
     }
   };
 
+  // step 3 → reset password
   const resetPassword = async () => {
+    const passwordError = validatePassword(password);
+    if (passwordError) return toast.error(passwordError);
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/reset-password`,

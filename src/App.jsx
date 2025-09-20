@@ -14,6 +14,7 @@ import ProfileSetupPage from "./pages/Auth/Register/ProfileSetupPage";
 import TagSelectionPage from "./pages/Auth/Register/TagSelectionPage";
 import { useAuth } from "./context/auth";
 import PreferencesPage from "./pages/PreferencesPage";
+import EnableNotifications from "./pages/EnableNotifications";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/comment" element={<RequireStep minStep={4}><CommentPage /></RequireStep>} />
         <Route path="/notification" element={<RequireStep minStep={4}><NotificationPage /></RequireStep>} />
         <Route path="/preferences" element={<RequireStep minStep={4}><PreferencesPage /></RequireStep>} />
+        <Route path="/enable-notifications" element={<EnableNotifications />} />
         <Route path="/*" element={<PageNotFound />} />
       </Routes>
     </>

@@ -1,4 +1,7 @@
 .highlight {
-  background-color: yellow !important;
+  /* margin-right: 3px; */
+  /* padding-left: 5px; */
+  border-radius: 5px;
+  background-color: color-mix(in srgb, var(--dark-indigo) 90%, white) !important;
   transition: background-color 1s ease;
 }

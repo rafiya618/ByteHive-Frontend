@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/auth";
 import InputField from "../../../shared/InputField";
 import toast from "react-hot-toast";
+import { validateEmail, validatePassword, validateOtp } from "../../../helpers/validators";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -14,10 +15,12 @@ const Register = () => {
   const [isResending, setIsResending] = useState(false);
   const [timer, setTimer] = useState(60);
   const [verifyDisabled, setVerifyDisabled] = useState(false);
-  const { auth, setAuth } = useAuth();
+  const { setAuth } = useAuth();
   const navigate = useNavigate();
 
-  // Countdown timer logic
+  // ==============================
+  // 🔹 Countdown timer logic
+  // ==============================
   useEffect(() => {
     let interval;
     if (step === 2 && timer > 0) {
@@ -30,9 +33,18 @@ const Register = () => {
     return () => clearInterval(interval);
   }, [step, timer]);
 
-  // Handle Register
+  // ==============================
+  // 🔹 Handle Register
+  // ==============================
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    const emailError = validateEmail(email);
+    if (emailError) return toast.error(emailError);
+
+    const passwordError = validatePassword(password);
+    if (passwordError) return toast.error(passwordError);
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/register`,
@@ -49,21 +61,28 @@ const Register = () => {
     }
   };
 
-  // Handle OTP Verification
+  // ==============================
+  // 🔹 Handle OTP Verification
+  // ==============================
   const handleVerify = async (e) => {
     e.preventDefault();
+
     if (verifyDisabled) {
       toast.error("OTP expired. Please click Resend OTP.");
       return;
     }
+
+    const otpError = validateOtp(otp);
+    if (otpError) return toast.error(otpError);
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/verify-otp`,
         { email, password, otp }
       );
       if (res.data.success) {
-        const decoded = jwtDecode(res.data.token); // decode token to get user info
-        setAuth({ token: res.data.token, user: decoded }); // set both token and user
+        const decoded = jwtDecode(res.data.token);
+        setAuth({ token: res.data.token, user: decoded });
         localStorage.setItem("Auth", JSON.stringify({ token: res.data.token }));
         toast.success("Registration Successful!");
         navigate("/setup-profile");
@@ -74,8 +93,13 @@ const Register = () => {
     }
   };
 
-  // Handle Resend OTP
+  // ==============================
+  // 🔹 Handle Resend OTP
+  // ==============================
   const handleResendOTP = async () => {
+    const emailError = validateEmail(email);
+    if (emailError) return toast.error(emailError);
+
     try {
       setIsResending(true);
       const res = await axios.post(
@@ -95,6 +119,9 @@ const Register = () => {
     }
   };
 
+  // ==============================
+  // 🔹 UI
+  // ==============================
   return (
     <div className="bg-navbar-bg text-white w-full flex items-center justify-center min-h-screen px-4">
       {step === 1 && (
@@ -133,6 +160,7 @@ const Register = () => {
           >
             Already have an account? Log in
           </p>
+
           {/* Divider */}
           <div className="flex items-center my-5">
             <div className="flex-grow border-t border-gray-600"></div>
@@ -181,10 +209,11 @@ const Register = () => {
             <button
               type="submit"
               disabled={verifyDisabled}
-              className={`mt-3 w-full py-2 rounded-md font-semibold transition duration-200 cursor-pointer ${verifyDisabled
-                ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
-                }`}
+              className={`mt-3 w-full py-2 rounded-md font-semibold transition duration-200 cursor-pointer ${
+                verifyDisabled
+                  ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+              }`}
             >
               {verifyDisabled ? "OTP Expired" : "Verify OTP & Register"}
             </button>

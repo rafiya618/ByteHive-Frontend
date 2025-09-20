@@ -16,9 +16,9 @@ export const ProfileProvider = ({ children }) => {
   const fetchProfile = async () => {
     try {
       if (!auth?.user?._id) return;
-
       setLoading(true);
       const res = await getProfile(auth?.user?._id);
+      console.log('res', res.data)
       setProfile(res?.data);
     } catch (err) {
       console.error("Failed to fetch profile:", err);

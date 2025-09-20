@@ -5,11 +5,12 @@ import { useAuth } from "../../context/auth";
 import toast from "react-hot-toast";
 import { useProfile } from "../../context/profileContext";
 import { useNotifications } from "../../context/NotificationContext";
+import { registerPush } from "../../helpers/registerPush";
 
 const Navbar = () => {
 
     const [isOpen, setIsOpen] = useState(false);
-    const {auth, setAuth} = useAuth()
+    const { auth, setAuth } = useAuth()
     const { profile, setProfile } = useProfile()
     const { unReadCount } = useNotifications()
     const navigate = useNavigate
@@ -43,11 +44,13 @@ const Navbar = () => {
                                 <li><Link to="/comment">Comment</Link></li>
                                 <li>
                                     <Link to="/notification" >
-                                        🔔 {unReadCount > 0 ?  `(${unReadCount})` : ""}
+                                        🔔 {unReadCount > 0 ? `(${unReadCount})` : ""}
                                     </Link>
                                 </li>
 
+                                <li ><Link to="/enable-notifications" >Enable Push</Link></li>
                                 <li ><Link to="/login" onClick={HandleLogout}>Logout</Link></li>
+                            
                             </>
 
                     }

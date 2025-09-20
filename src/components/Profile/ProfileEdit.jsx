@@ -1,9 +1,16 @@
 import React, { useState } from "react";
-import InputField from "../../shared/InputField"; // adjust path if needed
+import InputField from "../../shared/InputField";
+import {
+  validateName,
+  validateBio,
+  validateURL,
+} from "../../helpers/validators";
+import toast from "react-hot-toast";
 
 const ProfileEdit = ({ profile, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: profile.name || "",
+    username: profile.username || "",
     bio: profile.bio || "",
     profileImage: null,
     socialLinks: {
@@ -20,10 +27,14 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name.startsWith("socials.")) {
       setFormData({
         ...formData,
-        socialLinks: { ...formData.socialLinks, [name.split(".")[1]]: value },
+        socialLinks: {
+          ...formData.socialLinks,
+          [name.split(".")[1]]: value,
+        },
       });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -36,8 +47,34 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // ✅ Validate Name
+    const nameError = validateName(formData.name);
+    if (nameError) {
+      toast.error(nameError);
+      return;
+    }
+
+    // ✅ Validate Bio
+    const bioError = validateBio(formData.bio);
+    if (bioError) {
+      toast.error(bioError);
+      return;
+    }
+
+    // ✅ Validate Social Links
+    for (let [platform, link] of Object.entries(formData.socialLinks)) {
+      const urlError = validateURL(link);
+      if (urlError) {
+        toast.error(`${platform}: ${urlError}`);
+        return;
+      }
+    }
+
+    // Prepare FormData for backend
     const updatedForm = new FormData();
     updatedForm.append("name", formData.name);
+    updatedForm.append("username", formData.username);
     updatedForm.append("bio", formData.bio);
     if (formData.profileImage) {
       updatedForm.append("profileImage", formData.profileImage);
@@ -45,6 +82,7 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
     Object.entries(formData.socialLinks).forEach(([platform, link]) => {
       updatedForm.append(`socialLinks[${platform}]`, link);
     });
+
     onSave(updatedForm);
   };
 
@@ -64,6 +102,17 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
           value={formData.name}
           onChange={handleChange}
           placeholder="Your Name"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Name</label>
+        <InputField
+          type="text"
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          placeholder="Your username"
         />
       </div>
 

@@ -90,6 +90,16 @@ export default function NotificationPage() {
           });
           break;
 
+        case "like":
+          navigate(`/comment`, {
+            state: {
+              triggerType: "like",
+              triggerId: n.triggerId,
+              entityId: n.entityId,
+            },
+          });
+          break;
+
         case "reply":
           navigate(`/comment`, {
             state: {
@@ -119,38 +129,40 @@ export default function NotificationPage() {
 
 
   return (
-    <Layout className="p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">All Notifications</h1>
-      <div className="space-y-2">
-        {notifications.map((n) => {
-          const createdAt = new Date(n.createdAt);
-          let displayDate;
+    <Layout>
+      <div className="max-w-xl mx-auto w-full">
+        <h1 className="text-3xl font-bold mb-6 text-white text-center md:text-left">
+          All Notifications
+        </h1>
 
-          if (isToday(createdAt)) {
-            displayDate = "Today at " + format(createdAt, "p");
-            // e.g. Today at 10:30 AM
-          } else if (isYesterday(createdAt)) {
-            displayDate = "Yesterday at " + format(createdAt, "p");
-            // e.g. Yesterday at 9:15 PM
-          } else {
-            displayDate = format(createdAt, "MMM d, yyyy");
-            // e.g. Aug 22, 2025
-          }
+        <div className="space-y-4">
+          {notifications.length === 0 ? (
+            <p className="text-gray-400 text-center">No notifications yet</p>
+          ) : (
+            notifications.map((n) => {
+              const createdAt = new Date(n.createdAt);
+              let displayDate = isToday(createdAt)
+                ? `Today at ${format(createdAt, "p")}`
+                : isYesterday(createdAt)
+                  ? `Yesterday at ${format(createdAt, "p")}`
+                  : format(createdAt, "MMM d, yyyy");
 
-          return (
-            <div
-              onClick={() => handleNavigation(n)}
-              key={n._id}
-              style={{ cursor: "pointer" }}
-              className={`p-3 rounded-lg ${n.isRead ? "bg-gray-100" : "bg-white shadow"
-                }`}
-            >
-              <div>{n.message}</div>
-              <div className="text-xs text-gray-500">{displayDate}</div>
-              {/* <div onClick={() => HandleDelete(n._id)} style={{cursor: "pointer", color: "black", fontWeight: "bolder"}}>Delete</div> */}
-            </div>
-          );
-        })}
+              return (
+                <div
+                  key={n._id}
+                  onClick={() => handleNavigation(n)}
+                  className={`cursor-pointer p-4 rounded-xl transition-all duration-300
+                    ${n.isRead ? "bg-gray-800" : "bg-white text-black shadow-lg"}
+                    hover:scale-[1.02] hover:shadow-2xl
+                  `}
+                >
+                  <div className="font-medium">{n.message}</div>
+                  <div className="text-xs text-gray-400 mt-1">{displayDate}</div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </Layout>
   );

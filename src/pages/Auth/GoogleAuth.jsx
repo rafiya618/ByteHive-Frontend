@@ -1,10 +1,13 @@
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../../context/auth";
 
 
 const GoogleAuth = () => {
     const navigate = useNavigate();
+    const {auth, setAuth} = useAuth()
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get("token");
@@ -15,10 +18,15 @@ const GoogleAuth = () => {
             toast.error(error)
             navigate("/");
         } else if (token) {
-          localStorage.setItem("Auth", JSON.stringify({ token: token }));
-          
-          toast.success("Authentication successfull!")
-          navigate("/setup-profile");
+            const decoded = jwtDecode(token);
+            setAuth({ token: token, user: decoded });
+            localStorage.setItem("Auth", JSON.stringify({ token: token }));
+            toast.success("Authentication successfull!")
+            console.log('decoded', decoded)
+            if (decoded.onboardingStep == 2)
+                navigate("/setup-profile");
+            else if(decoded.onboardingStep == 4)
+                navigate("/");
         }
     }, []);
 

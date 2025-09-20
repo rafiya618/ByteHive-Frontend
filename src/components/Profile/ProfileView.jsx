@@ -1,5 +1,14 @@
 import React from "react";
-import { FaLinkedin, FaXTwitter, FaGithub, FaYoutube, FaInstagram, FaFacebook, FaThreads, FaGlobe } from "react-icons/fa6";
+import {
+  FaLinkedin,
+  FaXTwitter,
+  FaGithub,
+  FaYoutube,
+  FaInstagram,
+  FaFacebook,
+  FaThreads,
+  FaGlobe,
+} from "react-icons/fa6";
 
 const ProfileView = ({ profile, onEdit }) => {
   const socialIcons = {
@@ -15,16 +24,15 @@ const ProfileView = ({ profile, onEdit }) => {
 
   return (
     <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-2xl mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border text-white flex flex-col items-center gap-6">
-      
       {/* Profile Picture */}
       <div className="flex flex-col items-center">
         <img
-          src={profile.profileImage}
+          src={profile?.profileImage}
           alt="Profile"
           className="w-28 h-28 rounded-full object-cover border-4 border-blue-600 shadow-md"
         />
-        <h2 className="mt-4 text-2xl font-bold">{profile.name}</h2>
-        <p className="text-gray-300 text-center mt-1">{profile.bio}</p>
+        <h2 className="mt-4 text-2xl font-bold">{profile?.name}</h2>
+        <p className="text-gray-300 text-center mt-1">{profile?.bio}</p>
       </div>
 
       {/* Social Links */}

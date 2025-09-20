@@ -48,9 +48,9 @@ const CommentBlock = forwardRef(
       <div className={`flex-1 ${!c.parentId ? "bg-dark-indigo border border-faint-greyish-overlay rounded-md p-3" : ""}`}>
         {/* <div className={`${!c.parentId ? "bg-dark-indigo p-3" : ""}`}> */}
 
-          <div ref={(el) => c._id === triggerId && (ref.current = el)} >
-            {/* Editing Mode */}
-          
+        <div ref={(el) => c._id === triggerId && (ref.current = el)} >
+          {/* Editing Mode */}
+
           {editingComment[c._id] === c._id ? (
             <div className="flex flex-col sm:flex-row gap-2 ">
               <InputField
@@ -112,21 +112,27 @@ const CommentBlock = forwardRef(
                 >
                   Reply
                 </span>
-                <span
-                  onClick={() => {
-                    setEditingText((prev) => ({ ...prev, [c._id]: c.text }));
-                    setEditingComment((prev) => ({ ...prev, [c._id]: c._id }));
-                  }}
-                  className="cursor-pointer hover:text-yellow-400 transition"
-                >
-                  Edit
-                </span>
-                <span
-                  onClick={() => handleDelete(c._id)}
-                  className="cursor-pointer hover:text-red-500 transition"
-                >
-                  Delete
-                </span>
+                {c.userId === auth.user._id && (
+                  <>
+                    <span
+                      onClick={() => {
+                        setEditingText((prev) => ({ ...prev, [c._id]: c.text }));
+                        setEditingComment((prev) => ({ ...prev, [c._id]: c._id }));
+                      }}
+                      className="cursor-pointer hover:text-yellow-400 transition"
+                    >
+                      Edit
+                    </span>
+                    <span
+                      onClick={() => handleDelete(c._id)}
+                      className="cursor-pointer hover:text-red-500 transition"
+                    >
+                      Delete
+                    </span>
+                  </>
+                )
+
+                }
               </div>
             </>
           )}

@@ -49,7 +49,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
 
   // ⬅️ added: extract query params
   let { triggerType, triggerId, entityId, isAggregation } = location.state || {};
-  // console.log('triggerId in comment', triggerId)
+  console.log('triggerId in comment', triggerId);
   // const searchParams = new URLSearchParams(location.search);
   // const triggerType = searchParams.get("triggerType");
   // const entityId = searchParams.get("entityId");
@@ -61,7 +61,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
     const loadComment = async () => {
       try {
         console.log('triggerType', triggerType)
-        if (triggerType == "reply") {
+        if (triggerType == "reply" || triggerType == "like") {
           const { data } = await getcommentById(entityId);
           console.log("data in target reply", data);
           setComments((prev) => {
@@ -70,7 +70,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
             return [...prev, ...uniqueData];
           });
 
-          if (data.replies) {
+          if (data.replies && entityId !== triggerId) {
             setReplies((prev) => ({ ...prev, [entityId]: data.replies }));
             setExpandReplies((prev) => ({ ...prev, [entityId]: true }));
           }
@@ -102,7 +102,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
             targetRef.current.classList.add("highlight");
             setTimeout(
               () => targetRef.current.classList.remove("highlight"),
-              2000
+              1000
             );
           }
         }, 50);
@@ -119,7 +119,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
   // useEffect(() => {
   //   if (auth?.user) {
   //     try {
-        
+
   //       setDecoded(auth?.user);
   //     } catch (error) {
   //       console.error("Failed to decode token:", error);
@@ -244,11 +244,18 @@ const Comment = ({ postId = 34534903493030330 }) => {
 
   // Reset comments when post changes
   useEffect(() => {
+  const initFetch = async () => {
     setComments([]);
     setCursor(null);
     setHasMore(true);
-    fetchTopComments();
-  }, [postId]);
+
+    // Explicitly pass null cursor
+    await fetchTopComments(sortOrder, null);
+  };
+
+  initFetch();
+}, [postId, sortOrder]);
+
 
 
   // Infinite scroll observer
@@ -298,7 +305,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
       userId: auth?.user?._id,
       text: comment ? reply[comment._id] : msg,
       receiverId: comment ? comment.user._id : "postId",
-      receiverName: comment ? comment.user.username : "post_owner",
+      // receiverName: comment ? comment.user.username : "post_owner",
       entityId: comment ? comment._id : postId
     };
 
@@ -320,32 +327,37 @@ const Comment = ({ postId = 34534903493030330 }) => {
   };
 
   // Fetch top-level comments
-  const fetchTopComments = async (order = sortOrder) => {
-    try {
-      if (isLoading || !hasMore) return;
-      setIsLoading(true);
+  const fetchTopComments = async (order = sortOrder, startCursor = cursor) => {
+  if (isLoading || !hasMore) return;
+  setIsLoading(true);
 
-      const { data } = await getCommentsByPost(postId, cursor, order);
-      console.log('data', data)
-      if (data.length === 0) {
-        setHasMore(false);
-        if (observerRef.current && loaderRef.current) {
-          observerRef.current.unobserve(loaderRef.current);
-        }
-      } else {
-        setComments((prev) => {
-          const existingIds = new Set(prev.map(c => c._id));
-          const uniqueData = data.filter(c => !existingIds.has(c._id));
-          return [...prev, ...uniqueData];
-        });
-        setCursor(data[data.length - 1]._id);
-      }
-    } catch (error) {
-      console.log('Error: ', error);
-    } finally {
-      setIsLoading(false);
+  try {
+    const { data } = await getCommentsByPost(postId, startCursor, order);
+
+    const fetchedComments = data.comments;
+    const newCursor = data.nextCursor;
+
+    if (!fetchedComments || fetchedComments.length === 0) {
+      setHasMore(false);
+    } else {
+      setComments(prev => {
+        const existingIds = new Set(prev.map(c => c._id));
+        const uniqueData = fetchedComments.filter(c => !existingIds.has(c._id));
+        return order === "oldest"
+          ? [...uniqueData, ...prev] // prepend for oldest
+          : [...prev, ...uniqueData]; // append for latest
+      });
+
+      setCursor(newCursor);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching comments:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
 
   // Fetch replies for a comment
@@ -411,7 +423,7 @@ const Comment = ({ postId = 34534903493030330 }) => {
           onChange={(e) => {
             setSortOrder(e.target.value);
             setMsg("");
-            fetchTopComments(e.target.value);
+
           }}
           className="px-3 py-2 rounded-md bg-dark-indigo border border-faint-greyish-overlay text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -452,6 +464,8 @@ const Comment = ({ postId = 34534903493030330 }) => {
           <CommentBlock
             key={c._id}
             c={c}
+            triggerId={triggerId}
+  // targetRef={targetRef}
             ref={targetRef}
             auth={auth}
             editingComment={editingComment}
