@@ -13,7 +13,7 @@ const CommunityFilterBar = ({ filters = [], selected, onSelect }) => {
               fontWeight: isSelected ? 600 : 400,
               color: isSelected ? "var(--periwinkle)" : "var(--columbia-blue)",
               borderColor: isSelected ? "var(--periwinkle)" : "transparent",
-              opacity: isSelected ? 1 : 0.85, //  selected always fully visible
+              opacity: isSelected ? 1 : 0.85,
             }}
             onClick={() => onSelect(filter)}
           >
