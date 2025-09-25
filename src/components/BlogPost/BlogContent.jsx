@@ -1,8 +1,15 @@
-import React, { useState, useRef } from "react";
+// Updated src/components/BlogContent/BlogContent.jsx
+import React, { useState, useRef, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import TextSelectionPopup from "./TextSelectionPopup";
 import CommentSection from "./CommentSection";
+import SaveModal from "../UI/SaveModal";
+import { useSavedPosts, useViewHistory, useNotifications } from "../../hooks/useContentCuration";
+import { getBlogById } from "../../services/blogDataService";
 
 const BlogContent = () => {
+  const { id: postId } = useParams();
+  const navigate = useNavigate();
   const [readingMode, setReadingMode] = useState("original");
   const [showPopup, setShowPopup] = useState(false);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
@@ -12,76 +19,58 @@ const BlogContent = () => {
   const [downvotes, setDownvotes] = useState(5);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedText, setHighlightedText] = useState("");
+  const [blogData, setBlogData] = useState(null);
+  
   const contentRef = useRef(null);
 
-  // Original blog content
-  const originalContent = `
-    Next.js has revolutionized the way we build React applications by providing a powerful framework that simplifies the development process. Combined with TypeScript, it creates an excellent developer experience with robust type safety.
+  // Content curation hooks
+  const { savePost, removeSavedPost, isPostSaved } = useSavedPosts();
+  const { trackPostView } = useViewHistory();
+  const { showSuccess, showError } = useNotifications();
 
-    ## Getting Started with Next.js
-
-    To get started with Next.js, you need to have Node.js installed on your machine. Once you have Node.js, you can create a new Next.js application using the following command:
-
-    \`\`\`bash
-    npx create-next-app my-app --typescript
-    \`\`\`
-
-    This command creates a new Next.js application with TypeScript support.
-
-    ## File-Based Routing
-
-    One of the most powerful features of Next.js is its file-based routing system. In the App Router, you create routes by adding folders and pages within the app directory:
-
-    • app/page.tsx - Home page
-    • app/about/page.tsx - About page  
-    • app/blog/[id]/page.tsx - Dynamic blog post page
-
-    This intuitive routing system makes it easy to structure your application and add new pages without configuring complex route definitions.
-
-    ## Data Fetching
-
-    Next.js provides several ways to fetch data in your application. In the App Router, you can use the following methods:
-
-    \`\`\`javascript
-    // Server Component
-    async function Page() {
-      const data = await fetch('https://api.example.com/data', {
-        next: { revalidate: 60 }
-      })
-      const json = await data.json()
+  // Load blog data using shared service
+  useEffect(() => {
+    if (postId) {
+      const data = getBlogById(postId);
+      setBlogData(data);
       
-      return (
-        <div>{json.title}</div>
-      )
+      // Set initial vote states based on the blog data
+      setUpvotes(data.upvotes);
+      setDownvotes(data.downvotes);
     }
-    \`\`\`
+  }, [postId]);
 
-    This example demonstrates how to fetch data in a Server Component with revalidation every 60 seconds.
-
-    ## Conclusion
-
-    Next.js and TypeScript provide a powerful combination for building modern web applications. With features like file-based routing, server components, and built-in optimization, Next.js simplifies the development process while TypeScript adds type safety and improves developer experience.
-  `;
-
-  // Simplified version
-  const simplifiedContent = `
-    **Key Takeaways:**
-      
-
-    • Next.js simplifies React development with powerful built-in features
-    • TypeScript integration provides better code safety and developer experience
-    • File-based routing makes navigation setup intuitive
-    • Multiple data fetching options available for different use cases
-    • Great for building modern, optimized web applications
+  // Track view on component mount
+  useEffect(() => {
+    let isMounted = true;
     
+    const trackView = async () => {
+      if (postId && blogData && isMounted) {
+        console.log('Tracking view for post:', postId);
+        await trackPostView(blogData);
+      }
+    };
+    
+    if (blogData) {
+      const timeoutId = setTimeout(trackView, 100);
+      
+      return () => {
+        isMounted = false;
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [postId, blogData, trackPostView]);
 
-
-    **Quick Summary:**
-
-
-
-    Next.js is a React framework that makes building web apps easier. It includes automatic routing, TypeScript support, and various ways to load data. Perfect for developers who want a streamlined development experience.
-  `;
+  // Check if post is saved
+  useEffect(() => {
+    if (postId) {
+      setIsBookmarked(isPostSaved(postId));
+    }
+  }, [postId, isPostSaved]);
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
@@ -102,8 +91,41 @@ const BlogContent = () => {
     }
   };
 
-  const toggleBookmark = () => setIsBookmarked(!isBookmarked);
-  
+  // Handle save/bookmark
+  const handleSave = async () => {
+    if (isBookmarked) {
+      setSaveLoading(true);
+      const result = await removeSavedPost(postId);
+      
+      if (result.success) {
+        setIsBookmarked(false);
+        showSuccess(result.message);
+      } else {
+        showError(result.error);
+      }
+      setSaveLoading(false);
+    } else {
+      setShowSaveModal(true);
+    }
+  };
+
+  // Handle save with category
+  const handleSaveWithCategory = async (category) => {
+    setSaveLoading(true);
+    setShowSaveModal(false);
+    
+    const result = await savePost(blogData, category);
+    
+    if (result.success) {
+      setIsBookmarked(true);
+      showSuccess(result.message);
+    } else {
+      showError(result.error);
+    }
+    
+    setSaveLoading(false);
+  };
+
   const toggleUpvote = () => {
     if (isUpvoted) {
       setUpvotes(upvotes - 1);
@@ -132,258 +154,333 @@ const BlogContent = () => {
     }
   };
 
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    
+    if (term) {
+      setHighlightedText(term);
+    } else {
+      setHighlightedText("");
+    }
+  };
+
+  const highlightSearchTerm = (text) => {
+    if (!highlightedText) return text;
+    
+    const regex = new RegExp(`(${highlightedText})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-300 text-black">$1</mark>');
+  };
+
+  // Show loading state while blog data is being fetched
+  if (!blogData) {
+    return (
+      <div className="min-h-screen bg-rich-black flex items-center justify-center">
+        <div className="text-white text-lg font-lato">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-rich-black relative">
-      {/*  Background Glow Effect */}
-      <div
-        className="absolute z-0"
-        style={{
-          width: 637,
-          height: 300,
-          top: -38,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "#1A1842B3",
-          filter: "blur(100px)",
-          boxShadow: "0px 4px 100px 500px #00000066",
-          borderRadius: 30,
-          pointerEvents: "none",
-        }}
-      />
-      
-      <div className="relative z-10 container mx-auto px-5 sm:px-7 lg:px-10 py-6">
-        <div className="max-w-4xl mx-auto">
-          
-          {/* Header Section with Buttons and Search */}
-          <div className="flex items-center justify-between mb-6">
-            {/* Left Side - Reading Mode Toggle */}
-            <div className="flex items-center space-x-3">
+    <>
+      <div className="min-h-screen bg-rich-black relative">
+        {/* Background Glow Effect */}
+        <div
+          className="absolute z-0"
+          style={{
+            width: 637,
+            height: 300,
+            top: -38,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#1A1842B3",
+            filter: "blur(100px)",
+            boxShadow: "0px 4px 100px 500px #00000066",
+            borderRadius: 30,
+            pointerEvents: "none",
+          }}
+        />
+        
+        <div className="relative z-10 container mx-auto px-5 sm:px-7 lg:px-10 py-6">
+          <div className="max-w-4xl mx-auto">
+            
+            {/* Back Button */}
+            <div className="mb-6">
               <button
-                onClick={() => setReadingMode("simplified")}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md font-lato text-sm font-medium transition-all duration-200 ${
-                  readingMode === "simplified"
-                    ? "bg-medium-slate-blue text-white shadow-lg shadow-medium-slate-blue/30"
-                    : "bg-rich-black-light text-periwinkle hover:bg-periwinkle-light border border-navbar-border"
-                }`}
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-white hover:text-periwinkle transition-colors"
               >
-                <span className="material-icons text-lg">auto_fix_high</span>
-                <span>Simplify</span>
-              </button>
-              
-              <button
-                onClick={() => setReadingMode("original")}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md font-lato text-sm font-medium transition-all duration-200 ${
-                  readingMode === "original"
-                    ? "bg-medium-slate-blue text-white shadow-lg shadow-medium-slate-blue/30"
-                    : "bg-rich-black-light text-periwinkle hover:bg-periwinkle-light border border-navbar-border"
-                }`}
-              >
-                <span className="material-icons text-lg">description</span>
-                <span>Original</span>
+                <span className="material-icons">arrow_back</span>
+                <span className="text-xl font-fenix">Back</span>
               </button>
             </div>
 
-            {/* Right Side - Search */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search in article"
-                className="bg-transparent border border-[#393B5A] text-white rounded-[8px] h-[49px] pl-12 pr-4 w-96 text-base focus:outline-none font-lato placeholder-periwinkle"
-              />
-              <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-periwinkle text-xl">
-                search
-              </span>
-            </div>
-          </div>
+            {/* Header Section with Buttons and Search */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setReadingMode("simplified")}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md font-lato text-sm font-medium transition-all duration-200 ${
+                    readingMode === "simplified"
+                      ? "bg-medium-slate-blue text-white shadow-lg shadow-medium-slate-blue/30"
+                      : "bg-rich-black-light text-periwinkle hover:bg-periwinkle-light border border-navbar-border"
+                  }`}
+                >
+                  <span className="material-icons text-lg">auto_fix_high</span>
+                  <span>Simplify</span>
+                </button>
+                
+                <button
+                  onClick={() => setReadingMode("original")}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md font-lato text-sm font-medium transition-all duration-200 ${
+                    readingMode === "original"
+                      ? "bg-medium-slate-blue text-white shadow-lg shadow-medium-slate-blue/30"
+                      : "bg-rich-black-light text-periwinkle hover:bg-periwinkle-light border border-navbar-border"
+                  }`}
+                >
+                  <span className="material-icons text-lg">description</span>
+                  <span>Original</span>
+                </button>
+              </div>
 
-          {/* Category and Meta Info */}
-          <div className="flex items-center text-sm mb-4 font-lato">
-            <span className="text-periwinkle px-3 py-1 rounded-xl font-semibold border border-solid border-navbar-border">
-              Next.js Devs
-            </span>
-            <span className="mx-2 text-periwinkle">·</span>
-            <span className="text-periwinkle">Mar 10, 2025 • 6 min read</span>
-          </div>
-
-          {/* Title */}
-          <h1 className="font-fenix text-3xl md:text-4xl text-white mb-6 leading-tight">
-            Building Modern Web Applications with Next.js and the TypeScript
-          </h1>
-
-          {/* Author Info */}
-          <div className="flex items-center space-x-3 mb-4">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGFljVK_1YLiLqNE8SMU0zsD2LUOv_ZJClfdq_DWp5FLd8KsDvQMnl0VOe2aFfU8eqc6M6I9aJ-VCGtFzHlUS0P9bjYnTWHMI5UO-pnf_7H4DGlvVnCe8Bj212iSAhJEonp7QjXn4VZAVbIpKHMYo4M70ouLkfY0wZPHju90a2vQzdL6Es79mMQ8NwXMHcJmqQaWhUuBwfkisr2uii-p0d3iFFfq4_RPcfykChX-MAS__NVdhAo3TLJvD4_LSMPxI_TLnrD1Gi_oFK"
-              alt="David Lee"
-              className="w-12 h-12 rounded-full"
-            />
-            <div>
-              <div className="text-white font-lato font-medium text-base">David Lee</div>
-              <div className="text-periwinkle text-sm font-lato">Author</div>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            <span className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl font-lato">
-              #Nextjs
-            </span>
-            <span className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl font-lato">
-              #TypeScript
-            </span>
-            <span className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl font-lato">
-              #WebDevelopment
-            </span>
-          </div>
-
-          {/* Blog Image */}
-          <div className="mb-8 rounded-lg overflow-hidden">
-            <img
-              src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=1200&h=600&fit=crop"
-              alt="Next.js and TypeScript"
-              className="w-full h-80 object-cover"
-            />
-          </div>
-
-          {/* Blog Content */}
-          <div 
-            ref={contentRef}
-            className="mb-8"
-            onMouseUp={handleTextSelection}
-          >
-            <div className="prose prose-invert max-w-none">
-              {readingMode === "original" ? (
-                <div className="text-white space-y-4">
-                  {originalContent.split('\n\n').map((paragraph, index) => {
-                    if (paragraph.trim().startsWith('##')) {
-                      return (
-                        <h2 key={index} className="text-2xl font-fenix text-white mt-8 mb-4 font-semibold">
-                          {paragraph.replace('##', '').trim()}
-                        </h2>
-                      );
-                    }
-                    if (paragraph.trim().startsWith('```')) {
-                      const codeContent = paragraph.replace(/```\w*\n?/, '').replace(/```$/, '');
-                      return (
-                        <div key={index} className="bg-rich-black-light rounded-lg p-4 my-6 border border-navbar-border">
-                          <pre className="text-white text-sm overflow-x-auto font-mono">
-                            <code>{codeContent}</code>
-                          </pre>
-                        </div>
-                      );
-                    }
-                    if (paragraph.trim().startsWith('•')) {
-                      const items = paragraph.split('•').filter(item => item.trim());
-                      return (
-                        <ul key={index} className="list-disc list-inside space-y-2 text-white font-lato text-base">
-                          {items.map((item, i) => (
-                            <li key={i} className="ml-4">{item.trim()}</li>
-                          ))}
-                        </ul>
-                      );
-                    }
-                    return paragraph.trim() ? (
-                      <p key={index} className="text-base leading-snug font-lato text-white">
-                        {paragraph.trim()}
-                      </p>
-                    ) : null;
-                  })}
-                </div>
-              ) : (
-                <div className="text-white space-y-4">
-                  {simplifiedContent.split('\n\n').map((section, index) => {
-                    if (section.trim().startsWith('**') && section.trim().endsWith('**')) {
-                      return (
-                        <h2 key={index} className="text-2xl font-fenix text-white mb-4 font-semibold">
-                          {section.replace(/\*\*/g, '')}
-                        </h2>
-                      );
-                    }
-                    if (section.trim().startsWith('•')) {
-                      const items = section.split('•').filter(item => item.trim());
-                      return (
-                        <ul key={index} className="list-disc list-inside space-y-2 text-base">
-                          {items.map((item, i) => (
-                            <li key={i} className="ml-4 text-white font-lato">{item.trim()}</li>
-                          ))}
-                        </ul>
-                      );
-                    }
-                    return section.trim() ? (
-                      <p key={index} className="text-base leading-snug font-lato text-white">
-                        {section.trim()}
-                      </p>
-                    ) : null;
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Separator Line */}
-          <hr className="border-navbar-border mb-8" />
-
-          {/* Action Bar */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-6">
-              {/* Upvote */}
-              <button
-                onClick={toggleUpvote}
-                className={`flex items-center space-x-2 transition-colors ${
-                  isUpvoted ? "text-white" : "text-periwinkle hover:text-white"
-                }`}
-              >
-                <span className="material-icons text-lg">thumb_up</span>
-                <span className="font-lato font-medium">{upvotes}</span>
-              </button>
-
-              {/* Downvote */}
-              <button
-                onClick={toggleDownvote}
-                className={`flex items-center space-x-2 transition-colors ${
-                  isDownvoted ? "text-white" : "text-periwinkle hover:text-white"
-                }`}
-              >
-                <span className="material-icons text-lg">thumb_down</span>
-                <span className="font-lato font-medium">{downvotes}</span>
-              </button>
-
-              {/* Views */}
-              <div className="flex items-center space-x-2 text-periwinkle">
-                <span className="material-icons text-lg">visibility</span>
-                <span className="font-lato font-medium">142</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search in article"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="bg-transparent border border-[#393B5A] text-white rounded-[8px] h-[49px] pl-12 pr-4 w-96 text-base focus:outline-none font-lato placeholder-periwinkle focus:border-periwinkle transition-colors"
+                />
+                <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-periwinkle text-xl">
+                  search
+                </span>
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setHighlightedText("");
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-periwinkle hover:text-white transition-colors"
+                  >
+                    <span className="material-icons text-xl">clear</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              {/* Share */}
-              <button className="flex items-center space-x-2 px-4 py-2 border border-periwinkle text-periwinkle rounded-md hover:bg-periwinkle-light transition-colors font-lato">
-                <span className="material-icons text-lg">share</span>
-                <span>Share</span>
-              </button>
-
-              {/* Save */}
-              <button className="flex items-center space-x-2 px-4 py-2 border border-periwinkle text-periwinkle rounded-md hover:bg-periwinkle-light transition-colors font-lato">
-                <span className="material-icons text-lg">bookmark_border</span>
-                <span>Save</span>
-              </button>
+            {/* Category and Meta Info */}
+            <div className="flex items-center text-sm mb-4 font-lato">
+              <span className="text-periwinkle px-3 py-1 rounded-xl font-semibold border border-solid border-navbar-border">
+                {blogData.community}
+              </span>
+              <span className="mx-2 text-periwinkle">·</span>
+              <span className="text-periwinkle">{blogData.date} • {blogData.readTime} read</span>
             </div>
-          </div>
 
-          {/* Comments Section */}
-          <CommentSection />
+            {/* Title */}
+            <h1 className="font-fenix text-3xl md:text-4xl text-white mb-6 leading-tight">
+              {blogData.title}
+            </h1>
+
+            {/* Author Info */}
+            <div className="flex items-center space-x-3 mb-4">
+              <img
+                src={blogData.author.avatar}
+                alt={blogData.author.name}
+                className="w-12 h-12 rounded-full"
+              />
+              <div>
+                <div className="text-white font-lato font-medium text-base">{blogData.author.name}</div>
+                <div className="text-periwinkle text-sm font-lato">Author</div>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {blogData.tags.map((tag, index) => (
+                <span key={index} className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl font-lato">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Blog Image */}
+            <div className="mb-8 rounded-lg overflow-hidden">
+              <img
+                src={blogData.image}
+                alt={blogData.title}
+                className="w-full h-80 object-cover"
+              />
+            </div>
+
+            {/* Blog Content */}
+            <div 
+              ref={contentRef}
+              className="mb-8"
+              onMouseUp={handleTextSelection}
+            >
+              <div className="prose prose-invert max-w-none">
+                {readingMode === "original" ? (
+                  <div className="text-white space-y-4">
+                    {blogData.content.split('\n\n').map((paragraph, index) => {
+                      if (paragraph.trim().startsWith('##')) {
+                        const headingText = paragraph.replace('##', '').trim();
+                        return (
+                          <h2 key={index} className="text-2xl font-fenix text-white mt-8 mb-4 font-semibold"
+                              dangerouslySetInnerHTML={{ __html: highlightSearchTerm(headingText) }} />
+                        );
+                      }
+                      if (paragraph.trim().startsWith('```')) {
+                        const codeContent = paragraph.replace(/```\w*\n?/, '').replace(/```$/, '');
+                        return (
+                          <div key={index} className="bg-rich-black-light rounded-lg p-4 my-6 border border-navbar-border">
+                            <pre className="text-white text-sm overflow-x-auto font-mono">
+                              <code dangerouslySetInnerHTML={{ __html: highlightSearchTerm(codeContent) }} />
+                            </pre>
+                          </div>
+                        );
+                      }
+                      if (paragraph.trim().startsWith('•')) {
+                        const items = paragraph.split('•').filter(item => item.trim());
+                        return (
+                          <ul key={index} className="list-disc list-inside space-y-2 text-white font-lato text-base">
+                            {items.map((item, i) => (
+                              <li key={i} className="ml-4" 
+                                  dangerouslySetInnerHTML={{ __html: highlightSearchTerm(item.trim()) }} />
+                            ))}
+                          </ul>
+                        );
+                      }
+                      if (paragraph.trim().startsWith('**') && paragraph.trim().endsWith('**')) {
+                        const boldText = paragraph.replace(/\*\*/g, '');
+                        return (
+                          <p key={index} className="text-base leading-snug font-lato text-white font-bold"
+                             dangerouslySetInnerHTML={{ __html: highlightSearchTerm(boldText) }} />
+                        );
+                      }
+                      return paragraph.trim() ? (
+                        <p key={index} className="text-base leading-snug font-lato text-white"
+                           dangerouslySetInnerHTML={{ __html: highlightSearchTerm(paragraph.trim()) }} />
+                      ) : null;
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-white space-y-4">
+                    {blogData.simplified.split('\n\n').map((section, index) => {
+                      if (section.trim().startsWith('**') && section.trim().endsWith('**')) {
+                        const headingText = section.replace(/\*\*/g, '');
+                        return (
+                          <h2 key={index} className="text-2xl font-fenix text-white mb-4 font-semibold"
+                              dangerouslySetInnerHTML={{ __html: highlightSearchTerm(headingText) }} />
+                        );
+                      }
+                      if (section.trim().startsWith('•')) {
+                        const items = section.split('•').filter(item => item.trim());
+                        return (
+                          <ul key={index} className="list-disc list-inside space-y-2 text-base">
+                            {items.map((item, i) => (
+                              <li key={i} className="ml-4 text-white font-lato" 
+                                  dangerouslySetInnerHTML={{ __html: highlightSearchTerm(item.trim()) }} />
+                            ))}
+                          </ul>
+                        );
+                      }
+                      return section.trim() ? (
+                        <p key={index} className="text-base leading-snug font-lato text-white"
+                           dangerouslySetInnerHTML={{ __html: highlightSearchTerm(section.trim()) }} />
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Separator Line */}
+            <hr className="border-navbar-border mb-8" />
+
+            {/* Action Bar */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-6">
+                <button
+                  onClick={toggleUpvote}
+                  className={`flex items-center space-x-2 transition-colors ${
+                    isUpvoted ? "text-white" : "text-periwinkle hover:text-white"
+                  }`}
+                >
+                  <span className="material-icons text-lg">thumb_up</span>
+                  <span className="font-lato font-medium">{upvotes}</span>
+                </button>
+
+                <button
+                  onClick={toggleDownvote}
+                  className={`flex items-center space-x-2 transition-colors ${
+                    isDownvoted ? "text-white" : "text-periwinkle hover:text-white"
+                  }`}
+                >
+                  <span className="material-icons text-lg">thumb_down</span>
+                  <span className="font-lato font-medium">{downvotes}</span>
+                </button>
+
+                <div className="flex items-center space-x-2 text-periwinkle">
+                  <span className="material-icons text-lg">visibility</span>
+                  <span className="font-lato font-medium">{blogData.views}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <button className="flex items-center space-x-2 px-4 py-2 border border-periwinkle text-periwinkle rounded-md hover:bg-periwinkle-light transition-colors font-lato">
+                  <span className="material-icons text-lg">share</span>
+                  <span>Share</span>
+                </button>
+
+                {/* Save button with unsave functionality */}
+                <button 
+                  onClick={handleSave}
+                  disabled={saveLoading}
+                  className={`flex items-center space-x-2 px-4 py-2 border rounded-md transition-colors font-lato ${
+                    isBookmarked
+                      ? "border-periwinkle bg-periwinkle text-white hover:bg-opacity-90"
+                      : "border-periwinkle text-periwinkle hover:bg-periwinkle-light"
+                  } ${saveLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <span className="material-icons text-lg">
+                    {saveLoading 
+                      ? "sync" 
+                      : isBookmarked 
+                        ? "bookmark" 
+                        : "bookmark_border"
+                    }
+                  </span>
+                  <span>{isBookmarked ? "Saved" : "Save"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Comments Section */}
+            {typeof CommentSection !== 'undefined' && <CommentSection />}
+          </div>
         </div>
+
+        {/* Text Selection Popup */}
+        {showPopup && typeof TextSelectionPopup !== 'undefined' && (
+          <TextSelectionPopup
+            position={popupPosition}
+            selectedText={selectedText}
+            onClose={() => setShowPopup(false)}
+          />
+        )}
       </div>
 
-      {/* Text Selection Popup */}
-      {showPopup && (
-        <TextSelectionPopup
-          position={popupPosition}
-          selectedText={selectedText}
-          onClose={() => setShowPopup(false)}
+      {/* Save Modal */}
+      {showSaveModal && (
+        <SaveModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveWithCategory}
+          postTitle={blogData.title}
         />
       )}
-    </div>
+    </>
   );
 };
 

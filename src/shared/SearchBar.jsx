@@ -1,57 +1,79 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect } from 'react';
 
-const SearchBar = ({ placeholder = "Search events", onSearch, className = "" }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+const SearchBar = ({ 
+  placeholder = "Search...", 
+  onSearch, 
+  initialValue = "",
+  delay = 300 
+}) => {
+  const [searchValue, setSearchValue] = useState(initialValue);
+  const [timeoutId, setTimeoutId] = useState(null);
 
-  // Debounce search to avoid too many API calls
-  const debounce = (func, delay) => {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func.apply(null, args), delay);
-    };
-  };
-
-  const debouncedSearch = useCallback(
-    debounce((query) => {
-      if (onSearch) {
-        onSearch(query);
-      }
-    }, 500), // 500ms delay
-    [onSearch]
-  );
+  useEffect(() => {
+    setSearchValue(initialValue);
+  }, [initialValue]);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
-    setSearchQuery(value);
-    debouncedSearch(value);
+    setSearchValue(value);
+
+    // Clear previous timeout
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    // Set new timeout for debounced search
+    const newTimeoutId = setTimeout(() => {
+      if (onSearch) {
+        onSearch(value);
+      }
+    }, delay);
+
+    setTimeoutId(newTimeoutId);
+  };
+
+  const handleClear = () => {
+    setSearchValue("");
+    if (onSearch) {
+      onSearch("");
+    }
+    // Clear timeout
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (onSearch) {
-        onSearch(searchQuery);
+    if (e.key === 'Enter' && onSearch) {
+      // Clear timeout and search immediately on Enter
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
+      onSearch(searchValue);
     }
   };
 
   return (
-    <div className={`relative flex-grow max-w-xl ${className}`}>
-      {/* Search Icon (Left) */}
-      <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-[#B0BAFF] text-xl">
-        search
-      </span>
-
-      {/* Input */}
-      <input 
-        type="text" 
+    <div className="relative w-full">
+      <input
+        type="text"
         placeholder={placeholder}
-        value={searchQuery}
+        value={searchValue}
         onChange={handleInputChange}
         onKeyPress={handleKeyPress}
-        className="bg-transparent border border-[#393B5A] text-white rounded-[8px] h-[49px] pl-12 pr-4 w-full text-base focus:outline-none focus:border-periwinkle transition-colors" 
+        className="bg-transparent border border-[#393B5A] text-white rounded-[8px] h-[49px] pl-12 pr-12 w-full text-base focus:outline-none font-lato placeholder-periwinkle focus:border-periwinkle transition-colors"
       />
+      <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-periwinkle text-xl">
+        search
+      </span>
+      {searchValue && (
+        <button
+          onClick={handleClear}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-periwinkle hover:text-white transition-colors"
+        >
+          <span className="material-icons text-xl">clear</span>
+        </button>
+      )}
     </div>
   );
 };
