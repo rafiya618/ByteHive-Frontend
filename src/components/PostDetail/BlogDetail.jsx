@@ -5,6 +5,7 @@ import { getProfile } from "../../api/ProfileApi";
 import axios from "axios";
 import TextSelectionPopup from "./TextSelectionPopup";
 import Comment from "./Comment/Comment";
+import { postsApi } from "../../api/postsApi";
 
 export default function BlogDetail() {
   const { postId } = useParams();
@@ -22,6 +23,7 @@ export default function BlogDetail() {
   const [downvotes, setDownvotes] = useState(0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
+  const [voteLoading, setVoteLoading] = useState(false);
   const contentRef = useRef(null);
   
   // State for user profile
@@ -32,14 +34,24 @@ export default function BlogDetail() {
     const fetchPost = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:5000/api/posts/${postId}`);
-        const data = res.data.post;
+        // Use enhanced method that includes vote status
+        const res = auth?.user?._id 
+          ? await postsApi.getPostByIdWithVotes(postId, auth.user._id)
+          : await postsApi.getPostById(postId);
+        
+        const data = res.post;
         setPost(data);
         setUpvotes(data.upvotes || 0);
         setDownvotes(data.downvotes || 0);
+        setIsUpvoted(data.userLiked || false);
+        setIsDownvoted(data.userDisliked || false);
         
-        console.log('Post data loaded:', data);
-        console.log('Post user_id for profile fetch:', data.user_id);
+        console.log('Post data with votes loaded:', {
+          upvotes: data.upvotes,
+          downvotes: data.downvotes,
+          userLiked: data.userLiked,
+          userDisliked: data.userDisliked
+        });
         
         // Fetch user profile after post is loaded
         if (data.user_id) {
@@ -51,7 +63,7 @@ export default function BlogDetail() {
       setLoading(false);
     };
     if (postId) fetchPost();
-  }, [postId]);
+  }, [postId, auth?.user?._id]);
 
   const fetchUserProfile = async (userId) => {
     if (!userId) {
@@ -122,41 +134,79 @@ export default function BlogDetail() {
     }
   };
 
-  const toggleUpvote = () => {
+  const toggleUpvote = async () => {
     if (!auth?.token) {
       navigate('/login', { state: { from: `/post/${postId}` } });
       return;
     }
     
-    if (isUpvoted) {
-      setUpvotes(upvotes - 1);
-      setIsUpvoted(false);
-    } else {
-      setUpvotes(upvotes + 1);
-      setIsUpvoted(true);
-      if (isDownvoted) {
-        setDownvotes(downvotes - 1);
-        setIsDownvoted(false);
+    if (voteLoading) return;
+    
+    setVoteLoading(true);
+    
+    try {
+      const response = await postsApi.likePost(postId, auth.user._id);
+      
+      if (response.ok) {
+        setUpvotes(response.upvotes);
+        setDownvotes(response.downvotes);
+        setIsUpvoted(response.userLiked);
+        setIsDownvoted(response.userDisliked);
+        
+        console.log('Upvote response:', response);
       }
+    } catch (error) {
+      console.error('Error toggling upvote:', error);
+      
+      // Show user-friendly error message for schema issues
+      if (error.message.includes('outdated data format')) {
+        setErr('This post has an outdated format. Please refresh the page and try again.');
+      } else {
+        setErr('Failed to update vote. Please try again.');
+      }
+      
+      // Clear error after 5 seconds
+      setTimeout(() => setErr(''), 5000);
+    } finally {
+      setVoteLoading(false);
     }
   };
 
-  const toggleDownvote = () => {
+  const toggleDownvote = async () => {
     if (!auth?.token) {
       navigate('/login', { state: { from: `/post/${postId}` } });
       return;
     }
     
-    if (isDownvoted) {
-      setDownvotes(downvotes - 1);
-      setIsDownvoted(false);
-    } else {
-      setDownvotes(downvotes + 1);
-      setIsDownvoted(true);
-      if (isUpvoted) {
-        setUpvotes(upvotes - 1);
-        setIsUpvoted(false);
+    if (voteLoading) return;
+    
+    setVoteLoading(true);
+    
+    try {
+      const response = await postsApi.dislikePost(postId, auth.user._id);
+      
+      if (response.ok) {
+        setUpvotes(response.upvotes);
+        setDownvotes(response.downvotes);
+        setIsUpvoted(response.userLiked);
+        setIsDownvoted(response.userDisliked);
+        
+        console.log('Downvote response:', response);
       }
+    } catch (error) {
+      console.error('Error toggling downvote:', error);
+      
+      // Show user-friendly error message for schema issues
+      if (error.message.includes('outdated data format')) {
+        setErr('This post has an outdated format. Please refresh the page and try again.');
+      } else {
+        setErr('Failed to update vote. Please try again.');
+      }
+      
+      // Clear error after 5 seconds
+      setTimeout(() => setErr(''), 5000);
+    } finally {
+      setVoteLoading(false);
     }
   };
 
@@ -332,22 +382,28 @@ export default function BlogDetail() {
               {/* Upvote */}
               <button
                 onClick={toggleUpvote}
+                disabled={voteLoading}
                 className={`flex items-center space-x-2 transition-colors ${
                   isUpvoted ? "text-green-400" : "text-periwinkle hover:text-white"
-                }`}
+                } ${voteLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <span className="material-icons text-lg">arrow_upward</span>
+                <span className="material-icons text-lg">
+                  {voteLoading && (isUpvoted || (!isUpvoted && !isDownvoted)) ? "hourglass_empty" : "arrow_upward"}
+                </span>
                 <span className="font-lato font-medium">{upvotes}</span>
               </button>
 
               {/* Downvote */}
               <button
                 onClick={toggleDownvote}
+                disabled={voteLoading}
                 className={`flex items-center space-x-2 transition-colors ${
                   isDownvoted ? "text-red-400" : "text-periwinkle hover:text-white"
-                }`}
+                } ${voteLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <span className="material-icons text-lg">arrow_downward</span>
+                <span className="material-icons text-lg">
+                  {voteLoading && (isDownvoted || (!isUpvoted && !isDownvoted)) ? "hourglass_empty" : "arrow_downward"}
+                </span>
                 <span className="font-lato font-medium">{downvotes}</span>
               </button>
 

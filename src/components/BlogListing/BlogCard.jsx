@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/auth";
 import { getProfile } from "../../api/ProfileApi";
+import { postsApi } from "../../api/postsApi";
 
 const BlogCard = ({
   id,
@@ -10,25 +12,30 @@ const BlogCard = ({
   readTime,
   title,
   description,
-  tags = [], // Default to empty array
-  author = { name: "Unknown", avatar: "" }, // Default author object
-  upvotes = 0,
-  downvotes = 0,
+  tags = [],
+  author = { name: "Unknown", avatar: "" },
+  upvotes: initialUpvotes = 0,
+  downvotes: initialDownvotes = 0,
   comments = 0,
   views = 0,
   bookmarked = false,
-  user_id, // Add user_id prop to fetch profile
+  user_id,
 }) => {
+  const { auth } = useAuth();
+  
   // State for toggles
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
+  const [upvotes, setUpvotes] = useState(initialUpvotes);
+  const [downvotes, setDownvotes] = useState(initialDownvotes);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
+  const [voteLoading, setVoteLoading] = useState(false);
   
   // State for user profile
   const [userProfile, setUserProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Fetch user profile on component mount
+  // Fetch user profile and vote status on component mount
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user_id) {
@@ -62,23 +69,113 @@ const BlogCard = ({
       }
     };
 
+    const fetchVoteStatus = async () => {
+      if (!id || !auth?.user?._id) return;
+      
+      try {
+        const voteResponse = await postsApi.getPostVoteStatus(id, auth.user._id);
+        if (voteResponse.ok) {
+          setUpvotes(voteResponse.upvotes);
+          setDownvotes(voteResponse.downvotes);
+          setIsUpvoted(voteResponse.userLiked);
+          setIsDownvoted(voteResponse.userDisliked);
+          
+          console.log('Vote status loaded:', {
+            postId: id,
+            upvotes: voteResponse.upvotes,
+            downvotes: voteResponse.downvotes,
+            userLiked: voteResponse.userLiked,
+            userDisliked: voteResponse.userDisliked
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching vote status:', error);
+      }
+    };
+
     fetchUserProfile();
-  }, [user_id, id]);
+    fetchVoteStatus();
+  }, [user_id, id, auth?.user?._id]);
+
+  // Vote handlers
+  const toggleUpvote = async (e) => {
+    e.preventDefault();
+    
+    if (!auth?.token) {
+      // Redirect to login if not authenticated
+      return;
+    }
+    
+    if (voteLoading) return;
+    
+    setVoteLoading(true);
+    
+    try {
+      const response = await postsApi.likePost(id, auth.user._id);
+      
+      if (response.ok) {
+        setUpvotes(response.upvotes);
+        setDownvotes(response.downvotes);
+        setIsUpvoted(response.userLiked);
+        setIsDownvoted(response.userDisliked);
+        
+        console.log('Upvote response:', response);
+      }
+    } catch (error) {
+      console.error('Error toggling upvote:', error);
+      
+      // Show alert for schema issues
+      if (error.message.includes('outdated data format')) {
+        alert('This post has an outdated format. Please refresh the page and try again.');
+      } else {
+        alert('Failed to update vote. Please try again.');
+      }
+    } finally {
+      setVoteLoading(false);
+    }
+  };
+
+  const toggleDownvote = async (e) => {
+    e.preventDefault();
+    
+    if (!auth?.token) {
+      // Redirect to login if not authenticated
+      return;
+    }
+    
+    if (voteLoading) return;
+    
+    setVoteLoading(true);
+    
+    try {
+      const response = await postsApi.dislikePost(id, auth.user._id);
+      
+      if (response.ok) {
+        setUpvotes(response.upvotes);
+        setDownvotes(response.downvotes);
+        setIsUpvoted(response.userLiked);
+        setIsDownvoted(response.userDisliked);
+        
+        console.log('Downvote response:', response);
+      }
+    } catch (error) {
+      console.error('Error toggling downvote:', error);
+      
+      // Show alert for schema issues
+      if (error.message.includes('outdated data format')) {
+        alert('This post has an outdated format. Please refresh the page and try again.');
+      } else {
+        alert('Failed to update vote. Please try again.');
+      }
+    } finally {
+      setVoteLoading(false);
+    }
+  };
 
   // Handlers
   const toggleBookmark = (e) => {
     e.preventDefault(); // prevent navigation
     setIsBookmarked(!isBookmarked);
-  };
-  const toggleUpvote = (e) => {
-    e.preventDefault();
-    setIsUpvoted(!isUpvoted);
-    if (isDownvoted) setIsDownvoted(false); // can't be both
-  };
-  const toggleDownvote = (e) => {
-    e.preventDefault();
-    setIsDownvoted(!isDownvoted);
-    if (isUpvoted) setIsUpvoted(false);
   };
 
   // Get author info from profile or fallback to props
@@ -186,27 +283,29 @@ const BlogCard = ({
               {/* Upvote */}
               <button
                 onClick={toggleUpvote}
+                disabled={voteLoading}
                 className={`flex items-center text-sm transition-colors ${
                   isUpvoted ? "text-green-500" : "hover:text-white"
-                }`}
+                } ${voteLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span className="material-icons text-base mr-1">
-                  arrow_upward
+                  {voteLoading && (isUpvoted || (!isUpvoted && !isDownvoted)) ? "hourglass_empty" : "arrow_upward"}
                 </span>
-                {upvotes + (isUpvoted ? 1 : 0)}
+                {upvotes}
               </button>
 
               {/* Downvote */}
               <button
                 onClick={toggleDownvote}
+                disabled={voteLoading}
                 className={`flex items-center text-sm transition-colors ${
                   isDownvoted ? "text-red-400" : "hover:text-white"
-                }`}
+                } ${voteLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span className="material-icons text-base mr-1">
-                  arrow_downward
+                  {voteLoading && (isDownvoted || (!isUpvoted && !isDownvoted)) ? "hourglass_empty" : "arrow_downward"}
                 </span>
-                {downvotes + (isDownvoted ? 1 : 0)}
+                {downvotes}
               </button>
 
               {/* Comments */}

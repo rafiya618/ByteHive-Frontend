@@ -175,17 +175,63 @@ export const postsApi = {
     return post;
   },
 
-  // Search Posts (Public)
+  // Search Posts (Public) - Updated to allow single character searches
   searchPosts: async (searchParams = {}) => {
     const queryParams = new URLSearchParams();
     
-    if (searchParams.q) queryParams.append('q', searchParams.q);
+    // Clean and validate search query - now allow single characters
+    if (searchParams.q) {
+      const cleanQuery = searchParams.q.trim();
+      if (cleanQuery.length >= 1) { // Changed from >= 2 to >= 1
+        queryParams.append('q', cleanQuery);
+      } else {
+        // Return empty result for completely empty queries
+        return {
+          ok: true,
+          count: 0,
+          total: 0,
+          page: 1,
+          totalPages: 0,
+          posts: []
+        };
+      }
+    }
+    
     if (searchParams.tags) queryParams.append('tags', searchParams.tags);
     if (searchParams.category) queryParams.append('category', searchParams.category);
     if (searchParams.page) queryParams.append('page', searchParams.page);
     if (searchParams.limit) queryParams.append('limit', searchParams.limit);
     
-    return await apiRequest(`/posts/search?${queryParams}`);
+    console.log('Searching posts with params:', searchParams);
+    console.log('Query string:', queryParams.toString());
+    
+    try {
+      const response = await apiRequest(`/posts/search/query?${queryParams}`);
+      console.log('Search posts response:', response);
+      
+      // Backend now handles all relevance scoring, just return the response
+      return {
+        ok: response.ok || true,
+        count: response.count || 0,
+        total: response.total || 0,
+        page: response.page || 1,
+        totalPages: response.totalPages || 0,
+        posts: response.posts || []
+      };
+    } catch (error) {
+      console.error('Search posts API error:', error);
+      
+      // Return empty results instead of throwing error for better UX
+      return {
+        ok: false,
+        count: 0,
+        total: 0,
+        page: 1,
+        totalPages: 0,
+        posts: [],
+        error: error.message
+      };
+    }
   },
 
   // Update Post (Protected)
@@ -231,5 +277,86 @@ export const postsApi = {
   // Get Post Status (Protected)
   getPostStatus: async (postId) => {
     return await authenticatedRequest(`/posts/${postId}/status`);
-  }
+  },
+
+  // Like/Unlike Post (Protected)
+  likePost: async (postId, userId) => {
+    console.log('Liking post:', { postId, userId });
+    
+    try {
+      return await authenticatedRequest(`/posts/${postId}/like`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId })
+      });
+    } catch (error) {
+      console.error('Like post API error:', error);
+      
+      // Handle schema mismatch error
+      if (error.message.includes('upvotes') && error.message.includes('must be an array')) {
+        console.warn('Detected upvotes schema mismatch. Post may need data migration.');
+        throw new Error('This post has outdated data format. Please contact support to fix this issue.');
+      }
+      
+      throw error;
+    }
+  },
+
+  // Dislike/Remove Dislike Post (Protected)
+  dislikePost: async (postId, userId) => {
+    console.log('Disliking post:', { postId, userId });
+    
+    try {
+      return await authenticatedRequest(`/posts/${postId}/dislike`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId })
+      });
+    } catch (error) {
+      console.error('Dislike post API error:', error);
+      
+      // Handle schema mismatch error
+      if (error.message.includes('downvotes') && error.message.includes('must be an array')) {
+        console.warn('Detected downvotes schema mismatch. Post may need data migration.');
+        throw new Error('This post has outdated data format. Please contact support to fix this issue.');
+      }
+      
+      throw error;
+    }
+  },
+
+  // Get Post Vote Status (Public/Protected)
+  getPostVoteStatus: async (postId, userId = null) => {
+    const queryParams = userId ? `?user_id=${userId}` : '';
+    return await apiRequest(`/posts/${postId}/vote-status${queryParams}`);
+  },
+
+  // Get Post by ID with vote status (Enhanced)
+  getPostByIdWithVotes: async (postId, userId = null) => {
+    try {
+      console.log('Fetching post with votes:', { postId, userId });
+      
+      // Get post details and vote status in parallel
+      const [postResponse, voteResponse] = await Promise.all([
+        postsApi.getPostById(postId),
+        postsApi.getPostVoteStatus(postId, userId)
+      ]);
+      
+      if (postResponse.ok && voteResponse.ok) {
+        // Merge post data with vote information
+        const enhancedPost = {
+          ...postResponse.post,
+          upvotes: voteResponse.upvotes || 0,
+          downvotes: voteResponse.downvotes || 0,
+          userLiked: voteResponse.userLiked || false,
+          userDisliked: voteResponse.userDisliked || false
+        };
+        
+        return { ...postResponse, post: enhancedPost };
+      }
+      
+      return postResponse;
+    } catch (error) {
+      console.error('Error fetching post with votes:', error);
+      throw error;
+    }
+  },
 };
