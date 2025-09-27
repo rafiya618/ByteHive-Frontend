@@ -1,7 +1,14 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import ActionButton from "../../shared/ActionButton";
 
 const CommunityFormCard = () => {
+  const navigate = useNavigate();
+
+  const handleCreateCommunity = () => {
+    navigate("/community/1");
+  };
+
   return (
     <div className="bg-navbar-bg border border-navbar-border rounded-2xl p-6 flex flex-col gap-6 w-full">
       {/* Community Name */}
@@ -48,7 +55,7 @@ const CommunityFormCard = () => {
       {/* Buttons */}
       <div className="flex justify-end gap-3">
         <ActionButton variant="secondary">Save Draft</ActionButton>
-        <ActionButton variant="primary">Create Community</ActionButton>
+        <ActionButton variant="primary" onClick={handleCreateCommunity}>Create Community</ActionButton>
       </div>
     </div>
   );

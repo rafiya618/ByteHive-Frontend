@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CommunityCard = ({
   id = 1,
@@ -10,6 +11,7 @@ const CommunityCard = ({
   isFollowing = false,
 }) => {
   const [following, setFollowing] = useState(isFollowing);
+  const navigate = useNavigate();
 
   const handleFollowToggle = (e) => {
     e.stopPropagation();
@@ -18,7 +20,7 @@ const CommunityCard = ({
 
   const handleViewCommunity = () => {
     // Navigate to community detail page
-    console.log(`Navigate to community ${id}`);
+    navigate(`/community/${id}`);
   };
 
   return (

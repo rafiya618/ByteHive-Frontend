@@ -1,4 +1,3 @@
-// App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import BlogListing from "./pages/BlogListing";
 import CreatePost from "./pages/CreatePost";
@@ -8,6 +7,9 @@ import SavedItems from "./pages/SavedItems";
 import History from "./pages/History";
 import BlogPost from "./pages/BlogPost";
 import Communities from "./pages/Communities";
+import CommunityDetail from "./pages/CommunityDetail";
+import ChatPage from "./pages/ChatPage";
+import VideoRoomPage from "./pages/VideoRoomPage";
 
 function App() {
   return (
@@ -21,6 +23,9 @@ function App() {
         <Route path="/history" element={<History />} />
         <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/communities" element={<Communities />} />
+        <Route path="/community/:id" element={<CommunityDetail />} />
+        <Route path="/chat/:id" element={<ChatPage />} />
+        <Route path="/video-room/:id" element={<VideoRoomPage />} />
       </Routes>
     </Router>
   );
