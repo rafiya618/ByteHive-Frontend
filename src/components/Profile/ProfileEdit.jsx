@@ -5,9 +5,8 @@ import {
   validateBio,
   validateURL,
 } from "../../helpers/validators";
-import toast from "react-hot-toast";
 
-const ProfileEdit = ({ profile, onSave, onCancel }) => {
+const ProfileEdit = ({ profile, onSave, onCancel, errors = {} }) => {
   const [formData, setFormData] = useState({
     name: profile.name || "",
     username: profile.username || "",
@@ -25,9 +24,10 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
     },
   });
 
+  const [localErrors, setLocalErrors] = useState({});
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name.startsWith("socials.")) {
       setFormData({
         ...formData,
@@ -47,31 +47,31 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setLocalErrors({});
 
-    // ✅ Validate Name
     const nameError = validateName(formData.name);
     if (nameError) {
-      toast.error(nameError);
+      setLocalErrors((prev) => ({ ...prev, name: nameError }));
       return;
     }
 
-    // ✅ Validate Bio
     const bioError = validateBio(formData.bio);
     if (bioError) {
-      toast.error(bioError);
+      setLocalErrors((prev) => ({ ...prev, bio: bioError }));
       return;
     }
 
-    // ✅ Validate Social Links
     for (let [platform, link] of Object.entries(formData.socialLinks)) {
       const urlError = validateURL(link);
       if (urlError) {
-        toast.error(`${platform}: ${urlError}`);
+        setLocalErrors((prev) => ({
+          ...prev,
+          [platform]: `${platform}: ${urlError}`,
+        }));
         return;
       }
     }
 
-    // Prepare FormData for backend
     const updatedForm = new FormData();
     updatedForm.append("name", formData.name);
     updatedForm.append("username", formData.username);
@@ -82,107 +82,145 @@ const ProfileEdit = ({ profile, onSave, onCancel }) => {
     Object.entries(formData.socialLinks).forEach(([platform, link]) => {
       updatedForm.append(`socialLinks[${platform}]`, link);
     });
-
+    console.log('updatedForm', updatedForm)
     onSave(updatedForm);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-dark-navy-purple w-[90%] sm:w-full max-w-2xl mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border text-white flex flex-col gap-5"
+      className="bg-dark-indigo w-[90%] sm:w-full max-w-md mx-auto 
+                 p-5 sm:p-6 rounded-xl shadow-lg border border-navbar-border 
+                 text-white flex flex-col max-h-[500px] overflow-hidden"
     >
-      <h2 className="text-xl md:text-2xl font-bold text-center">Edit Profile</h2>
-
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
-        <InputField
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Your Name"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
-        <InputField
-          type="text"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          placeholder="Your username"
-        />
-      </div>
-
-      {/* Bio */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Bio</label>
-        <InputField
-          type="textarea"
-          name="bio"
-          value={formData.bio}
-          onChange={handleChange}
-          placeholder="Tell us about yourself"
-          rows={4}
-        />
-      </div>
-
-      {/* Profile Image Preview */}
-      <div className="flex flex-col items-center">
-        <img
-          src={
-            formData.profileImage
-              ? URL.createObjectURL(formData.profileImage)
-              : profile.profileImage || "/default-profile.png"
-          }
-          alt="Profile Preview"
-          className="w-28 h-28 rounded-full object-cover border-2 border-blue-600 shadow-md mb-3"
-        />
-      </div>
-
-      {/* Profile Image Input */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Profile Image</label>
-        <InputField
-          type="file"
-          id="profileImage"
-          onChange={handleFileChange}
-          accept="image/*"
-        />
-      </div>
-
-      {/* Social Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {Object.keys(formData.socialLinks).map((platform) => (
-          <div key={platform}>
-            <label className="block text-sm font-medium mb-1">
-              {platform} URL
-            </label>
-            <InputField
-              type="text"
-              name={`socials.${platform}`}
-              value={formData.socialLinks[platform]}
-              onChange={handleChange}
-              placeholder={`https://${platform.toLowerCase()}.com/yourhandle`}
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto flex flex-col gap-5 pr-4 custom-scrollbar px-1 pb-3 ">
+        {/* Profile Image Upload */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative group">
+            <img
+              src={
+                formData.profileImage
+                  ? URL.createObjectURL(formData.profileImage)
+                  : profile.profileImage || "/default-profile.png"
+              }
+              alt="Profile Preview"
+              className="w-24 h-24 rounded-full object-cover border-2 border-blue-600 shadow-md"
             />
+            <label
+              htmlFor="profileImage"
+              className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white 
+                         p-1.5 rounded-full cursor-pointer shadow-md transition-colors opacity-90 group-hover:opacity-100"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.232 5.232l3.536 3.536M9 13l6-6 3 3-6 6H9v-3z"
+                />
+              </svg>
+            </label>
           </div>
-        ))}
+          <input
+            type="file"
+            id="profileImage"
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          <p className="text-xs text-gray-400">Click the image to upload a new one</p>
+        </div>
+
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-300">Name</label>
+          <InputField
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Your Name"
+          />
+          {(localErrors.name || errors.name) && (
+            <p className="text-red-500 text-sm">{localErrors.name || errors.name}</p>
+          )}
+        </div>
+
+        {/* Username */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-300">Username</label>
+          <InputField
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            placeholder="Your username"
+          />
+          {errors.username && (
+            <p className="text-red-500 text-sm">{errors.username}</p>
+          )}
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-300">Bio</label>
+          <InputField
+            type="textarea"
+            name="bio"
+            value={formData.bio}
+            onChange={handleChange}
+            placeholder="Tell us about yourself"
+            rows={3}
+          />
+          {(localErrors.bio || errors.bio) && (
+            <p className="text-red-500 text-sm">{localErrors.bio || errors.bio}</p>
+          )}
+        </div>
+
+        {/* Social Links */}
+        <div className="flex flex-col gap-3">
+          {Object.keys(formData.socialLinks).map((platform) => (
+            <div key={platform}>
+              <label className="block text-sm font-medium mb-1 text-gray-300">
+                {platform} URL
+              </label>
+              <InputField
+                type="text"
+                name={`socials.${platform}`}
+                value={formData.socialLinks[platform]}
+                onChange={handleChange}
+                placeholder={"url"}
+                // placeholder={`https://${platform.toLowerCase()}.com`}
+              />
+              {(localErrors[platform] || errors[platform]) && (
+                <p className="text-red-500 text-sm">
+                  {localErrors[platform] || errors[platform]}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex justify-end gap-3 mt-6">
+      {/* Buttons pinned at bottom */}
+      <div className="flex justify-end gap-3 mt-4 border-t border-gray-700 pt-3">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-700 text-white font-medium"
+          className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-700 text-white font-medium text-sm transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+          className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors"
         >
           Save
         </button>

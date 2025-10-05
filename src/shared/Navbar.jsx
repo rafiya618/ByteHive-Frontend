@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import Logo from "../assets/BytehiveLogo.png";
+import { useNavigate } from "react-router-dom";
+import { useProfile } from "../context/profileContext";
+import { useNotifications } from "../context/NotificationContext";
+
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { profile } = useProfile()
+  const { unReadCount } = useNotifications()
+  const navigate = useNavigate()
 
   return (
     <header className="bg-navbar-bg backdrop-blur-sm sticky top-0 z-50 border-b border-navbar-border">
@@ -15,7 +22,7 @@ export default function Navbar() {
                 Bytehive
               </h1>
             </a>
-            
+
           </div>
 
           {/* DESKTOP NAV */}
@@ -49,16 +56,18 @@ export default function Navbar() {
                 </div>
               </a>
 
-              <button className="text-columbia-blue hover:text-white p-3 rounded-full hover:bg-periwinkle-light transition-colors relative flex items-center justify-center">
+              <button onClick={() => navigate("/notification")} className="text-columbia-blue hover:text-white p-3 rounded-full hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer">
                 <span className="material-icons text-3xl">notifications</span>
-                <span className="absolute top-1.5 right-1.5 block h-3 w-3 rounded-full bg-medium-slate-blue"></span>
+                {unReadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 block h-3 w-3 rounded-full bg-medium-slate-blue"></span>
+                )}
               </button>
 
-              <button className="flex items-center justify-center">
+              <button className="flex items-center justify-center" onClick={() => navigate("/profile")}>
                 <img
                   alt="User avatar"
-                  className="w-11 h-11 rounded-full border-2 border-transparent hover:border-periwinkle transition-all"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0SOH_qdug48AdwWxvlB89VAMgWwLvCzU5nSDeh7sGBOxfcwtoGxXGFu3Q2JauQZWpKqk-GCgCttE6cJIsPEkbYBWNgz8qS6HIT-5Sz6LgHkDAzWnkSvAOUOk7CDaVV0qGaLh5TF5SZPN1EfhhvDKzelBH3komHVKuAU_sLPUdP82-LnV5uJEpBfaz0d1ZudZEkDGu7GEHq46ftKnljIDa0wEpEPuusxbFSIsOPoONgMi3EDnu1Bupe8IbBw6vKFxxdMaP6_2s5fii"
+                  className="w-11 h-11 rounded-full border-2 border-transparent hover:border-periwinkle transition-all cursor-pointer"
+                  src={profile?.profileImage}
                 />
               </button>
             </div>

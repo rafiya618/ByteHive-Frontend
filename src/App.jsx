@@ -1,5 +1,4 @@
-// App.jsx
-import { BrowserRouter as Router, Routes, Route, Navigate} from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import BlogListing from "./pages/BlogListing";
 import CreatePost from "./pages/CreatePost";
 import EventsListing from "./pages/EventsListing";
@@ -9,50 +8,67 @@ import Register from "./pages/Auth/Register/Register";
 import Login from "./pages/Auth/Login";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import GoogleAuth from "./pages/Auth/GoogleAuth";
+import PageNotFound from "./pages/PageNotFound";
+import NotificationPage from "./pages/Notification/NotificationPage";
+import PreferencesPage from "./pages/Notification/PreferencesPage";
+import EnableNotifications from "./pages/Notification/EnableNotifications";
 import { Toaster } from "react-hot-toast";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileSetupPage from "./pages/Auth/Register/ProfileSetupPage";
 import TagSelectionPage from "./pages/Auth/Register/TagSelectionPage";
 import { useAuth } from "./context/auth";
-import { NotificationProvider } from "./context/NotificationContext";
-import { ProfileProvider } from "./context/profileContext";
 import CreateCommunity from "./pages/CreateCommunity";
 import Communities from "./pages/Communities";
 import CommunityDetail from "./pages/CommunityDetail";
+import CommentPage from "./pages/CommentPage";
+import ProtectedRoute from "./components/Routes/ProtectedRoute";
+import PublicRoute from "./components/Routes/PublicRoute";
 
 function App() {
   return (
-    <Router>
-      <ProfileProvider>
-        <NotificationProvider>
-          <Toaster />
-          <Routes>
-            <Route path="/register" element={<Register />} />
-            <Route path="/setup-profile" element={<RequireStep minStep={2}><ProfileSetupPage /></RequireStep>} />
-            <Route path="/select-tags" element={<RequireStep minStep={3}><TagSelectionPage /></RequireStep>} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/google-auth" element={<GoogleAuth />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/profile" element={<RequireStep minStep={4}><ProfilePage /></RequireStep>} />
-            <Route path="/" element={<BlogListing />} />
-            <Route path="/create-post" element={<CreatePost />} />
-            <Route path="/events" element={<EventsListing />} />
-            <Route path="/create-event" element={<CreateEvent />} />
-            {/* Blog detail page - accepts postId */}
-            <Route path="/post/:postId" element={<BlogDetailPage />} />
+    <>
+      <Toaster />
+      <Routes>
+        {/* Public routes */}
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/google-auth" element={<PublicRoute><GoogleAuth /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
 
-            {/* Default for now (example postId = 1) */}
-            <Route path="/post" element={<BlogDetailPage postId="1" />} />
-
-            <Route path="/create-community" element={<CreateCommunity />} />
-            <Route path="/communities" element={<Communities />} />
-            <Route path="/community/:id" element={<CommunityDetail />} />
-          </Routes>
-        </NotificationProvider>
-      </ProfileProvider>
-    </Router>
+        {/* Everything else is protected */}
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Routes>
+                {/* <Route path="/google-auth" element={<GoogleAuth />} /> */}
+                <Route path="/setup-profile" element={<RequireStep minStep={2}><ProfileSetupPage /></RequireStep>} />
+                <Route path="/select-tags" element={<RequireStep minStep={3}><TagSelectionPage /></RequireStep>} />
+                <Route path="/profile" element={<RequireStep minStep={4}><ProfilePage /></RequireStep>} />
+                <Route path="/" element={<RequireStep minStep={4}><BlogListing /></RequireStep>} />
+                <Route path="/create-post" element={<CreatePost />} />
+                <Route path="/events" element={<EventsListing />} />
+                <Route path="/create-event" element={<CreateEvent />} />
+                <Route path="/comment" element={<RequireStep minStep={4}><CommentPage /></RequireStep>} />
+                <Route path="/post/:postId" element={<BlogDetailPage />} />
+                <Route path="/post" element={<BlogDetailPage postId="1" />} />
+                <Route path="/create-community" element={<CreateCommunity />} />
+                <Route path="/communities" element={<Communities />} />
+                <Route path="/community/:id" element={<CommunityDetail />} />
+                <Route path="/notification" element={<RequireStep minStep={4}><NotificationPage /></RequireStep>} />
+                <Route path="/preferences" element={<RequireStep minStep={4}><PreferencesPage /></RequireStep>} />
+                <Route path="/enable-notifications" element={<RequireStep minStep={4}><EnableNotifications /></RequireStep>} />
+                <Route path="*" element={<PageNotFound />} />
+              </Routes>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </>
   );
 }
+
+// Same RequireStep as before
 function getRedirectPath(step) {
   if (!step) return "/login";
   if (step === 1) return "/register";
@@ -65,7 +81,7 @@ function RequireStep({ minStep, children }) {
   const { auth, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>; // show spinner/loader until auth is ready
+    return <div>Loading...</div>;
   }
 
   const userStep = auth?.token ? auth?.user?.onboardingStep : 1;
@@ -74,4 +90,5 @@ function RequireStep({ minStep, children }) {
   }
   return children;
 }
+
 export default App;

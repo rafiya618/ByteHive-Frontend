@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 
 const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
+  const [errors, setErrors] = useState({}); // ✅ inline errors state
   const { auth } = useAuth();
   const { profile, fetchProfile, loading } = useProfile();
 
@@ -23,13 +24,24 @@ const ProfilePage = () => {
   const handleSave = async (formData) => {
     try {
       if (!userId) return;
+      setErrors({}); // reset errors
+
       await updateProfile(userId, formData);
       await fetchProfile();
+
       toast.success("Profile updated successfully!");
       setEditing(false);
     } catch (err) {
       console.error("Profile update failed:", err);
-      toast.error("Failed to update profile. Try again.");
+
+      // ✅ Handle inline errors from backend
+      if (err.response?.data?.field) {
+        setErrors({
+          [err.response.data.field]: err.response.data.message,
+        });
+      } else {
+        toast.error("Failed to update profile. Try again.");
+      }
     }
   };
 
@@ -46,12 +58,10 @@ const ProfilePage = () => {
               profile={profile}
               onSave={handleSave}
               onCancel={() => setEditing(false)}
+              errors={errors} // ✅ pass errors to edit form
             />
           ) : (
-            <ProfileView
-              profile={profile}
-              onEdit={() => setEditing(true)}
-            />
+            <ProfileView profile={profile} onEdit={() => setEditing(true)} />
           )
         ) : (
           <p>No profile data found.</p>

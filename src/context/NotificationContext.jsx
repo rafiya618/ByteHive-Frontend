@@ -14,7 +14,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Join personal room + load existing notifications
   useEffect(() => {
-    if (!auth?.user?._id) return;
+    if (!auth?.user?._id || auth?.user?.onboardingStep !== 4) return;
 
     const fetchNotifications = async () => {
       try {
@@ -62,73 +62,7 @@ export const NotificationProvider = ({ children }) => {
 
       console.log("notification", notif);
 
-      // 🔔 Fire push notification (UPDATED)
-      // if (Notification.permission === "granted") {
-      //   const notification = new Notification("New Activity", {
-      //     body: notif.message,
-      //     icon: "/comment-icon.png",
-      //   });
-
-      //   // 👇 Make it clickable
-      //   notification.onclick = () => {
-      //     window.focus();
-
-      //     // 🔀 Route based on notif.entityType
-      //     let targetUrl = "/";
-      //     switch (notif.triggerType) {
-      //       case "post":
-      //         targetUrl = `/posts/${notif.entityId}`;
-      //         break;
-      //       case "comment":
-      //         targetUrl = `/comment?triggerType=comment&triggerId=${notif.triggerId}&entityId=${notif.entityId}`;
-      //         break;
-      //       case "reply":
-      //         targetUrl = `/comment?triggerType=reply&triggerId=${notif.triggerId}&entityId=${notif.entityId}`;
-      //         break;
-      //       case "profile":
-      //         targetUrl = `/profile/${notif.entityId}`;
-      //         break;
-      //       default:
-      //         targetUrl = "/";
-      //     }
-
-      //     window.location.href = targetUrl;
-      //   };
-      // } else if (Notification.permission !== "denied") {
-      //   Notification.requestPermission().then((permission) => {
-      //     if (permission === "granted") {
-      //       const notification = new Notification("New Activity", {
-      //         body: notif.message,
-      //         icon: "/comment-icon.png",
-      //       });
-
-      //       // 👇 Same clickable behavior
-      //       notification.onclick = () => {
-      //         window.focus();
-
-      //         let targetUrl = "/";
-      //         switch (notif.triggerType) {
-      //           case "post":
-      //             targetUrl = `/posts/${notif.entityId}`;
-      //             break;
-      //           case "comment":
-      //             targetUrl = `/comment?triggerType=comment&triggerId=${notif.triggerId}&entityId=${notif.entityId}`;
-      //             break;
-      //           case "reply":
-      //             targetUrl = `/comment?triggerType=reply&triggerId=${notif.triggerId}&entityId=${notif.entityId}`;
-      //             break;
-      //           case "profile":
-      //             targetUrl = `/profile/${notif.entityId}`;
-      //             break;
-      //           default:
-      //             targetUrl = "/";
-      //         }
-
-      //         window.location.href = targetUrl;
-      //       };
-      //     }
-      //   });
-      // }
+      
     });
 
     // Listen for updated (aggregated) notifications

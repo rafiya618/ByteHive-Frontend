@@ -10,7 +10,7 @@ const CommentBlock = forwardRef(
     {
       c,
       auth,
-      triggerId,
+      highlightId,
       editingComment,
       setEditingComment,
       editingText,
@@ -32,18 +32,18 @@ const CommentBlock = forwardRef(
     },
     ref
   ) => (
-    <div className="flex space-x-3">
+    <div className="flex space-x-3" >
       {/* Avatar outside the box */}
       <img
         src={c.user?.profileImage || "/default-avatar.png"}
         alt={c.user?.username || "Unknown User"}
-        className={`${isReply ? "w-8 h-8" : "w-10 h-10"} rounded-full flex-shrink-0`}
+        className={`${isReply ? "w-8 h-8" : "w-10 h-10"} rounded-full flex-shrink-0 border-2 border-dark-indigo`}
       />
 
       {/* Comment Thread Box */}
-      <div className="flex-1 bg-rich-black-light rounded-lg border border-navbar-border">
+      <div className={c.parentId ? "flex-1 min-w-0" : "flex-1 bg-rich-black-light rounded-lg border border-navbar-border"} ref={(el) => c._id === highlightId && (ref.current = el)}>
         {/* Main Comment */}
-        <div className="p-4" ref={(el) => c._id === triggerId && (ref.current = el)}>
+        <div className={c.parentId ? "pb-4" : "p-4"} >
           {/* Editing Mode */}
           {editingComment[c._id] === c._id ? (
             <div className="flex items-start space-x-3">
@@ -59,7 +59,7 @@ const CommentBlock = forwardRef(
               <div className="flex gap-2">
                 <button
                   onClick={() => handleUpdateComment(c._id)}
-                  className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30"
+                  className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30 cursor-pointer"
                 >
                   <span className="material-icons text-base">send</span>
                 </button>
@@ -68,7 +68,7 @@ const CommentBlock = forwardRef(
                     setEditingComment((prev) => ({ ...prev, [c._id]: "" }));
                     setEditingText((prev) => ({ ...prev, [c._id]: "" }));
                   }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition font-lato text-sm"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition font-lato text-sm cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -78,6 +78,7 @@ const CommentBlock = forwardRef(
             <>
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-white font-medium font-lato text-sm">{c.user?.username || "Unknown User"}</span>
+                <span className="text-white font-medium font-lato text-sm">{c._id || "Unknown User"}</span>
                 <span className="text-periwinkle text-xs font-lato">{dayjs(c.createdAt).fromNow()}</span>
               </div>
               <p className="text-white text-sm font-lato leading-relaxed mb-3">{c.text}</p>
@@ -86,7 +87,7 @@ const CommentBlock = forwardRef(
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => handleLike(c._id, auth?.user?._id)}
-                  className={`flex items-center space-x-1 text-xs transition-colors font-lato ${
+                  className={`flex items-center space-x-1 text-xs transition-colors font-lato cursor-pointer ${
                     c.likes?.includes(auth?.user?._id) ? "text-white" : "text-periwinkle hover:text-white"
                   }`}
                 >
@@ -95,7 +96,7 @@ const CommentBlock = forwardRef(
                 </button>
                 <button
                   onClick={() => handleDislike(c._id, auth?.user?._id)}
-                  className={`flex items-center space-x-1 text-xs transition-colors font-lato ${
+                  className={`flex items-center space-x-1 text-xs transition-colors font-lato cursor-pointer ${
                     c.dislikes?.includes(auth?.user?._id) ? "text-white" : "text-periwinkle hover:text-white"
                   }`}
                 >
@@ -107,7 +108,7 @@ const CommentBlock = forwardRef(
                     setReplyingTo((prev) => ({ ...prev, [c._id]: c._id }));
                     setReply((prev) => ({ ...prev, [c._id]: `@${c.user?.username || "Unknown"} ` }));
                   }}
-                  className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato"
+                  className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato cursor-pointer"
                 >
                   <span className="material-icons text-sm">chat_bubble_outline</span>
                   <span>Reply</span>
@@ -119,14 +120,14 @@ const CommentBlock = forwardRef(
                         setEditingText((prev) => ({ ...prev, [c._id]: c.text }));
                         setEditingComment((prev) => ({ ...prev, [c._id]: c._id }));
                       }}
-                      className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato"
+                      className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato cursor-pointer"
                     >
                       <span className="material-icons text-sm">edit</span>
                       <span>Edit</span>
                     </button>
                     <button
-                      onClick={() => handleDelete(c._id)}
-                      className="flex items-center space-x-1 text-xs text-periwinkle hover:text-red-400 transition-colors font-lato"
+                      onClick={() => handleDelete(c._id, c.userId)}
+                      className="flex items-center space-x-1 text-xs text-periwinkle transition-colors font-lato cursor-pointer hover:text-red-400"
                     >
                       <span className="material-icons text-sm">delete</span>
                       <span>Delete</span>
@@ -154,7 +155,7 @@ const CommentBlock = forwardRef(
               <div className="flex gap-2">
                 <button
                   onClick={(e) => handleAddComment(e, c)}
-                  className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30"
+                  className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30 cursor-pointer"
                 >
                   <span className="material-icons text-base">send</span>
                 </button>
@@ -163,7 +164,7 @@ const CommentBlock = forwardRef(
                     setReply((prev) => ({ ...prev, [c._id]: "" }));
                     setReplyingTo((prev) => ({ ...prev, [c._id]: null }));
                   }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition font-lato text-sm"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition font-lato text-sm cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -181,7 +182,7 @@ const CommentBlock = forwardRef(
                   ? setExpandReplies((prev) => ({ ...prev, [c._id]: false }))
                   : handleReplies(c._id)
               }
-              className="text-sm text-periwinkle hover:text-white transition-colors font-lato"
+              className="text-sm text-periwinkle hover:text-white transition-colors font-lato cursor-pointer"
             >
               {expandReplies[c._id] ? "Hide Replies" : `View Replies (${c.replyCount})`}
             </button>
@@ -193,63 +194,33 @@ const CommentBlock = forwardRef(
           <div className="pt-4 pl-16 pr-4 pb-4 relative">
             {/* Vertical line */}
             <div className="absolute left-12 top-0 bottom-4 w-px bg-gray-600"></div>
-            
-            {replies[c._id]?.map((replyComment) => (
-              <div key={replyComment._id} className="flex space-x-3 pb-4">
-                <img
-                  src={replyComment.user?.profileImage || "/default-avatar.png"}
-                  alt={replyComment.user?.username || "Unknown User"}
-                  className="w-8 h-8 rounded-full flex-shrink-0"
-                />
-                
-                <div className="flex-1 min-w-0" ref={replyComment._id === triggerId ? ref : null}>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-white font-medium font-lato text-sm">{replyComment.user?.username || "Unknown User"}</span>
-                    <span className="text-periwinkle text-xs font-lato">{dayjs(replyComment.createdAt).fromNow()}</span>
-                  </div>
-                  <p className="text-white text-sm font-lato leading-relaxed mb-3">{replyComment.text}</p>
-                  
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => handleLike(replyComment._id, auth?.user?._id)}
-                      className={`flex items-center space-x-1 text-xs transition-colors font-lato ${
-                        replyComment.likes?.includes(auth?.user?._id) ? "text-white" : "text-periwinkle hover:text-white"
-                      }`}
-                    >
-                      <span className="material-icons text-sm">thumb_up</span>
-                      <span>{replyComment.likes?.length || 0}</span>
-                    </button>
-                    <button
-                      onClick={() => handleDislike(replyComment._id, auth?.user?._id)}
-                      className={`flex items-center space-x-1 text-xs transition-colors font-lato ${
-                        replyComment.dislikes?.includes(auth?.user?._id) ? "text-white" : "text-periwinkle hover:text-white"
-                      }`}
-                    >
-                      <span className="material-icons text-sm">thumb_down</span>
-                      <span>{replyComment.dislikes?.length || 0}</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setReplyingTo((prev) => ({ ...prev, [c._id]: c._id }));
-                        setReply((prev) => ({ ...prev, [c._id]: `@${replyComment.user?.username || "Unknown"} ` }));
-                      }}
-                      className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato"
-                    >
-                      <span className="material-icons text-sm">chat_bubble_outline</span>
-                      <span>Reply</span>
-                    </button>
-                    {replyComment.userId === auth?.user?._id && (
-                      <button
-                        onClick={() => handleDelete(replyComment._id)}
-                        className="flex items-center space-x-1 text-xs text-periwinkle hover:text-red-400 transition-colors font-lato"
-                      >
-                        <span className="material-icons text-sm">delete</span>
-                        <span>Delete</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
+
+            {replies[c._id].map((replyComment) => (
+              <CommentBlock
+                key={replyComment._id}
+                c={replyComment}
+                ref={replyComment._id === highlightId ? ref : null}
+                highlightId={highlightId}
+                auth={auth}
+                editingComment={editingComment}
+                setEditingComment={setEditingComment}
+                editingText={editingText}
+                setEditingText={setEditingText}
+                handleUpdateComment={handleUpdateComment}
+                replyingTo={replyingTo}
+                setReplyingTo={setReplyingTo}
+                reply={reply}
+                setReply={setReply}
+                handleAddComment={handleAddComment}
+                handleLike={handleLike}
+                handleDislike={handleDislike}
+                replies={replies}
+                expandReplies={expandReplies}
+                setExpandReplies={setExpandReplies}
+                handleReplies={handleReplies}
+                handleDelete={handleDelete}
+                isReply={true} // keeps your reply styling logic
+              />
             ))}
           </div>
         )}

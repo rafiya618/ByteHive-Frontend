@@ -1,12 +1,15 @@
 import React from 'react'
 import Navbar from '../../shared/Navbar';
-
+// import Navbar from './Navbar';
+import { useAuth } from '../../context/auth';
 
 const Layout = ({ children }) => {
+  const {auth} = useAuth()
   return (
     <div className='min-h-screen bg-rich-black  flex flex-col relative text-white'>
-
+      
       <Navbar />
+      
       <div
         className="absolute z-0"
         style={{
@@ -22,8 +25,11 @@ const Layout = ({ children }) => {
           pointerEvents: "none",
         }}
       />
-      <main style={{ marginTop: '80px', padding: '20px' }}>{children}</main>
+      
+      {/* marginTop: '80px', padding: '20px' */}
+      <main style={{}}>{children}</main>
     </div>
+    
   )
 }
 

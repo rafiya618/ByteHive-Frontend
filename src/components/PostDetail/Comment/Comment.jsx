@@ -24,8 +24,7 @@ import InputField from '../../../shared/InputField';
 dayjs.extend(relativeTime);
 
 const Comment = ({ postId }) => {
-  console.log("🔥 postId prop received in Comment component:", postId);
-  // console.log("🟢 Comment component rendered with props:", props);
+  // console.log("🔥 postId prop received in Comment component:", postId);
 
   const [msg, setMsg] = useState("");
   const { auth } = useAuth();
@@ -46,86 +45,97 @@ const Comment = ({ postId }) => {
   const [sortOrder, setSortOrder] = useState("latest"); // latest | oldest
   const location = useLocation();
   const targetRef = useRef(null);
+  const [highlightId, setHighlightId] = useState("")
 
   // ⬅️ added: extract query params
-  let { triggerType, triggerId, entityId, isAggregation } = location.state || {};
-  console.log('triggerId in comment', triggerId);
-  // const searchParams = new URLSearchParams(location.search);
-  // const triggerType = searchParams.get("triggerType");
-  // const entityId = searchParams.get("entityId");
-  // const triggerId = searchParams.get("triggerId");
+  // let { triggerType, triggerId, entityId, isAggregation } = location.state || {};
+  // console.log('triggerId in comment', triggerId);
+  let searchParams = new URLSearchParams(location.search);
+  // let triggerType = searchParams.get("triggerType");
+  // let entityId = searchParams.get("entityId");
+  let triggerId = searchParams.get("triggerId");
+  let isAggregated = searchParams.get("isAggregated") === 'true';
 
   useEffect(() => {
-    if (!entityId) return;
+    if (!triggerId) return;
 
     const loadComment = async () => {
       try {
-        console.log('triggerType', triggerType)
-        if (triggerType == "reply" || triggerType == "like") {
-          const { data } = await getcommentById(entityId);
+        // if (isAggregated) {
+          const { data } = await getcommentById(triggerId);
           console.log("data in target reply", data);
           setComments((prev) => {
             const existingIds = new Set(prev.map((c) => c._id));
             const uniqueData = [data.comment].filter((c) => !existingIds.has(c._id));
             return [...prev, ...uniqueData];
           });
-
-          if (data.replies && entityId !== triggerId) {
-            setReplies((prev) => ({ ...prev, [entityId]: data.replies }));
-            setExpandReplies((prev) => ({ ...prev, [entityId]: true }));
+          if (!data.replies) {
+            console.log('hah')
+          } else {
+            setReplies((prev) => ({ ...prev, [data?.comment?._id]: data.replies }));
+            setExpandReplies((prev) => ({ ...prev, [data?.comment?._id]: true }));
           }
+          console.log('isAggregated', isAggregated)
+           console.log('data.comment._id', data?.comment._id)
+          if(isAggregated == true){
+            console.log('enter in aggragted true', isAggregated)
+            // console.log('data.comment._id', data?.comment._id)
+            setHighlightId(data?.comment?._id)
+          } 
+          else  if(isAggregated == false) {
+            console.log('enter in aggragted false', isAggregated)
+            setHighlightId(triggerId)
+          }
+          
+
+
           // if (isAggregation) {
           //   console.log('triggerId', triggerId)
           //   triggerId = entityId
           //   console.log('triggerId', triggerId)
           // }
 
-        } else {
-          const { data } = await getcommentById(triggerId);
-          console.log("data in target comment", data);
-          setComments((prev) => {
-            const existingIds = new Set(prev.map((c) => c._id));
-            const uniqueData = [data.comment].filter((c) => !existingIds.has(c._id));
-            return [...prev, ...uniqueData];
-          })
-        }
+        // } else {
+        //   const { data } = await getcommentById(triggerId);
+        //   console.log("data in target comment", data);
+        //   setComments((prev) => {
+        //     const existingIds = new Set(prev.map((c) => c._id));
+        //     const uniqueData = [data.comment].filter((c) => !existingIds.has(c._id));
+        //     return [...prev, ...uniqueData];
+        //   })
+        // }
         // If it's a reply, load replies
 
 
-        // 🔑 Wait a tick so React finishes rendering
-        setTimeout(() => {
-          if (targetRef.current) {
-            targetRef.current.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-            targetRef.current.classList.add("highlight");
-            setTimeout(
-              () => targetRef.current.classList.remove("highlight"),
-              1000
-            );
-          }
-        }, 50);
       } catch (err) {
         console.error("Error fetching comment for scroll:", err);
       }
     };
 
     loadComment();
-  }, [entityId, triggerType, triggerId]);
+  }, [triggerId]);
+
+useEffect(() => {
+  if (!highlightId) return;
+
+  console.log('highlightId: ', highlightId)
+  const scrollAndHighlight = () => {
+    if (targetRef.current) {
+      targetRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      targetRef.current.classList.add("highlight");
+      setTimeout(() => {
+        if (targetRef.current) targetRef.current.classList.remove("highlight");
+      }, 3000);
+    }
+  };
+
+  // Delay to wait for render to complete
+  const timeout = setTimeout(scrollAndHighlight, 100);
+
+  return () => clearTimeout(timeout);
+}, [highlightId]);
 
 
-  // // Decode JWT
-  // useEffect(() => {
-  //   if (auth?.user) {
-  //     try {
-
-  //       setDecoded(auth?.user);
-  //     } catch (error) {
-  //       console.error("Failed to decode token:", error);
-  //     }
-  //   }
-  // }, [auth?.user]);
 
   // Socket listeners
   useEffect(() => {
@@ -244,17 +254,17 @@ const Comment = ({ postId }) => {
 
   // Reset comments when post changes
   useEffect(() => {
-  const initFetch = async () => {
-    setComments([]);
-    setCursor(null);
-    setHasMore(true);
+    const initFetch = async () => {
+      setComments([]);
+      setCursor(null);
+      setHasMore(true);
 
-    // Explicitly pass null cursor
-    await fetchTopComments(sortOrder, null);
-  };
+      // Explicitly pass null cursor
+      await fetchTopComments(sortOrder, null);
+    };
 
-  initFetch();
-}, [postId, sortOrder]);
+    initFetch();
+  }, [postId, sortOrder]);
 
 
 
@@ -304,9 +314,8 @@ const Comment = ({ postId }) => {
         : null,
       userId: auth?.user?._id,
       text: comment ? reply[comment._id] : msg,
-      receiverId: comment ? comment.user?._id : postId,
-      // receiverName: comment ? comment.user.username : "post_owner",
-      entityId: comment ? comment._id : postId
+      receiverId: comment ? comment.user?._id : "postId",
+      entityId: comment ? (comment.parentId ? comment.parentId : comment._id) : postId
     };
 
     console.log('commentPayload', commentPayload);
@@ -328,34 +337,34 @@ const Comment = ({ postId }) => {
 
   // Fetch top-level comments
   const fetchTopComments = async (order = sortOrder, startCursor = cursor) => {
-  if (isLoading || !hasMore) return;
-  setIsLoading(true);
+    if (isLoading || !hasMore) return;
+    setIsLoading(true);
 
-  try {
-    const { data } = await getCommentsByPost(postId, startCursor, order);
+    try {
+      const { data } = await getCommentsByPost(postId, startCursor, order);
 
-    const fetchedComments = data.comments;
-    const newCursor = data.nextCursor;
+      const fetchedComments = data.comments;
+      const newCursor = data.nextCursor;
 
-    if (!fetchedComments || fetchedComments.length === 0) {
-      setHasMore(false);
-    } else {
-      setComments(prev => {
-        const existingIds = new Set(prev.map(c => c._id));
-        const uniqueData = fetchedComments.filter(c => !existingIds.has(c._id));
-        return order === "oldest"
-          ? [...uniqueData, ...prev] // prepend for oldest
-          : [...prev, ...uniqueData]; // append for latest
-      });
+      if (!fetchedComments || fetchedComments.length === 0) {
+        setHasMore(false);
+      } else {
+        setComments(prev => {
+          const existingIds = new Set(prev.map(c => c._id));
+          const uniqueData = fetchedComments.filter(c => !existingIds.has(c._id));
+          return order === "oldest"
+            ? [...uniqueData, ...prev] // prepend for oldest
+            : [...prev, ...uniqueData]; // append for latest
+        });
 
-      setCursor(newCursor);
+        setCursor(newCursor);
+      }
+    } catch (err) {
+      console.error("Error fetching comments:", err);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error("Error fetching comments:", err);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
 
@@ -404,10 +413,10 @@ const Comment = ({ postId }) => {
   };
 
   // Delete comment
-  const handleDelete = async (commentId) => {
+  const handleDelete = async (commentId, receiverId) => {
     try {
       console.log('commentId in handle delete', commentId);
-      await deleteComment(commentId);
+      await deleteComment(commentId, receiverId);
     } catch (error) {
       console.log('Error in handle Delete', error);
     }
@@ -431,7 +440,7 @@ const Comment = ({ postId }) => {
             setSortOrder(e.target.value);
             setMsg("");
           }}
-          className="px-3 py-2 rounded-md bg-rich-black-light border border-navbar-border text-white focus:outline-none focus:ring-2 focus:ring-medium-slate-blue"
+          className="px-3 py-2 rounded-md bg-rich-black-light border border-navbar-border text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-medium-slate-blue"
         >
           <option value="latest">Latest Comments</option>
           <option value="oldest">Oldest Comments</option>
@@ -443,7 +452,7 @@ const Comment = ({ postId }) => {
         <img
           src={auth?.user?.profileImage || profile?.profileImage || "https://ui-avatars.com/api/?name=User"}
           alt="Your avatar"
-          className="w-10 h-10 rounded-full flex-shrink-0"
+          className="w-10 h-10 rounded-full flex-shrink-0 border-2 border-dark-indigo"
         />
         <div className="flex-1">
           <form onSubmit={(e) => handleAddComment(e, null)} className="flex items-start space-x-3">
@@ -457,7 +466,7 @@ const Comment = ({ postId }) => {
             <button
               type="submit"
               disabled={!msg.trim()}
-              className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30"
+              className="cursor-pointer bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30"
             >
               <span className="material-icons text-base">send</span>
             </button>
@@ -473,7 +482,7 @@ const Comment = ({ postId }) => {
           <CommentBlock
             key={c._id}
             c={c}
-            triggerId={triggerId}
+            highlightId={highlightId}
             ref={targetRef}
             auth={auth}
             editingComment={editingComment}

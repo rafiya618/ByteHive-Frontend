@@ -10,7 +10,7 @@ export const validateEmail = (email) => {
 
   if (!email) return "Email is required.";
   if (!emailRegex.test(email)) return "Invalid email format.";
-  if (email.length > 254) return "Email cannot exceed 254 characters.";
+  if (email.length > 75) return "Email cannot exceed 75 characters.";
 
   return null;
 };
@@ -52,7 +52,7 @@ export const validateName = (name) => {
 // ✅ Validate Bio (optional, max 200 chars)
 export const validateBio = (bio) => {
   if (!bio) return null;
-  if (bio.length > 200) return "Bio cannot exceed 200 characters.";
+  if (bio.length > 150) return "Bio cannot exceed 150 characters.";
   return null;
 };
 
