@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/auth";
+import { postsApi } from "../../api/postsApi";
+import { getCommentsByPost } from "../../api/commentApi";
 
 const BlogCard = ({
   id,
@@ -21,21 +24,168 @@ const BlogCard = ({
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
+  const navigate = useNavigate();
+  const { auth } = useAuth();
+  const toCount = (v) => {
+    if (Array.isArray(v)) return v.length;
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string' && !isNaN(Number(v))) return Number(v);
+    return 0;
+  };
+
+  const [localUpvotes, setLocalUpvotes] = useState(toCount(upvotes));
+  const [localDownvotes, setLocalDownvotes] = useState(toCount(downvotes));
+  const [localCommentsCount, setLocalCommentsCount] = useState(toCount(comments));
+  // fetch current user's vote status (if logged in)
+  React.useEffect(() => {
+    let mounted = true;
+    // Fetch comments count helper
+    const commentFetch = async () => {
+      try {
+        if (toCount(comments) > 0) return;
+
+        // Try using comment API helper first (axios)
+        try {
+          const res = await getCommentsByPost(id, null, 'latest');
+          console.log('getCommentsByPost response for', id, res);
+          const fetched = res?.data?.comments;
+          if (mounted && Array.isArray(fetched)) {
+            setLocalCommentsCount(fetched.length);
+            console.log('Fetched comments count for post', id, fetched.length);
+            if (fetched.length < 5) return;
+          }
+        } catch (err) {
+          console.warn('getCommentsByPost failed, falling back to direct fetch:', err?.message || err);
+        }
+
+        // Fallback: direct fetch with large limit
+        try {
+          const base = import.meta.env.VITE_COMMENT_SERVICE_URL || 'http://localhost:5002';
+          const url = `${base.replace(/\/$/, '')}/comment/all/${id}?limit=1000&sort=latest`;
+          console.log('Fallback fetching comments count from', url);
+          const direct = await fetch(url);
+          if (!direct.ok) {
+            console.warn('Direct fetch for comments failed:', direct.status);
+            return;
+          }
+          const json = await direct.json();
+          const arr = json?.comments;
+          if (!mounted) return;
+          if (Array.isArray(arr)) setLocalCommentsCount(arr.length);
+        } catch (err) {
+          console.warn('Direct fetch fallback failed:', err?.message || err);
+        }
+      } catch (err) {
+        console.warn('Error fetching comments count:', err?.message || err);
+      }
+    };
+
+    const init = async () => {
+      if (!auth?.token) return;
+      try {
+        const userId = auth.user?._id ?? auth.user?.id ?? auth.user?.user_id ?? auth.user?.sub ?? auth.user?.userId;
+        const status = await postsApi.getPostVoteStatus(id, userId);
+        if (!mounted) return;
+        if (status) {
+          if (status.upvotes !== undefined) setLocalUpvotes(toCount(status.upvotes));
+          if (status.downvotes !== undefined) setLocalDownvotes(toCount(status.downvotes));
+          if (typeof status.userLiked === 'boolean') setIsUpvoted(status.userLiked);
+          if (typeof status.userDisliked === 'boolean') setIsDownvoted(status.userDisliked);
+        }
+      } catch (err) {
+        console.warn('Error fetching vote status:', err?.message || err);
+      }
+    };
+
+    init();
+    // Always attempt to fetch comments count regardless of vote-status outcome
+    commentFetch();
+    return () => { mounted = false; };
+  }, [auth?.token, id, auth.user]);
 
   // Handlers
   const toggleBookmark = (e) => {
     e.preventDefault(); // prevent navigation
+    e.stopPropagation();
     setIsBookmarked(!isBookmarked);
   };
-  const toggleUpvote = (e) => {
+  const toggleUpvote = async (e) => {
     e.preventDefault();
-    setIsUpvoted(!isUpvoted);
-    if (isDownvoted) setIsDownvoted(false); // can't be both
+    e.stopPropagation();
+    if (!auth?.token) {
+      navigate(`/login`, { state: { from: `/post/${id}` } });
+      return;
+    }
+    // optimistic update + precise reconciliation
+    const prev = { localUpvotes, localDownvotes, isUpvoted, isDownvoted };
+    // toggle logic: if currently upvoted -> remove like, else add like (and remove downvote if present)
+    if (isUpvoted) {
+      setLocalUpvotes((v) => Math.max(0, v - 1));
+      setIsUpvoted(false);
+    } else {
+      setLocalUpvotes((v) => v + 1);
+      setIsUpvoted(true);
+      if (isDownvoted) {
+        setLocalDownvotes((v) => Math.max(0, v - 1));
+        setIsDownvoted(false);
+      }
+    }
+
+    try {
+      const userId = auth.user?._id ?? auth.user?.id ?? auth.user?.user_id ?? auth.user?.sub ?? auth.user?.userId;
+      const res = await postsApi.likePost(id, userId);
+      if (res) {
+        if (res.upvotes !== undefined) setLocalUpvotes(toCount(res.upvotes));
+        if (res.downvotes !== undefined) setLocalDownvotes(toCount(res.downvotes));
+        if (typeof res.userLiked === 'boolean') setIsUpvoted(res.userLiked);
+        if (typeof res.userDisliked === 'boolean') setIsDownvoted(res.userDisliked);
+      }
+    } catch (err) {
+      console.error('Failed to toggle upvote:', err);
+      // rollback
+      setLocalUpvotes(prev.localUpvotes);
+      setLocalDownvotes(prev.localDownvotes);
+      setIsUpvoted(prev.isUpvoted);
+      setIsDownvoted(prev.isDownvoted);
+    }
   };
-  const toggleDownvote = (e) => {
+
+  const toggleDownvote = async (e) => {
     e.preventDefault();
-    setIsDownvoted(!isDownvoted);
-    if (isUpvoted) setIsUpvoted(false);
+    e.stopPropagation();
+    if (!auth?.token) {
+      navigate(`/login`, { state: { from: `/post/${id}` } });
+      return;
+    }
+    const prev = { localUpvotes, localDownvotes, isUpvoted, isDownvoted };
+    if (isDownvoted) {
+      setLocalDownvotes((v) => Math.max(0, v - 1));
+      setIsDownvoted(false);
+    } else {
+      setLocalDownvotes((v) => v + 1);
+      setIsDownvoted(true);
+      if (isUpvoted) {
+        setLocalUpvotes((v) => Math.max(0, v - 1));
+        setIsUpvoted(false);
+      }
+    }
+
+    try {
+      const userId = auth.user?._id ?? auth.user?.id ?? auth.user?.user_id ?? auth.user?.sub ?? auth.user?.userId;
+      const res = await postsApi.dislikePost(id, userId);
+      if (res) {
+        if (res.upvotes !== undefined) setLocalUpvotes(toCount(res.upvotes));
+        if (res.downvotes !== undefined) setLocalDownvotes(toCount(res.downvotes));
+        if (typeof res.userLiked === 'boolean') setIsUpvoted(res.userLiked);
+        if (typeof res.userDisliked === 'boolean') setIsDownvoted(res.userDisliked);
+      }
+    } catch (err) {
+      console.error('Failed to toggle downvote:', err);
+      setLocalUpvotes(prev.localUpvotes);
+      setLocalDownvotes(prev.localDownvotes);
+      setIsUpvoted(prev.isUpvoted);
+      setIsDownvoted(prev.isDownvoted);
+    }
   };
 
   return (
@@ -84,28 +234,28 @@ const BlogCard = ({
           </p>
 
           {/* Tags */}
-          <div className="flex items-center space-x-2 mb-4">
-            {tags.map((tag, i) => (
-              <span
-                key={i}
-                className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    {(Array.isArray(tags) ? tags : []).map((tag, i) => (
+                      <span
+                        key={i}
+                        className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
 
           {/* Author and actions */}
           <div className="flex justify-between items-center mt-auto">
             {/* Author */}
             <div className="flex items-center space-x-3">
               <img
-                alt={author.name}
+                alt={author?.name || 'Author'}
                 className="w-8 h-8 rounded-full"
-                src={author.avatar}
+                src={author?.avatar || 'https://via.placeholder.com/40'}
               />
               <span className="font-lato text-periwinkle text-sm">
-                {author.name}
+                {author?.name || 'Unknown'}
               </span>
             </div>
 
@@ -121,7 +271,7 @@ const BlogCard = ({
                 <span className="material-icons text-base mr-1">
                   arrow_upward
                 </span>
-                {upvotes + (isUpvoted ? 1 : 0)}
+                {localUpvotes}
               </button>
 
               {/* Downvote */}
@@ -134,7 +284,7 @@ const BlogCard = ({
                 <span className="material-icons text-base mr-1">
                   arrow_downward
                 </span>
-                {downvotes + (isDownvoted ? 1 : 0)}
+                {localDownvotes}
               </button>
 
               {/* Comments */}
@@ -142,7 +292,7 @@ const BlogCard = ({
                 <span className="material-icons text-base mr-1">
                   chat_bubble_outline
                 </span>
-                {comments}
+                {localCommentsCount}
               </button>
 
               {/* Views */}

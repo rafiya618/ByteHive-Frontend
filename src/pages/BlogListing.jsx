@@ -18,6 +18,7 @@ const DEFAULT_IMAGE =
 const BlogListing = () => {
   const [selectedFilter, setSelectedFilter] = useState(FILTERS[0]);
   const [blogs, setBlogs] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -98,7 +99,11 @@ const BlogListing = () => {
 
           {/* Row 2: Search + Post */}
           <div className="flex justify-center items-center gap-2 w-full md:flex-1 md:justify-center md:px-12">
-            <SearchBar className="flex-1 max-w-xs sm:max-w-md" />
+            <SearchBar
+              className="flex-1 max-w-xs sm:max-w-md"
+              placeholder="Search posts"
+              onSearch={(q) => setSearchQuery(q)}
+            />
             <NewPostButton />
           </div>
         </div>
@@ -125,7 +130,20 @@ const BlogListing = () => {
               ) : blogs.length === 0 ? (
                 <div className="text-white text-center py-8">No blogs found.</div>
               ) : (
-                blogs.map((blog) => <BlogCard key={blog.id} {...blog} />)
+                // filter blogs by searchQuery
+                (blogs
+                  .filter((b) => {
+                    if (!searchQuery || !searchQuery.trim()) return true;
+                    const q = searchQuery.trim().toLowerCase();
+                    return (
+                      (b.title || "").toLowerCase().includes(q) ||
+                      (b.description || "").toLowerCase().includes(q) ||
+                      (b.community || "").toLowerCase().includes(q) ||
+                      (b.tags || []).some((t) => t.toLowerCase().includes(q))
+                    );
+                  })
+                  .map((blog) => <BlogCard key={blog.id} {...blog} />)
+                )
               )}
             </div>
           </div>

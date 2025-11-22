@@ -14,7 +14,7 @@ const PostFormCard = () => {
   const [thumbnail, setThumbnail] = useState(null);
   const [mediaInputs, setMediaInputs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [postType, setPostType] = useState("Blog");
+  const [postType, setPostType] = useState("blog");
   const [error, setError] = useState("");
 
   const quillRef = useRef(null);

@@ -1,4 +1,27 @@
-import { jwtDecode } from 'jwt-decode';
+// Robust import for jwt-decode to support different bundler/interop behaviors
+import * as jwtDecodeModule from 'jwt-decode';
+
+const _decodeJwt = (token) => {
+  if (!token) return null;
+  // Try default export (CJS/ESM interop)
+  if (jwtDecodeModule && typeof jwtDecodeModule.default === 'function') {
+    return jwtDecodeModule.default(token);
+  }
+  // Try named export jwtDecode
+  if (jwtDecodeModule && typeof jwtDecodeModule.jwtDecode === 'function') {
+    return jwtDecodeModule.jwtDecode(token);
+  }
+  // If module itself is a function
+  if (typeof jwtDecodeModule === 'function') {
+    return jwtDecodeModule(token);
+  }
+  // Last resort: try to access as a value
+  if (jwtDecodeModule && jwtDecodeModule['default']) {
+    const fn = jwtDecodeModule['default'];
+    if (typeof fn === 'function') return fn(token);
+  }
+  throw new Error('jwt-decode: unable to find decode function on module');
+};
 
 const API_BASE_URL = 'http://localhost:5001/api';
 
@@ -47,7 +70,7 @@ const getUserIdFromAuth = () => {
     }
     
     // Decode JWT token to extract user ID
-    const decoded = jwtDecode(parsed.token);
+    const decoded = _decodeJwt(parsed.token);
     console.log('Decoded JWT payload:', decoded);
     console.log('Available fields in JWT:', Object.keys(decoded));
     
@@ -119,6 +142,28 @@ export const communityApi = {
       return await response.json();
     } catch (error) {
       console.error('Error getting community details:', error);
+      throw error;
+    }
+  },
+
+  // Get Community Posts (helper) - returns an object with community.posts for compatibility
+  getCommunityPosts: async (communityId) => {
+    try {
+      // Reuse getCommunityDetails to retrieve posts array
+      const details = await (async () => {
+        const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, { method: 'GET' });
+        if (!response.ok) {
+          const txt = await response.text().catch(() => '');
+          throw new Error(`HTTP error! status: ${response.status} - ${txt}`);
+        }
+        return await response.json();
+      })();
+
+      // Ensure shape: { community: { posts: [...] } }
+      const posts = details?.community?.posts || [];
+      return { community: { posts } };
+    } catch (error) {
+      console.error('Error getting community posts:', error);
       throw error;
     }
   },
@@ -269,7 +314,15 @@ export const communityApi = {
       if (imageFile) {
         formData.append('image', imageFile);
       }
-      
+
+      // Attach current user id so backend can authorize the update
+      try {
+        const currentUserId = getUserIdFromAuth();
+        formData.append('userId', currentUserId);
+      } catch (e) {
+        console.warn('Could not attach userId to update request:', e.message);
+      }
+
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
         method: 'PUT',
         headers: {
@@ -293,12 +346,15 @@ export const communityApi = {
   // Follow Community (Protected)
   followCommunity: async (communityId) => {
     try {
+      // include userId in the request body as the backend requires it
+      const userId = getUserIdFromAuth();
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/follow`, {
         method: 'POST',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ userId })
       });
       
       if (!response.ok) {
@@ -316,12 +372,15 @@ export const communityApi = {
   // Unfollow Community (Protected)
   unfollowCommunity: async (communityId) => {
     try {
+      // include userId in the request body as the backend requires it
+      const userId = getUserIdFromAuth();
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}/unfollow`, {
         method: 'DELETE',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ userId })
       });
       
       if (!response.ok) {
@@ -341,24 +400,26 @@ export const communityApi = {
     try {
       console.log('getUserCommunities called with searchQuery:', searchQuery, 'forceRefresh:', forceRefresh);
       
-      // Get auth data to extract user info for debugging using the helper function
+      // Get auth data to extract user id for the route
       let currentUserId = null;
       try {
         currentUserId = getUserIdFromAuth();
         console.log('Current user ID from token:', currentUserId);
       } catch (e) {
-        console.warn('Could not parse auth data for user ID:', e);
+        console.error('Could not parse auth data for user ID:', e);
+        throw new Error('User authentication required to fetch your communities');
       }
-      
+
       let queryParams = searchQuery.trim() ? `?search=${encodeURIComponent(searchQuery.trim())}` : '';
-      
+
       // Add cache-busting parameter if force refresh is requested
       if (forceRefresh) {
         const separator = queryParams ? '&' : '?';
         queryParams += `${separator}_t=${Date.now()}`;
       }
-      
-      const url = `${API_BASE_URL}/communities/user/my-communities${queryParams}`;
+
+      // Build URL with the actual userId as required by the backend route '/user/:userId'
+      const url = `${API_BASE_URL}/communities/user/${encodeURIComponent(currentUserId)}${queryParams}`;
       console.log('Making request to:', url);
       
       const headers = getAuthHeaders();
@@ -399,12 +460,22 @@ export const communityApi = {
   // Delete Community (Protected)
   deleteCommunity: async (communityId) => {
     try {
+      // backend expects userId in the request body for authorization
+      let body = null;
+      try {
+        const userId = getUserIdFromAuth();
+        body = JSON.stringify({ userId });
+      } catch (e) {
+        console.warn('No userId available for delete request:', e.message);
+      }
+
       const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
         method: 'DELETE',
         headers: {
           ...getAuthHeaders(),
           'Content-Type': 'application/json'
         },
+        body
       });
       
       if (!response.ok) {

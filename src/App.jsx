@@ -23,6 +23,14 @@ import CommunityDetail from "./pages/CommunityDetail";
 import CommentPage from "./pages/CommentPage";
 import ProtectedRoute from "./components/Routes/ProtectedRoute";
 import PublicRoute from "./components/Routes/PublicRoute";
+import ChatPage from "./pages/ChatPage";
+import { useParams } from "react-router-dom";
+import HomePage from "./pages/VideoCall/HomePage";
+import Room from "./pages/VideoCall/Room";
+function RoomWrapper() {
+  const { roomId } = useParams();
+  return <Room roomId={roomId} />;
+}
 
 function App() {
   return (
@@ -55,6 +63,11 @@ function App() {
                 <Route path="/create-community" element={<CreateCommunity />} />
                 <Route path="/communities" element={<Communities />} />
                 <Route path="/community/:id" element={<CommunityDetail />} />
+                            <Route path="/chat/:communityId" element={<ChatPage />} />
+            <Route path="/room1/:roomId" element={<ChatPage />} />
+
+            <Route path="/video-home" element={<HomePage />} />
+            <Route path="/room/:roomId" element={<RoomWrapper />} />
                 <Route path="/notification" element={<RequireStep minStep={4}><NotificationPage /></RequireStep>} />
                 <Route path="/preferences" element={<RequireStep minStep={4}><PreferencesPage /></RequireStep>} />
                 <Route path="/enable-notifications" element={<RequireStep minStep={4}><EnableNotifications /></RequireStep>} />

@@ -266,19 +266,25 @@ const Communities = () => {
       return result;
       
     } else {
-      // Show discover communities (exclude user's own communities)
+      // Show discover communities (exclude user's own communities and ones user already follows)
       return discoverCommunities
         .filter(community => {
           // Exclude communities owned by the user
-          const isOwnedByUser = community.user_id === auth.user?._id || 
-                               community.owner_id === auth.user?._id || 
+          const isOwnedByUser = community.user_id === auth.user?._id ||
+                               community.owner_id === auth.user?._id ||
                                community.created_by === auth.user?._id;
-          return !isOwnedByUser;
+
+          // Exclude communities the user already follows
+          const isFollowedByUser = (userCommunities.followed || []).some(fc => fc._id === community._id) ||
+                                   (community.members && community.members.includes(auth.user?._id));
+
+          return !isOwnedByUser && !isFollowedByUser;
         })
         .map(community => {
-          // Check if user is already following this community
-          const isFollowing = userCommunities.followed.some(fc => fc._id === community._id);
-          
+          // Check if user is already following this community (should be false because we filtered them out,
+          // but keep the check for safety if userCommunities is out-of-date)
+          const isFollowing = (userCommunities.followed || []).some(fc => fc._id === community._id);
+
           return {
             ...community,
             isFollowing,

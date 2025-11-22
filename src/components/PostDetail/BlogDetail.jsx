@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/auth";
 import axios from "axios";
+import { postsApi } from "../../api/postsApi";
 import TextSelectionPopup from "./TextSelectionPopup";
 import Comment from "./Comment/Comment";
 
@@ -22,23 +23,49 @@ export default function BlogDetail() {
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
   const contentRef = useRef(null);
+  // Helper to normalize upvote/downvote values (arrays or numbers) to a numeric count
+  const toCount = (v) => {
+    if (Array.isArray(v)) return v.length;
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string' && !isNaN(Number(v))) return Number(v);
+    return 0;
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:5000/api/posts/${postId}`);
-        const data = res.data.post;
+        // If user is logged in, fetch post with vote status for current user
+        let data;
+        const userId = auth?.token ? (auth.user?._id ?? auth.user?.id ?? auth.user?.user_id ?? auth.user?.sub ?? auth.user?.userId) : null;
+        if (userId) {
+          try {
+            const resp = await postsApi.getPostByIdWithVotes(postId, userId);
+            data = resp.post || resp;
+          } catch {
+            // fallback to basic fetch
+            const res = await axios.get(`http://localhost:5000/api/posts/${postId}`);
+            data = res.data.post;
+          }
+        } else {
+          const res = await axios.get(`http://localhost:5000/api/posts/${postId}`);
+          data = res.data.post;
+        }
+
         setPost(data);
-        setUpvotes(data.upvotes || 0);
-        setDownvotes(data.downvotes || 0);
+        // normalize upvotes/downvotes which may be arrays or numbers
+        setUpvotes(toCount(data.upvotes));
+        setDownvotes(toCount(data.downvotes));
+        // set user vote flags if provided
+        if (data.userLiked !== undefined) setIsUpvoted(Boolean(data.userLiked));
+        if (data.userDisliked !== undefined) setIsDownvoted(Boolean(data.userDisliked));
       } catch (error) {
         setErr(error?.response?.data?.error || "Failed to load post");
       }
       setLoading(false);
     };
     if (postId) fetchPost();
-  }, [postId]);
+  }, [postId, auth?.token, auth.user]);
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
@@ -57,41 +84,84 @@ export default function BlogDetail() {
     }
   };
 
-  const toggleUpvote = () => {
+  const toggleUpvote = async () => {
     if (!auth?.token) {
       navigate('/login', { state: { from: `/post/${postId}` } });
       return;
     }
-    
+
+    // optimistic update
+    const previous = { upvotes, downvotes, isUpvoted, isDownvoted };
     if (isUpvoted) {
-      setUpvotes(upvotes - 1);
+      setUpvotes((v) => v - 1);
       setIsUpvoted(false);
     } else {
-      setUpvotes(upvotes + 1);
+      setUpvotes((v) => v + 1);
       setIsUpvoted(true);
       if (isDownvoted) {
-        setDownvotes(downvotes - 1);
+        setDownvotes((v) => v - 1);
         setIsDownvoted(false);
       }
     }
+
+    try {
+      const userId = auth.user?._id ?? auth.user?.id ?? auth.user?.user_id ?? auth.user?.sub ?? auth.user?.userId;
+      const res = await postsApi.likePost(postId, userId);
+
+      // If API returns authoritative counts (array or number), normalize and use them
+      if (res && res.upvotes !== undefined) setUpvotes(toCount(res.upvotes));
+      if (res && res.downvotes !== undefined) setDownvotes(toCount(res.downvotes));
+      if (res && typeof res.userLiked === 'boolean') setIsUpvoted(res.userLiked);
+      if (res && typeof res.userDisliked === 'boolean') setIsDownvoted(res.userDisliked);
+    } catch (error) {
+      console.error('Like API failed:', error);
+      // rollback optimistic update
+      setUpvotes(previous.upvotes);
+      setDownvotes(previous.downvotes);
+      setIsUpvoted(previous.isUpvoted);
+      setIsDownvoted(previous.isDownvoted);
+    }
   };
 
-  const toggleDownvote = () => {
+  const toggleDownvote = async () => {
     if (!auth?.token) {
       navigate('/login', { state: { from: `/post/${postId}` } });
       return;
     }
-    
+
+    const previous = { upvotes, downvotes, isUpvoted, isDownvoted };
     if (isDownvoted) {
-      setDownvotes(downvotes - 1);
+      setDownvotes((v) => v - 1);
       setIsDownvoted(false);
     } else {
-      setDownvotes(downvotes + 1);
+      setDownvotes((v) => v + 1);
       setIsDownvoted(true);
       if (isUpvoted) {
-        setUpvotes(upvotes - 1);
+        setUpvotes((v) => v - 1);
         setIsUpvoted(false);
       }
+    }
+
+    try {
+      const userId = auth.user?._id ?? auth.user?.id ?? auth.user?.user_id ?? auth.user?.sub ?? auth.user?.userId;
+      const res = await postsApi.dislikePost(postId, userId);
+
+      if (res && res.upvotes !== undefined) {
+        const c = toCount(res.upvotes);
+        if (c !== null) setUpvotes(c);
+      }
+      if (res && res.downvotes !== undefined) {
+        const c = toCount(res.downvotes);
+        if (c !== null) setDownvotes(c);
+      }
+      if (res && typeof res.userLiked === 'boolean') setIsUpvoted(res.userLiked);
+      if (res && typeof res.userDisliked === 'boolean') setIsDownvoted(res.userDisliked);
+    } catch (error) {
+      console.error('Dislike API failed:', error);
+      setUpvotes(previous.upvotes);
+      setDownvotes(previous.downvotes);
+      setIsUpvoted(previous.isUpvoted);
+      setIsDownvoted(previous.isDownvoted);
     }
   };
 
