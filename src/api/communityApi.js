@@ -457,6 +457,35 @@ export const communityApi = {
     }
   },
 
+  // Link a post to a community / increment post count (Protected)
+  addPostToCommunity: async (communityId, postId) => {
+    try {
+      if (!communityId || !postId) {
+        throw new Error('Community ID and Post ID are required');
+      }
+
+      const url = `${API_BASE_URL}/communities/${encodeURIComponent(communityId)}/posts/${encodeURIComponent(postId)}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ postId })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error linking post to community:', error);
+      throw error;
+    }
+  },
+
   // Delete Community (Protected)
   deleteCommunity: async (communityId) => {
     try {

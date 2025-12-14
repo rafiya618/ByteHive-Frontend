@@ -83,112 +83,61 @@ const CommunityDetail = () => {
   };
 
   const fetchCommunityPosts = async () => {
-    if (!id) return;
+    if (!id || !community) return;
     
     setPostsLoading(true);
     try {
-      console.log('=== Starting fetchCommunityPosts ===');
-      console.log('Community ID:', id);
-      console.log('Current community data:', community);
+      console.log('Fetching posts for community:', community.community_name);
       
-      // Step 1: Try to get the community's post IDs using the posts endpoint
-      let postIds = [];
-      
-      try {
-        console.log('Step 1: Attempting to get posts via getCommunityPosts API...');
-        const communityPostsResponse = await communityApi.getCommunityPosts(id);
-        console.log('getCommunityPosts response:', communityPostsResponse);
-        postIds = communityPostsResponse.community?.posts || [];
-        console.log('Post IDs from API:', postIds);
-      } catch (apiError) {
-        console.warn('getCommunityPosts API failed, trying fallback:', apiError);
-      }
-      
-      // Step 1.5: Fallback - if no posts from API, try using community data we already have
-      if (postIds.length === 0 && community?.posts) {
-        console.log('Fallback: Using posts from existing community data:', community.posts);
-        postIds = community.posts;
-      }
-      
-      // Step 1.75: Last resort fallback - refresh community details and get posts
-      if (postIds.length === 0) {
-        try {
-          console.log('Last resort: Fetching fresh community details...');
-          const freshCommunityResponse = await communityApi.getCommunityDetails(id);
-          console.log('Fresh community response:', freshCommunityResponse);
-          
-          if (freshCommunityResponse.community?.posts) {
-            postIds = freshCommunityResponse.community.posts;
-            console.log('Post IDs from fresh community details:', postIds);
-            
-            // Update the community state with fresh data
-            setCommunity(freshCommunityResponse.community);
-          }
-        } catch (fallbackError) {
-          console.error('Fresh community details fetch failed:', fallbackError);
-        }
-      }
-      
-      console.log('Final post IDs to fetch:', postIds);
-      
-      if (postIds.length === 0) {
-        console.log('No post IDs found, setting empty posts array');
-        setPosts([]);
-        return;
-      }
-
-      // Step 2: Fetch full post details for each post ID
-      console.log('Step 2: Fetching full post details...');
-      const postPromises = postIds.map(async (postId, index) => {
-        try {
-          console.log(`Fetching post ${index + 1}/${postIds.length}: ${postId}`);
-          const response = await postsApi.getPostById(postId);
-          console.log(`Post ${postId} response:`, response);
-          return response.ok ? response.post : null;
-        } catch (error) {
-          console.error(`Error fetching post ${postId}:`, error);
-          return null;
-        }
+      // Fetch posts filtered by community name
+      const response = await postsApi.getPosts({
+        limit: 100
       });
-
-      const postResponses = await Promise.all(postPromises);
-      const validPosts = postResponses.filter(post => post !== null);
       
-      console.log('Valid posts fetched:', validPosts.length);
-      console.log('Post details:', validPosts);
+      console.log('Posts API response:', response);
+      
+      // Filter posts by matching community name
+      const communityPosts = (response.posts || []).filter(
+        post => post.community === community.community_name
+      );
+      
+      console.log(`Found ${communityPosts.length} posts for community ${community.community_name}`);
+      
+      // Update community post count
+      const postCount = communityPosts.length;
+      if (community.no_of_posts !== postCount) {
+        setCommunity(prev => ({
+          ...prev,
+          no_of_posts: postCount
+        }));
+      }
 
-      // Step 3: Transform posts to match BlogCard expected format
-      const transformedPosts = validPosts.map((post) => {
-        const transformed = {
-          id: post._id,
-          image: post.thumbnail || DEFAULT_IMAGE,
-          community: post.community || community?.community_name || "",
-          date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "",
-          readTime: post.read_time || "6 min",
-          title: post.post_title || "",
-          description: post.small_description || "",
-          tags: Array.isArray(post.tags) ? post.tags : [],
-          author: {
-            name: "Loading...",
-            avatar: "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff",
-          },
-          upvotes: post.upvotes || 0,
-          downvotes: post.downvotes || 0,
-          comments: post.comments || 0,
-          views: post.views || 0,
-          bookmarked: false,
-          user_id: post.user_id // Pass user_id to BlogCard for profile fetching
-        };
-        console.log('Transformed post with user_id:', transformed);
-        return transformed;
-      });
+      // Transform posts to match BlogCard expected format
+      const transformedPosts = communityPosts.map((post) => ({
+        id: post._id,
+        image: post.thumbnail || DEFAULT_IMAGE,
+        community: post.community || community?.community_name || "",
+        date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "",
+        readTime: post.read_time || "6 min",
+        title: post.post_title || "",
+        description: post.small_description || "",
+        tags: Array.isArray(post.tags) ? post.tags : [],
+        author: {
+          name: "Loading...",
+          avatar: "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff",
+        },
+        upvotes: post.upvotes || 0,
+        downvotes: post.downvotes || 0,
+        comments: post.comments || 0,
+        views: post.views || 0,
+        bookmarked: false,
+        user_id: post.user_id
+      }));
 
-      console.log('Final transformed posts with user_id:', transformedPosts);
       setPosts(transformedPosts);
-      console.log('=== fetchCommunityPosts completed ===');
       
     } catch (err) {
-      console.error('Error in fetchCommunityPosts:', err);
+      console.error('Error fetching community posts:', err);
       setPosts([]);
     } finally {
       setPostsLoading(false);
