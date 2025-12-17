@@ -245,6 +245,10 @@ const BlogCard = ({
           const { logActivity } = await import('../../api/retentionApi');
           await logActivity('upvote', id);
           console.log('✅ [BLOG-CARD] Upvote activity logged successfully to userActivity');
+          try {
+            const { reTrackEvent } = await import('../../api/reApi');
+            await reTrackEvent({ userId: String(normalizedUserId), action: 'upvote', entityType: 'post', entityId: id });
+          } catch {}
         } catch (error) {
           console.error('❌ [BLOG-CARD] Failed to log upvote activity:', error);
           console.error('❌ [BLOG-CARD] Error details:', error.message, error.response?.data);
@@ -418,6 +422,14 @@ const BlogCard = ({
 
       <Link
         to={`/post/${id}`}
+        onClick={async () => {
+          try {
+            const userId = auth?.user?._id ?? auth?.user?.id ?? auth?.user?.user_id ?? auth?.user?.sub ?? auth?.user?.userId;
+            if (!userId) return;
+            const { reTrackEvent } = await import('../../api/reApi');
+            await reTrackEvent({ userId: String(userId), action: 'read', entityType: 'post', entityId: id, metadata: { source: 'listing' } });
+          } catch {}
+        }}
         className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 transition"
         style={{ border: "1px solid var(--navbar-border)" }}
       >

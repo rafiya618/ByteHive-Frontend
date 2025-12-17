@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth';
 import TextSelectionPopup from './TextSelectionPopup';
@@ -13,6 +13,7 @@ import { useVoting } from '../../hooks/useVoting';
 import { useBookmark } from '../../hooks/useBookmark';
 import { useSimplification } from '../../hooks/useSimplification';
 import Loader from '../shared/Loader';
+import { reTrackEvent } from '../../api/reApi';
 
 export default function BlogDetail() {
   const { postId } = useParams();
@@ -22,6 +23,53 @@ export default function BlogDetail() {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
   const contentRef = useRef(null);
+  const pageLoadTimeRef = useRef(Date.now());
+
+  // Track read event with time spent
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      const timeSpentSec = Math.floor((Date.now() - pageLoadTimeRef.current) / 1000);
+      if (auth?.user && postId && timeSpentSec > 0) {
+        try {
+          const userId = auth.user._id || auth.user.id || auth.user.user_id;
+          await reTrackEvent({
+            userId: String(userId),
+            action: 'read',
+            entityType: 'post',
+            entityId: postId,
+            metadata: { timeSpentSec, source: 'detail' }
+          });
+        } catch (err) {
+          console.error('Failed to track read event:', err);
+        }
+      }
+    };
+
+    // Track read when component mounts
+    if (auth?.user && postId) {
+      try {
+        const userId = auth.user._id || auth.user.id || auth.user.user_id;
+        reTrackEvent({
+          userId: String(userId),
+          action: 'read',
+          entityType: 'post',
+          entityId: postId,
+          metadata: { source: 'detail' }
+        }).catch(err => console.error('Failed to track read:', err));
+      } catch (err) {
+        console.error('Failed to track read:', err);
+      }
+    }
+
+    // Send tracking data before page unload
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also track on component unmount
+      handleBeforeUnload();
+    };
+  }, [postId, auth?.user]);
+
 
   // Custom hooks for data fetching and state management
   const {
