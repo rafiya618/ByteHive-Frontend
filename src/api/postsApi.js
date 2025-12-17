@@ -389,11 +389,14 @@ export const postsApi = {
     }
   },
 
-  // Increment Post View (Public)
-  incrementView: async (postId) => {
+  // Increment Post View (Public) - Session-based tracking for logged-in users
+  incrementView: async (postId, userId = null) => {
     try {
+      const requestBody = userId ? { user_id: String(userId) } : {};
+
       return await apiRequest(`/posts/${postId}/view`, {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify(requestBody)
       });
     } catch (error) {
       console.error('Error incrementing view:', error);

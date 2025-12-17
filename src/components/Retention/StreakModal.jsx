@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getUserStreak, getUserStats, getLeaderboard } from '../../api/retentionApi';
-import LoadingState from '../../shared/LoadingState';
 import toast from 'react-hot-toast';
 
 export default function StreakModal({ onClose }) {
   const [streak, setStreak] = useState(null);
   const [stats, setStats] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview'); // overview, stats, leaderboard
 
   useEffect(() => {
@@ -16,7 +14,6 @@ export default function StreakModal({ onClose }) {
 
   const fetchStreakData = async () => {
     try {
-      setLoading(true);
       const [streakData, statsData, leaderboardData] = await Promise.all([
         getUserStreak(),
         getUserStats(),
@@ -29,14 +26,8 @@ export default function StreakModal({ onClose }) {
     } catch (error) {
       console.error('Error fetching streak data:', error);
       toast.error('Failed to load streak data');
-    } finally {
-      setLoading(false);
     }
   };
-
-  if (loading) {
-    return <LoadingState message="Loading your streak..." />;
-  }
 
   const getLevelColor = (level) => {
     const colors = {
@@ -61,8 +52,24 @@ export default function StreakModal({ onClose }) {
   };
 
   const getBadgeIcon = (badgeName) => {
-    // Use the icon from badge object, fallback to badge emoji
-    return '🎖️';
+    const badges = {
+      'First Step': 'flag',
+      'Weekly Warrior': 'local_fire_department',
+      'Monthly Milestone': 'emoji_events',
+      'Read Master': 'menu_book',
+      'Post Prodigy': 'create',
+      'Comment King': 'chat',
+      'Like Legend': 'favorite',
+      'Consistency Champion': 'local_fire_department',
+      'Community Champion': 'stars',
+      'Unstoppable': 'flash',
+      'Novice Explorer': 'explore',
+      'Apprentice Adventurer': 'hiking',
+      'Expert Navigator': 'navigation',
+      'Master Voyager': 'flight_takeoff',
+      'Legendary Pioneer': 'rocket'
+    };
+    return badges[badgeName] || 'military_tech';
   };
 
   return (
@@ -71,7 +78,7 @@ export default function StreakModal({ onClose }) {
         {/* Header */}
         <div className="sticky top-0 bg-rich-black-light border-b border-navbar-border p-6 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <span className="text-5xl">🔥</span>
+            <span className="material-icons text-5xl">local_fire_department</span>
             <h2 className="text-3xl font-bold text-white">Your Streak</h2>
           </div>
           <button
@@ -126,7 +133,7 @@ export default function StreakModal({ onClose }) {
                 {/* Current Streak */}
                 <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-lg p-6 text-white">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-4xl">🔥</span>
+                    <span className="material-icons text-4xl">local_fire_department</span>
                     <span className="text-sm font-semibold bg-black bg-opacity-30 px-3 py-1 rounded-full">
                       Active
                     </span>
@@ -139,7 +146,7 @@ export default function StreakModal({ onClose }) {
                 {/* Longest Streak */}
                 <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-6 text-white">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-4xl">🏆</span>
+                    <span className="material-icons text-4xl">emoji_events</span>
                     <span className="text-sm font-semibold bg-black bg-opacity-30 px-3 py-1 rounded-full">
                       Record
                     </span>
@@ -183,13 +190,13 @@ export default function StreakModal({ onClose }) {
               {streak?.badge_details && streak.badge_details.length > 0 && (
                 <div>
                   <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-                    <span>🎖️</span>
+                    <span className="material-icons">military_tech</span>
                     <span>Earned Badges</span>
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {streak.badge_details.map((badge, index) => (
                       <div key={index} className="bg-periwinkle-light rounded-lg p-4 text-center hover:bg-periwinkle-light hover:shadow-lg transition-all">
-                        <p className="text-3xl mb-2">{badge.badge_icon}</p>
+                        <span className="material-icons text-3xl mb-2">{getBadgeIcon(badge.badge_name)}</span>
                         <p className="text-sm font-semibold text-white mb-1">{badge.badge_name}</p>
                         <p className="text-xs text-columbia-blue">{badge.description}</p>
                       </div>
@@ -200,7 +207,7 @@ export default function StreakModal({ onClose }) {
 
               {(!streak?.badge_details || streak.badge_details.length === 0) && (
                 <div className="bg-periwinkle-light rounded-lg p-6 text-center">
-                  <p className="text-columbia-blue">Keep building your streak to earn badges! 🎖️</p>
+                  <p className="text-columbia-blue">Keep building your streak to earn badges!</p>
                 </div>
               )}
             </>
@@ -212,28 +219,28 @@ export default function StreakModal({ onClose }) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Posts */}
                 <div className="bg-periwinkle-light rounded-lg p-4">
-                  <div className="text-3xl mb-2">✍️</div>
+                  <div className="material-icons text-3xl mb-2">create</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2">Posts</p>
                   <p className="text-3xl font-bold text-white">{streak?.total_posts || stats?.total_posts || 0}</p>
                 </div>
 
                 {/* Reads */}
                 <div className="bg-periwinkle-light rounded-lg p-4">
-                  <div className="text-3xl mb-2">📚</div>
+                  <div className="material-icons text-3xl mb-2">menu_book</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2">Reads</p>
                   <p className="text-3xl font-bold text-white">{streak?.total_reads || stats?.total_reads || 0}</p>
                 </div>
 
                 {/* Comments */}
                 <div className="bg-periwinkle-light rounded-lg p-4">
-                  <div className="text-3xl mb-2">💬</div>
+                  <div className="material-icons text-3xl mb-2">chat</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2">Comments</p>
                   <p className="text-3xl font-bold text-white">{streak?.total_comments || stats?.total_comments || 0}</p>
                 </div>
 
                 {/* Likes */}
                 <div className="bg-periwinkle-light rounded-lg p-4">
-                  <div className="text-3xl mb-2">❤️</div>
+                  <div className="material-icons text-3xl mb-2">favorite</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2">Likes</p>
                   <p className="text-3xl font-bold text-white">{streak?.total_likes || stats?.total_likes || 0}</p>
                 </div>
@@ -269,7 +276,7 @@ export default function StreakModal({ onClose }) {
                       </div>
                       <div className="text-right">
                         <div className="flex items-center space-x-1 text-orange-500">
-                          <span className="text-lg">🔥</span>
+                          <span className="material-icons text-lg">local_fire_department</span>
                           <span className="font-bold">{user.current_streak}</span>
                         </div>
                         <p className="text-xs text-columbia-blue">streak</p>

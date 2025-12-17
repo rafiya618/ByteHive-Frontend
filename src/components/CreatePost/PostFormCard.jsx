@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ActionButton from "../../shared/ActionButton";
 import ReactQuill from "react-quill";
@@ -268,6 +268,17 @@ const PostFormCard = () => {
       }
 
 
+      // ✅ Log post creation activity (only for new posts, not edits)
+      if (!isEdit && response && response.ok && response.post && response.post._id) {
+        try {
+          const { logActivity } = await import('../../api/retentionApi');
+          await logActivity('read', response.post._id); // Using 'read' for post creation tracking
+          console.log('✅ [POST-CREATE] Post creation activity logged');
+        } catch (activityError) {
+          console.error('❌ [POST-CREATE] Failed to log post activity:', activityError);
+          // Don't block success flow
+        }
+      }
 
       setLoading(false);
       setTitle("");
@@ -289,8 +300,8 @@ const PostFormCard = () => {
       setLoading(false);
       setError(
         err?.response?.data?.error ||
-          err?.message ||
-          "Failed to create post. Please try again."
+        err?.message ||
+        "Failed to create post. Please try again."
       );
     }
   };

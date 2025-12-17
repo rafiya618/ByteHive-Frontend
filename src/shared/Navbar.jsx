@@ -28,10 +28,10 @@ export default function Navbar() {
     try {
       const streakData = await getUserStreak();
       // Handle different response structures
-      const streakValue = streakData?.streak?.current_streak || 
-                         streakData?.current_streak || 
-                         streakData?.data?.current_streak || 
-                         0;
+      const streakValue = streakData?.streak?.current_streak ||
+        streakData?.current_streak ||
+        streakData?.data?.current_streak ||
+        0;
       setCurrentStreak(streakValue);
     } catch (error) {
       console.error('Error fetching streak:', error);
@@ -112,13 +112,13 @@ export default function Navbar() {
                 )}
               </button>
 
-              <button className="flex items-center justify-center relative" onClick={() => setProfileDropdown(!profileDropdown)}>
+              <div className="flex items-center justify-center relative cursor-pointer" onClick={() => setProfileDropdown(!profileDropdown)}>
                 <img
                   alt="User avatar"
                   className="w-11 h-11 rounded-full border-2 border-transparent hover:border-periwinkle transition-all cursor-pointer"
                   src={profile?.profileImage}
                 />
-                
+
                 {/* Profile Dropdown */}
                 {profileDropdown && (
                   <div className="absolute top-full right-0 mt-2 bg-rich-black-light border border-navbar-border rounded-md shadow-lg z-50 min-w-48">
@@ -144,7 +144,7 @@ export default function Navbar() {
                     </button>
                   </div>
                 )}
-              </button>
+              </div>
             </div>
           </div>
 

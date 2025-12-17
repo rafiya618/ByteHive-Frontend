@@ -280,7 +280,15 @@ const Comment = ({ postId }) => {
     try {
       const { data } = await addComment(commentPayload);
 
-      // Activity recording removed
+      // ✅ Log comment activity for Activity Metrics
+      try {
+        const { logActivity } = await import('../../../api/retentionApi');
+        await logActivity('comment', postId);
+        console.log('✅ [COMMENT] Comment activity logged to userActivity');
+      } catch (activityError) {
+        console.error('❌ [COMMENT] Failed to log comment activity:', activityError);
+        // Don't block comment submission if activity logging fails
+      }
 
       if (comment) {
         setReply(prev => ({ ...prev, [comment._id]: "" }));

@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getUserStreak, getUserStats, getLeaderboard } from '../api/retentionApi';
-import LoadingState from '../shared/LoadingState';
 import toast from 'react-hot-toast';
 
 export default function StreakPage() {
   const [streak, setStreak] = useState(null);
   const [stats, setStats] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
@@ -16,7 +14,6 @@ export default function StreakPage() {
 
   const fetchStreakData = async () => {
     try {
-      setLoading(true);
       const [streakData, statsData, leaderboardData] = await Promise.all([
         getUserStreak(),
         getUserStats(),
@@ -29,14 +26,8 @@ export default function StreakPage() {
     } catch (error) {
       console.error('Error fetching streak data:', error);
       toast.error('Failed to load streak data');
-    } finally {
-      setLoading(false);
     }
   };
-
-  if (loading) {
-    return <LoadingState message="Loading your streak..." />;
-  }
 
   const getLevelColor = (level) => {
     const colors = {
@@ -62,18 +53,23 @@ export default function StreakPage() {
 
   const getBadgeIcon = (badgeName) => {
     const badges = {
-      'First Step': '🎯',
-      'Weekly Warrior': '⚔️',
-      'Monthly Milestone': '🏆',
-      'Read Master': '📚',
-      'Post Prodigy': '✍️',
-      'Comment King': '💬',
-      'Like Legend': '❤️',
-      'Consistency Champion': '🔥',
-      'Community Champion': '🌟',
-      'Unstoppable': '⚡'
+      'First Step': 'flag',
+      'Weekly Warrior': 'local_fire_department',
+      'Monthly Milestone': 'emoji_events',
+      'Read Master': 'menu_book',
+      'Post Prodigy': 'create',
+      'Comment King': 'chat',
+      'Like Legend': 'favorite',
+      'Consistency Champion': 'local_fire_department',
+      'Community Champion': 'stars',
+      'Unstoppable': 'flash',
+      'Novice Explorer': 'explore',
+      'Apprentice Adventurer': 'hiking',
+      'Expert Navigator': 'navigation',
+      'Master Voyager': 'flight_takeoff',
+      'Legendary Pioneer': 'rocket'
     };
-    return badges[badgeName] || '🎖️';
+    return badges[badgeName] || 'military_tech';
   };
 
   return (
@@ -82,7 +78,7 @@ export default function StreakPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
-            <span className="text-6xl">🔥</span>
+            <span className="material-icons text-6xl">local_fire_department</span>
             <div>
               <h1 className="text-4xl font-bold text-white">Your Streak</h1>
               <p className="text-columbia-blue">Track your daily engagement and climb the ranks</p>
@@ -147,7 +143,7 @@ export default function StreakPage() {
                 {/* Longest Streak */}
                 <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-8 text-white">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-5xl">🏆</span>
+                    <span className="material-icons text-5xl">emoji_events</span>
                     <span className="text-sm font-semibold bg-black bg-opacity-30 px-3 py-1 rounded-full">
                       Record
                     </span>
@@ -191,13 +187,13 @@ export default function StreakPage() {
               {streak?.badge_details && streak.badge_details.length > 0 && (
                 <div>
                   <h3 className="text-2xl font-bold text-white mb-6 flex items-center space-x-2">
-                    <span>🎖️</span>
+                    <span className="material-icons">military_tech</span>
                     <span>Earned Badges</span>
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {streak.badge_details.map((badge, index) => (
                       <div key={index} className="bg-periwinkle-light rounded-lg p-6 text-center hover:bg-periwinkle-light hover:shadow-lg transition-all">
-                        <p className="text-4xl mb-3">{getBadgeIcon(badge.badge_name)}</p>
+                        <span className="material-icons text-4xl mb-3">{getBadgeIcon(badge.badge_name)}</span>
                         <p className="text-sm font-semibold text-white mb-2">{badge.badge_name}</p>
                         <p className="text-xs text-columbia-blue">{badge.description}</p>
                       </div>
@@ -208,7 +204,7 @@ export default function StreakPage() {
 
               {(!streak?.badge_details || streak.badge_details.length === 0) && (
                 <div className="bg-periwinkle-light rounded-lg p-8 text-center">
-                  <p className="text-columbia-blue text-lg">Keep building your streak to earn badges! 🎖️</p>
+                  <p className="text-columbia-blue text-lg">Keep building your streak to earn badges! <span className="material-icons text-lg align-middle">military_tech</span></p>
                 </div>
               )}
             </>
@@ -220,28 +216,28 @@ export default function StreakPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Posts */}
                 <div className="bg-periwinkle-light rounded-lg p-6">
-                  <div className="text-4xl mb-3">✍️</div>
+                  <div className="material-icons text-4xl mb-3">create</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2 font-semibold">Posts</p>
                   <p className="text-4xl font-bold text-white">{streak?.total_posts || stats?.total_posts || 0}</p>
                 </div>
 
                 {/* Reads */}
                 <div className="bg-periwinkle-light rounded-lg p-6">
-                  <div className="text-4xl mb-3">📚</div>
+                  <div className="material-icons text-4xl mb-3">menu_book</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2 font-semibold">Reads</p>
                   <p className="text-4xl font-bold text-white">{streak?.total_reads || stats?.total_reads || 0}</p>
                 </div>
 
                 {/* Comments */}
                 <div className="bg-periwinkle-light rounded-lg p-6">
-                  <div className="text-4xl mb-3">💬</div>
+                  <div className="material-icons text-4xl mb-3">chat</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2 font-semibold">Comments</p>
                   <p className="text-4xl font-bold text-white">{streak?.total_comments || stats?.total_comments || 0}</p>
                 </div>
 
                 {/* Likes */}
                 <div className="bg-periwinkle-light rounded-lg p-6">
-                  <div className="text-4xl mb-3">❤️</div>
+                  <div className="material-icons text-4xl mb-3">favorite</div>
                   <p className="text-xs text-columbia-blue uppercase mb-2 font-semibold">Likes</p>
                   <p className="text-4xl font-bold text-white">{streak?.total_likes || stats?.total_likes || 0}</p>
                 </div>
@@ -277,7 +273,7 @@ export default function StreakPage() {
                       </div>
                       <div className="text-right">
                         <div className="flex items-center space-x-2 text-orange-500">
-                          <span className="text-2xl">🔥</span>
+                          <span className="material-icons text-2xl">local_fire_department</span>
                           <span className="font-bold text-xl">{user.current_streak}</span>
                         </div>
                         <p className="text-sm text-columbia-blue">streak</p>

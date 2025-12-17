@@ -1,14 +1,13 @@
 import { useCallback } from 'react';
-import { recordActivity } from '../api/retentionApi';
+import { logActivity } from '../api/retentionApi';
 
 export const useRecordStreak = () => {
-  const recordActivityAction = useCallback(async (activityType, postId = null, commentId = null, description = null) => {
+  const recordActivityAction = useCallback(async (activityType, postId = null) => {
     try {
-      await recordActivity(activityType, postId, commentId, description);
-      // Optionally show a subtle notification
-      console.log(`Activity recorded: ${activityType}`);
+      await logActivity(activityType, postId);
+      console.log(`✅ Activity logged: ${activityType}`);
     } catch (error) {
-      console.error('Error recording activity:', error);
+      console.error('❌ Error logging activity:', error);
       // Don't show error toast for activity recording to avoid spam
     }
   }, []);
@@ -18,27 +17,27 @@ export const useRecordStreak = () => {
   }, [recordActivityAction]);
 
   const recordView = useCallback((postId) => {
-    return recordActivityAction('view', postId);
+    return recordActivityAction('read', postId); // 'view' -> 'read'
   }, [recordActivityAction]);
 
   const recordPost = useCallback((postId) => {
-    return recordActivityAction('post', postId);
+    return recordActivityAction('read', postId); // 'post' -> 'read'
   }, [recordActivityAction]);
 
-  const recordComment = useCallback((commentId, postId) => {
-    return recordActivityAction('comment', postId, commentId);
+  const recordComment = useCallback((postId) => {
+    return recordActivityAction('comment', postId);
   }, [recordActivityAction]);
 
   const recordLike = useCallback((postId) => {
-    return recordActivityAction('like', postId);
+    return recordActivityAction('upvote', postId); // 'like' -> 'upvote'
   }, [recordActivityAction]);
 
   const recordDownvote = useCallback((postId) => {
     return recordActivityAction('downvote', postId);
   }, [recordActivityAction]);
 
-  const recordCommentView = useCallback((commentId, postId) => {
-    return recordActivityAction('comment_view', postId, commentId);
+  const recordCommentView = useCallback((postId) => {
+    return recordActivityAction('comment', postId);
   }, [recordActivityAction]);
 
   return {

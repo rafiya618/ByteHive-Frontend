@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { retentionApi } from "../../api/retentionApi";
-import toast from "react-hot-toast";
 
 const Comments = () => {
   const [newComment, setNewComment] = useState("");
@@ -61,13 +60,13 @@ const Comments = () => {
       setComments([...comments, comment]);
       setNewComment("");
 
-      // Record comment activity for streak
+      // ✅ Log comment activity for Activity Metrics
       try {
-        retentionApi.recordActivity("comment", postId, commentId, "Posted a comment").catch(error => {
-          console.error("Failed to record comment activity:", error);
+        retentionApi.logActivity("comment", null).catch(error => {
+          console.error("Failed to log comment activity:", error);
         });
       } catch (error) {
-        console.error("Error recording activity:", error);
+        console.error("Error logging comment activity:", error);
       }
     }
   };
@@ -77,8 +76,8 @@ const Comments = () => {
       if (isReply && comment.id === parentId) {
         return {
           ...comment,
-          replies: comment.replies.map(reply => 
-            reply.id === commentId 
+          replies: comment.replies.map(reply =>
+            reply.id === commentId
               ? { ...reply, likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1, isLiked: !reply.isLiked }
               : reply
           )
@@ -93,14 +92,7 @@ const Comments = () => {
       return comment;
     }));
 
-    // Record like activity for streak
-    try {
-      retentionApi.recordActivity("like", postId, null, "Liked a comment").catch(error => {
-        console.error("Failed to record like activity:", error);
-      });
-    } catch (error) {
-      console.error("Error recording activity:", error);
-    }
+    // Note: Comment likes are separate from post likes, no activity logging needed
   };
 
   return (
@@ -147,7 +139,7 @@ const Comments = () => {
               alt={comment.author.name}
               className="w-10 h-10 rounded-full flex-shrink-0"
             />
-            
+
             {/* Comment Thread Box*/}
             <div className="flex-1 bg-rich-black-light rounded-lg border border-navbar-border">
               {/* Main Comment */}
@@ -157,14 +149,13 @@ const Comments = () => {
                   <span className="text-periwinkle text-xs font-lato">{comment.date}</span>
                 </div>
                 <p className="text-white text-sm font-lato leading-relaxed mb-3">{comment.content}</p>
-                
+
                 {/* Comment Actions */}
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={() => toggleLike(comment.id)}
-                    className={`flex items-center space-x-1 text-xs transition-colors font-lato ${
-                      comment.isLiked ? "text-white" : "text-periwinkle hover:text-white"
-                    }`}
+                    className={`flex items-center space-x-1 text-xs transition-colors font-lato ${comment.isLiked ? "text-white" : "text-periwinkle hover:text-white"
+                      }`}
                   >
                     <span className="material-icons text-sm">thumb_up</span>
                     <span>{comment.likes}</span>
@@ -175,13 +166,13 @@ const Comments = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Replies */}
               {comment.replies && comment.replies.length > 0 && (
                 <div className="pt-4 pl-16 pr-4 pb-4 relative">
                   {/* Vertical line */}
                   <div className="absolute left-12 top-0 bottom-4 w-px bg-gray-600"></div>
-                  
+
                   {comment.replies.map((reply, index) => (
                     <div key={reply.id} className="flex space-x-3 pb-4">
                       <img
@@ -189,20 +180,19 @@ const Comments = () => {
                         alt={reply.author.name}
                         className="w-8 h-8 rounded-full flex-shrink-0"
                       />
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-2">
                           <span className="text-white font-medium font-lato text-sm">{reply.author.name}</span>
                           <span className="text-periwinkle text-xs font-lato">{reply.date}</span>
                         </div>
                         <p className="text-white text-sm font-lato leading-relaxed mb-3">{reply.content}</p>
-                        
+
                         <div className="flex items-center space-x-4">
                           <button
                             onClick={() => toggleLike(reply.id, true, comment.id)}
-                            className={`flex items-center space-x-1 text-xs transition-colors font-lato ${
-                              reply.isLiked ? "text-white" : "text-periwinkle hover:text-white"
-                            }`}
+                            className={`flex items-center space-x-1 text-xs transition-colors font-lato ${reply.isLiked ? "text-white" : "text-periwinkle hover:text-white"
+                              }`}
                           >
                             <span className="material-icons text-sm">thumb_up</span>
                             <span>{reply.likes}</span>

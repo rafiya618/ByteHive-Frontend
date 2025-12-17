@@ -7,6 +7,7 @@ import BlogFilterBar from "../components/BlogListing/BlogFilterBar";
 import PopularTags from "../components/BlogListing/PopularTags";
 import PopularCommunities from "../components/BlogListing/PopularCommunties";
 import UpcomingEvents from "../components/BlogListing/UpcomingEvents";
+import Loader from "../components/shared/Loader";
 import axios from "axios";
 
 // Filters
@@ -32,30 +33,30 @@ const BlogListing = () => {
         const res = await axios.get("http://localhost:5000/api/posts");
         const processedBlogs = Array.isArray(res.data.posts)
           ? res.data.posts.map((post) => ({
-              id: post._id,
-              image: post.thumbnail || DEFAULT_IMAGE,
-              community: post.community || "",
-              date: post.createdAt
-                ? new Date(post.createdAt).toLocaleDateString()
-                : "",
-              readTime: post.read_time || "6 min",
-              title: post.post_title || "",
-              description: post.small_description || "",
-              tags: post.tags || [],
-              // pass through any author from backend; BlogCard will enrich if missing
-              author: post.author || {
-                name: "Unknown",
-                avatar:
-                  "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff",
-              },
-              // include user_id for author profile lookup in BlogCard
-              user_id: post.user_id || post.userId || post.author_id || null,
-              upvotes: post.upvotes || 0,
-              downvotes: post.downvotes || 0,
-              comments: post.comments || 0,
-              views: post.views || 0,
-              bookmarked: false,
-            }))
+            id: post._id,
+            image: post.thumbnail || DEFAULT_IMAGE,
+            community: post.community || "",
+            date: post.createdAt
+              ? new Date(post.createdAt).toLocaleDateString()
+              : "",
+            readTime: post.read_time || "6 min",
+            title: post.post_title || "",
+            description: post.small_description || "",
+            tags: post.tags || [],
+            // pass through any author from backend; BlogCard will enrich if missing
+            author: post.author || {
+              name: "Unknown",
+              avatar:
+                "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff",
+            },
+            // include user_id for author profile lookup in BlogCard
+            user_id: post.user_id || post.userId || post.author_id || null,
+            upvotes: post.upvotes || 0,
+            downvotes: post.downvotes || 0,
+            comments: post.comments || 0,
+            views: post.views || 0,
+            bookmarked: false,
+          }))
           : [];
         if (!abort) setBlogs(processedBlogs);
       } catch (err) {
@@ -135,7 +136,7 @@ const BlogListing = () => {
             </div>
             <div className="flex flex-col gap-7 pb-12">
               {loading ? (
-                <div className="text-white text-center py-8">Loading blogs...</div>
+                <Loader message="Loading blogs..." />
               ) : err ? (
                 <div className="text-red-400 text-center py-8">{err}</div>
               ) : blogs.length === 0 ? (

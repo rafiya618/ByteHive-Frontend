@@ -89,7 +89,7 @@ export default function NotificationPage() {
   const getNotificationIcon = (triggerType) => {
     switch (triggerType) {
       case 'system':
-        return '⚙️';
+        return '';
       case 'streak_warning':
         return '🔥';
       case 'like':

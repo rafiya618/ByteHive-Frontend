@@ -23,28 +23,31 @@ const BlogCard = ({
   views,
   bookmarked = false,
 }) => {
-    const [authorInfo, setAuthorInfo] = useState(author || { name: 'Unknown', avatar: '' });
+  const [authorInfo, setAuthorInfo] = useState(author || { name: 'Unknown', avatar: '' });
 
-    // Fetch author profile if missing and user_id available
-    React.useEffect(() => {
-      let mounted = true;
-      const loadAuthor = async () => {
-        try {
-          const hasName = !!authorInfo?.name && authorInfo.name !== 'Unknown';
-          if (hasName || !user_id) return;
-          const { getProfile } = await import('../../api/ProfileApi.jsx');
-          const res = await getProfile({ userId: user_id });
-          const data = res?.data || res?.profile || {};
-          const name = data.fullName || data.username || data.name || [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Unknown';
-          const avatar = data.profileImage || data.avatar || data.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name);
-          if (mounted) setAuthorInfo({ name, avatar });
-        } catch (err) {
+  // Fetch author profile if missing and user_id available
+  React.useEffect(() => {
+    let mounted = true;
+    const loadAuthor = async () => {
+      try {
+        const hasName = !!authorInfo?.name && authorInfo.name !== 'Unknown';
+        if (hasName || !user_id) return;
+        const { getProfile } = await import('../../api/ProfileApi.jsx');
+        const res = await getProfile({ userId: user_id });
+        const data = res?.data || res?.profile || {};
+        const name = data.fullName || data.username || data.name || [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Unknown';
+        const avatar = data.profileImage || data.avatar || data.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name);
+        if (mounted) setAuthorInfo({ name, avatar });
+      } catch (err) {
+        // Don't log 404 errors as they are expected for users without profiles
+        if (err?.response?.status !== 404) {
           console.warn('Failed to load author profile:', err?.message || err);
         }
-      };
-      loadAuthor();
-      return () => { mounted = false; };
-    }, [user_id]);
+      }
+    };
+    loadAuthor();
+    return () => { mounted = false; };
+  }, [user_id]);
   // State for toggles
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
   const [showBookmarkMenu, setShowBookmarkMenu] = useState(false);
@@ -81,14 +84,21 @@ const BlogCard = ({
             if (fetched.length < 5) return;
           }
         } catch (err) {
-          console.warn('getCommentsByPost failed, falling back to direct fetch:', err?.message || err);
+          // Don't log 401 errors as they are expected for unauthenticated users
+          if (err?.response?.status !== 401) {
+            console.warn('getCommentsByPost failed, falling back to direct fetch:', err?.message || err);
+          }
         }
 
         // Fallback: direct fetch with large limit
         try {
           const base = import.meta.env.VITE_COMMENT_SERVICE_URL || 'http://localhost:5002';
           const url = `${base.replace(/\/$/, '')}/comment/all/${id}?limit=1000&sort=latest`;
-          const direct = await fetch(url);
+          const headers = {};
+          if (auth?.token) {
+            headers['Authorization'] = `Bearer ${auth.token}`;
+          }
+          const direct = await fetch(url, { headers });
           if (!direct.ok) {
             return;
           }
@@ -97,7 +107,10 @@ const BlogCard = ({
           if (!mounted) return;
           if (Array.isArray(arr)) setLocalCommentsCount(arr.length);
         } catch (err) {
-          console.warn('Direct fetch fallback failed:', err?.message || err);
+          // Don't log 401 errors as they are expected for unauthenticated users
+          if (err?.status !== 401 && err?.response?.status !== 401) {
+            console.warn('Direct fetch fallback failed:', err?.message || err);
+          }
         }
       } catch (err) {
         console.warn('Error fetching comments count:', err?.message || err);
@@ -222,7 +235,33 @@ const BlogCard = ({
         if (typeof res.userLiked === 'boolean') setIsUpvoted(res.userLiked);
         if (typeof res.userDisliked === 'boolean') setIsDownvoted(res.userDisliked);
       }
-      // Removed activity recording
+
+      // ✅ Log upvote activity - ONLY when upvote is ADDED (not removed)
+      // This ensures Activity Metrics tracks upvotes from main index page
+      if (!prev.isUpvoted && res.userLiked) {
+        try {
+          console.log('📝 [BLOG-CARD] Logging upvote activity for post:', id);
+          console.log('📝 [BLOG-CARD] User ID:', normalizedUserId);
+          const { logActivity } = await import('../../api/retentionApi');
+          await logActivity('upvote', id);
+          console.log('✅ [BLOG-CARD] Upvote activity logged successfully to userActivity');
+        } catch (error) {
+          console.error('❌ [BLOG-CARD] Failed to log upvote activity:', error);
+          console.error('❌ [BLOG-CARD] Error details:', error.message, error.response?.data);
+          // Don't block the UI if activity logging fails
+        }
+      } else if (prev.isUpvoted && !res.userLiked) {
+        // Remove from userActivity
+        console.log('🗑️ [BLOG-CARD] Upvote removed - removing from userActivity');
+        try {
+          const { removeActivity } = await import('../../api/retentionApi');
+          await removeActivity('upvote', id);
+          console.log('✅ [BLOG-CARD] Upvote removed from userActivity');
+        } catch (error) {
+          console.error('❌ [BLOG-CARD] Failed to remove upvote activity:', error);
+        }
+      }
+
     } catch (err) {
       console.error('Failed to toggle upvote:', err);
       // rollback
@@ -270,6 +309,32 @@ const BlogCard = ({
         if (typeof res.userLiked === 'boolean') setIsUpvoted(res.userLiked);
         if (typeof res.userDisliked === 'boolean') setIsDownvoted(res.userDisliked);
       }
+
+      // ✅ Log downvote activity - ONLY when downvote is ADDED (not removed)
+      // This ensures Activity Metrics tracks downvotes from main index page
+      if (!prev.isDownvoted && res.userDisliked) {
+        try {
+          console.log('📝 [BLOG-CARD] Logging downvote activity for post:', id);
+          console.log('📝 [BLOG-CARD] User ID:', normalizedUserId);
+          const { logActivity } = await import('../../api/retentionApi');
+          await logActivity('downvote', id);
+          console.log('✅ [BLOG-CARD] Downvote activity logged successfully to userActivity');
+        } catch (error) {
+          console.error('❌ [BLOG-CARD] Failed to log downvote activity:', error);
+          console.error('❌ [BLOG-CARD] Error details:', error.message, error.response?.data);
+        }
+      } else if (prev.isDownvoted && !res.userDisliked) {
+        // Remove from userActivity
+        console.log('🗑️ [BLOG-CARD] Downvote removed - removing from userActivity');
+        try {
+          const { removeActivity } = await import('../../api/retentionApi');
+          await removeActivity('downvote', id);
+          console.log('✅ [BLOG-CARD] Downvote removed from userActivity');
+        } catch (error) {
+          console.error('❌ [BLOG-CARD] Failed to remove downvote activity:', error);
+        }
+      }
+
     } catch (err) {
       console.error('Failed to toggle downvote:', err);
       setLocalUpvotes(prev.localUpvotes);

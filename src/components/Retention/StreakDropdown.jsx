@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getUserStreak, getAllBadges } from '../../api/retentionApi';
 import { updatePreferences } from '../../api/notificationApi';
 import { registerPush } from '../../helpers/registerPush';
@@ -21,38 +21,13 @@ const scrollbarStyles = `
 
 export default function StreakDropdown({ isOpen, onClose }) {
   const [streak, setStreak] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [allBadges, setAllBadges] = useState([]);
   const dropdownRef = useRef(null);
 
   const [notificationStatus, setNotificationStatus] = useState('unknown'); // disabled, enabled, unknown
   const [countdown, setCountdown] = useState(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchStreakData();
-      fetchAllBadges();
-      checkNotificationStatus();
-
-      const refreshInterval = setInterval(() => {
-        fetchStreakData();
-      }, 5000);
-
-      // Countdown ticker
-      const timer = setInterval(() => {
-        if (streak?.streak_expires_at) {
-          updateCountdown(streak.streak_expires_at, streak.server_time);
-        }
-      }, 1000);
-
-      return () => {
-        clearInterval(refreshInterval);
-        clearInterval(timer);
-      };
-    }
-  }, [isOpen, streak?.streak_expires_at]);
-
-  const updateCountdown = (expiresAt, serverTime) => {
+  const updateCountdown = (expiresAt) => {
     if (!expiresAt) return;
 
     // Calculate client offset if needed, or just diff
@@ -73,7 +48,7 @@ export default function StreakDropdown({ isOpen, onClose }) {
     setCountdown(`${hours}h ${minutes}m`);
   };
 
-  const checkNotificationStatus = async () => {
+  const checkNotificationStatus = useCallback(async () => {
     try {
       if ('Notification' in window) {
         // 1. Check Browser Permission
@@ -101,7 +76,81 @@ export default function StreakDropdown({ isOpen, onClose }) {
       console.error("Error checking notification status:", e);
       setNotificationStatus('disabled');
     }
+  }, [streak?.user_id]);
+
+  const fetchStreakData = async () => {
+    try {
+      const streakData = await getUserStreak();
+
+      if (streakData?.current_streak !== undefined) {
+        setStreak(streakData);
+      } else if (streakData?.streak) {
+        setStreak(streakData.streak);
+      } else {
+        setStreak({
+          current_streak: 0,
+          longest_streak: 0,
+          current_level: 1,
+          total_days_active: 0,
+          total_posts: 0,
+          total_reads: 0,
+          total_comments: 0,
+          total_likes: 0,
+          badges_earned: [],
+          badge_details: []
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error fetching streak data:', error);
+      setStreak({
+        current_streak: 0,
+        longest_streak: 0,
+        current_level: 1,
+        total_days_active: 0,
+        total_posts: 0,
+        total_reads: 0,
+        total_comments: 0,
+        total_likes: 0,
+        badges_earned: [],
+        badge_details: []
+      });
+    }
   };
+
+  const fetchAllBadges = async () => {
+    try {
+      const response = await getAllBadges();
+      if (response?.badges) {
+        setAllBadges(response.badges);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching all badges:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchStreakData();
+      fetchAllBadges();
+      checkNotificationStatus();
+
+      const refreshInterval = setInterval(() => {
+        fetchStreakData();
+      }, 5000);
+
+      // Countdown ticker
+      const timer = setInterval(() => {
+        if (streak?.streak_expires_at) {
+          updateCountdown(streak.streak_expires_at);
+        }
+      }, 1000);
+
+      return () => {
+        clearInterval(refreshInterval);
+        clearInterval(timer);
+      };
+    }
+  }, [isOpen, streak?.streak_expires_at, checkNotificationStatus]);
 
   const handleEnableNotifications = async () => {
     console.log('\n🔔 [FRONTEND] ==================== TOGGLE NOTIFICATION ====================');
@@ -160,73 +209,25 @@ export default function StreakDropdown({ isOpen, onClose }) {
     };
   }, [isOpen, onClose]);
 
-  const fetchStreakData = async () => {
-    try {
-      setLoading(true);
-      const streakData = await getUserStreak();
-
-      if (streakData?.current_streak !== undefined) {
-        setStreak(streakData);
-      } else if (streakData?.streak) {
-        setStreak(streakData.streak);
-      } else {
-        setStreak({
-          current_streak: 0,
-          longest_streak: 0,
-          current_level: 1,
-          total_days_active: 0,
-          total_posts: 0,
-          total_reads: 0,
-          total_comments: 0,
-          total_likes: 0,
-          badges_earned: [],
-          badge_details: []
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error fetching streak data:', error);
-      setStreak({
-        current_streak: 0,
-        longest_streak: 0,
-        current_level: 1,
-        total_days_active: 0,
-        total_posts: 0,
-        total_reads: 0,
-        total_comments: 0,
-        total_likes: 0,
-        badges_earned: [],
-        badge_details: []
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAllBadges = async () => {
-    try {
-      const response = await getAllBadges();
-      if (response?.badges) {
-        setAllBadges(response.badges);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching all badges:', error);
-    }
-  };
-
-  // Generate week days - showing 9 days with today highlighted
+  // Generate week days - showing 9 days with today highlighted and REAL activity data
   const generateWeekDays = () => {
     const days = [];
     const today = new Date();
+
+    // Get activity dates from streak data (if available)
+    const activityDates = streak?.activity_dates || []; // Expecting array of ISO date strings from backend
 
     // Get 4 days before today and 4 days after
     for (let i = -4; i <= 4; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+
       days.push({
         date,
-        dayLabel: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][date.getDay()],
+        dayLabel: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][date.getDay()],
         isToday: i === 0,
-        isActive: false // This would be updated from backend activity data
+        isActive: activityDates.includes(dateStr) // REAL DATA - not hardcoded!
       });
     }
 
@@ -250,14 +251,26 @@ export default function StreakDropdown({ isOpen, onClose }) {
     return badges[level] || 'Novice';
   };
 
+  // Get badge icon color based on badge type
+  const getBadgeIconColor = (badge) => {
+    switch (badge.badge_id) {
+      case 'novice-explorer': return 'text-blue-400';
+      case 'active-contributor': return 'text-green-400';
+      case 'engaged-member': return 'text-purple-400';
+      case 'community-champion': return 'text-yellow-400';
+      case 'master-scholar': return 'text-red-400';
+      default: return 'text-white';
+    }
+  };
+
   if (!isOpen) return null;
 
   const weekDays = generateWeekDays();
   const currentStreak = streak?.current_streak ?? 0;
   const longestStreak = streak?.longest_streak ?? 0;
-  const totalDaysActive = streak?.total_days_active ?? 0;
+  const _totalDaysActive = streak?.total_days_active ?? 0;
   const currentLevel = streak?.current_level ?? 1;
-  const badgesEarned = streak?.badges_earned ?? [];
+  const _badgesEarned = streak?.badges_earned ?? [];
   const badgeDetails = streak?.badge_details ?? [];
   const totalPosts = streak?.total_posts ?? 0;
   const totalReads = streak?.total_reads ?? 0;
@@ -287,7 +300,7 @@ export default function StreakDropdown({ isOpen, onClose }) {
               {/* Timer at the top right of the card, small */}
               {countdown && (
                 <div className="absolute top-2 right-2 text-[10px] font-mono bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20">
-                  ⏱ {countdown}
+                  <span className="material-icons text-xs mr-1">schedule</span>{countdown}
                 </div>
               )}
               <div className="text-3xl font-bold text-white mt-2">{currentStreak}</div>
@@ -300,7 +313,7 @@ export default function StreakDropdown({ isOpen, onClose }) {
             <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg p-3">
               <div className="flex items-center gap-1">
                 <div className="text-3xl font-bold text-white">{longestStreak}</div>
-                <span className="text-xl">🏆</span>
+                <span className="material-icons text-xl text-yellow-400">emoji_events</span>
               </div>
               <div className="text-xs text-gray-400 mt-1">Longest streak</div>
             </div>
@@ -358,21 +371,9 @@ export default function StreakDropdown({ isOpen, onClose }) {
 
             {/* Heart indicator for today */}
             <div className="flex justify-center mt-2">
-              <span className="text-sm text-pink-400">💗 Heart marks today</span>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="border-t border-gray-800 pt-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-400">Total active days:</span>
-              <span className="text-white font-semibold">{totalDaysActive}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500">Timezone: Asia/Tashkent</span>
-              <button className="text-gray-400 hover:text-white transition-colors">
-                <span className="material-icons text-xl">settings</span>
-              </button>
+              <span className="text-sm text-pink-400">
+                <span className="material-icons text-sm mr-1">favorite</span>Heart marks today
+              </span>
             </div>
           </div>
 
@@ -402,12 +403,27 @@ export default function StreakDropdown({ isOpen, onClose }) {
           {/* Badges Section - Show All Available Badges */}
           <div className="border-t border-gray-800 pt-4">
             <h4 className="text-sm font-semibold text-gray-300 mb-3">
-              Badges Earned ({badgeDetails?.length || 0}/10)
+              Badges Earned ({badgeDetails?.length || 0}/5)
             </h4>
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {allBadges.slice(0, 10).map((badge) => {
+              {allBadges.slice(0, 5).map((badge) => {
                 const isEarned = badgeDetails?.some(b => b.badge_id === badge.badge_id);
                 const earnedBadge = badgeDetails?.find(b => b.badge_id === badge.badge_id);
+
+                // Calculate how many more needed (real-time)
+                let remaining = badge.requirement_value;
+                if (!isEarned) {
+                  const currentValue = (() => {
+                    switch (badge.requirement_type) {
+                      case 'reads': return totalReads;
+                      case 'posts': return totalPosts;
+                      case 'comments': return totalComments;
+                      case 'likes': return totalLikes;
+                      default: return 0;
+                    }
+                  })();
+                  remaining = Math.max(0, badge.requirement_value - currentValue);
+                }
 
                 return (
                   <div
@@ -423,7 +439,11 @@ export default function StreakDropdown({ isOpen, onClose }) {
                   >
                     {/* Badge Icon */}
                     <div className="text-2xl sm:text-3xl mb-2 flex items-center justify-center h-10 sm:h-12">
-                      {isEarned ? badge.badge_icon : '🔒'}
+                      {isEarned ? (
+                        <span className={`material-icons ${getBadgeIconColor(badge)}`}>{badge.badge_icon}</span>
+                      ) : (
+                        <span className="material-icons text-white">lock</span>
+                      )}
                     </div>
 
                     {/* Badge Name - Allow 2 lines */}
@@ -440,20 +460,22 @@ export default function StreakDropdown({ isOpen, onClose }) {
                     )}
                     {!isEarned && (
                       <div className="text-[9px] sm:text-[10px] text-gray-500 font-medium">
-                        Need: {badge.requirement_value}
+                        {remaining > 0 ? `Need: ${remaining}` : 'Ready!'}
                       </div>
                     )}
                   </div>
                 );
               })}
 
-              {/* Fill remaining slots if less than 10 badges */}
-              {allBadges.length < 10 && Array.from({ length: 10 - allBadges.length }).map((_, idx) => (
+              {/* Fill remaining slots if less than 5 badges */}
+              {allBadges.length < 5 && Array.from({ length: 5 - allBadges.length }).map((_, idx) => (
                 <div
                   key={`empty-${idx}`}
                   className="rounded-xl p-3 text-center bg-gray-800/20 border-2 border-gray-700/30 opacity-40"
                 >
-                  <div className="text-2xl sm:text-3xl mb-2 flex items-center justify-center h-10 sm:h-12">🔒</div>
+                  <div className="text-2xl sm:text-3xl mb-2 flex items-center justify-center h-10 sm:h-12">
+                    <span className="material-icons">lock</span>
+                  </div>
                   <div className="text-[9px] sm:text-[10px] font-bold text-gray-500 mb-1 min-h-[2rem] sm:h-8 flex items-center justify-center">Coming Soon</div>
                 </div>
               ))}
@@ -461,7 +483,7 @@ export default function StreakDropdown({ isOpen, onClose }) {
 
             {badgeDetails?.length === 0 && (
               <p className="text-xs text-gray-400 text-center mt-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                🎯 Earn badges by completing activities! Start by reading posts, creating content, and engaging with the community.
+                Earn badges by completing activities! Start by reading posts, creating content, and engaging with the community.
               </p>
             )}
           </div>

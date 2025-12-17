@@ -1,11 +1,12 @@
 import axios from 'axios';
+import { isValidSimplificationLevel } from '../utils/validation';
 
 const SMART_READING_BASE_URL = 'http://127.0.0.1:5008/smart-reading';
 
 // Create axios instance with default config
 const smartReadingClient = axios.create({
   baseURL: SMART_READING_BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // 60 seconds for AI processing (increased from 10s)
 });
 
 // Add request interceptor to include JWT token
@@ -60,36 +61,51 @@ export async function searchMeanings(query) {
  * Simplify post content using AI
  * @param {string} postId - The post ID
  * @param {string} content - The content to simplify
- * @param {string} level - Simplification level: 'concise' or 'detailed'
+ * @param {string} level - Simplification level: 'summarize', 'key_takeaways', 'concise_summary', or 'detailed_summary'
  * @returns {Promise<Object>} Simplified content, summaries, and key takeaways
  */
-export async function simplifyPost(postId, content, level = 'detailed', forceRefresh = false) {
+export async function simplifyPost(postId, content, level = 'detailed_summary', forceRefresh = false) {
   try {
-    console.log(
-      `✨ Simplifying post ${postId} with level: ${level} (forceRefresh: ${forceRefresh})`
-    );
+    // Validate simplification level (SINGLE SOURCE OF TRUTH)
+    if (!isValidSimplificationLevel(level)) {
+      throw new Error(`Invalid simplification level: "${level}". Must be one of: summarize, key_takeaways, concise_summary, detailed_summary`);
+    }
+
+    console.log(`📤 Simplifying post ${postId} with level: ${level}`);
+
     const response = await smartReadingClient.post('/simplify', {
       postId,
       content,
-      level,
-      forceRefresh,
+      simplificationLevel: level, // Use correct parameter name expected by backend
     });
-    console.log('✅ Post simplified successfully');
-    return response.data.data;
+
+    console.log('✅ Simplification response:', response.data);
+    return response.data; // Return the full response data
   } catch (error) {
     console.error('❌ Error simplifying post:', error.message);
+    console.error('Response status:', error.response?.status);
+    console.error('Response data:', error.response?.data);
+
+    // Re-throw the error so the component can handle it
+    // Do NOT return placeholder data
     throw error;
   }
-}
+};
 
 /**
  * Get cached simplification for a post
  * @param {string} postId - The post ID
- * @param {string} level - Simplification level: 'concise' or 'detailed'
+ * @param {string} level - Simplification level: 'summarize', 'key_takeaways', 'concise_summary', or 'detailed_summary'
  * @returns {Promise<Object|null>} Simplified content or null if not found
  */
-export async function getSimplification(postId, level = 'detailed') {
+export async function getSimplification(postId, level = 'detailed_summary') {
   try {
+    // Validate simplification level
+    if (!isValidSimplificationLevel(level)) {
+      console.warn(`⚠️ Invalid simplification level: "${level}". Using default 'detailed_summary'`);
+      level = 'detailed_summary';
+    }
+
     console.log(
       `📖 Fetching simplification for post: ${postId} (${level})`
     );

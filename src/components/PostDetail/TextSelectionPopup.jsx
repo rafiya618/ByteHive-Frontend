@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { getMeaning, searchBlogs, chatAboutWord, simplifyPost } from "../../api/smartReadingApi";
 import toast from "react-hot-toast";
+import { TEXT_SELECTION } from "../../utils/constants";
+import { validateTextSelection, validateSearchQuery, stripHTML } from "../../utils/validation";
+
 
 const TextSelectionPopup = ({ selectedText, onClose }) => {
-  const [activeTab, setActiveTab] = useState("meaning");
+  const [activeTab, setActiveTab] = useState("search"); // Default to search, will adjust based on selection
   const [showContent, setShowContent] = useState(false);
   const [meaningData, setMeaningData] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
@@ -15,66 +18,67 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
   const [loadingSimplify, setLoadingSimplify] = useState(false);
   const [showSimplifyDialog, setShowSimplifyDialog] = useState(false);
   const [simplifyView, setSimplifyView] = useState("original"); // "original" or "simplified"
+  const [validationError, setValidationError] = useState(null);
 
-  // Clear chat messages when selected text changes
+  // Validate selected text on mount and set default tab
+  useEffect(() => {
+    const validation = validateTextSelection(selectedText);
+
+    if (!validation.valid) {
+      setValidationError(validation.error);
+      setActiveTab(""); // No tab active on error
+    } else {
+      setValidationError(null);
+      // Set default tab based on word count
+      if (validation.wordCount === 1) {
+        setActiveTab("meaning");
+      } else {
+        setActiveTab("search");
+      }
+    }
+  }, [selectedText]);
+
+  // Clear states when selected text changes
   useEffect(() => {
     setChatMessages([]);
-    setSearchQuery(selectedText + " ");
+    setSearchQuery(selectedText);
+    setMeaningData(null);
+    setRelatedBlogs([]);
+    setSimplifiedContent(null);
+    setSimplifyView("original");
+    setShowSimplifyDialog(false);
   }, [selectedText]);
 
   const fetchMeaning = useCallback(async () => {
-    const cacheKey = `meaning_${selectedText.split(" ")[0]}`;
-    const cachedData = localStorage.getItem(cacheKey);
-
-    if (cachedData) {
-      try {
-        const { data, timestamp } = JSON.parse(cachedData);
-        const cacheAge = Date.now() - timestamp;
-        const cacheExpiry = 60 * 60 * 1000; // 1 hour in milliseconds
-
-        if (cacheAge < cacheExpiry) {
-          setMeaningData(data);
-          setLoadingMeaning(false);
-          return;
-        } else {
-          localStorage.removeItem(cacheKey);
-        }
-      } catch (error) {
-        console.warn('Error parsing cached meaning:', error);
-        localStorage.removeItem(cacheKey);
-      }
-    }
-
     try {
       setLoadingMeaning(true);
       const word = selectedText.split(" ")[0];
       const data = await getMeaning(word);
       setMeaningData(data);
-
-      // Cache the result
-      const cacheData = {
-        data: data,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-
-      // Activity recording removed
     } catch (error) {
       console.error("Error fetching meaning:", error);
-      toast.error("Failed to fetch meaning");
-      // Set placeholder data
+      // Show error state instead of placeholder
       setMeaningData({
+        error: true,
         word: selectedText.split(" ")[0],
-        definition: "Definition not available. Please try another word.",
-        partOfSpeech: "unknown",
+        message: error.message || 'Failed to fetch meaning from AI. Please try again.'
       });
     } finally {
       setLoadingMeaning(false);
+
+      // Log word meaning activity
+      try {
+        const { logActivity } = await import('../../api/retentionApi');
+        await logActivity('word_meaning', null); // No specific postId
+        console.log('✅ [TEXT-SELECTION] Word meaning activity logged');
+      } catch (error) {
+        console.error('❌ [TEXT-SELECTION] Failed to log word meaning activity:', error);
+      }
     }
   }, [selectedText]);
 
   const fetchRelatedBlogs = useCallback(async () => {
-    const cacheKey = `relatedBlogs_${selectedText}`;
+    const cacheKey = `relatedBlogs_${selectedText} `;
     const cachedData = localStorage.getItem(cacheKey);
 
     if (cachedData) {
@@ -128,20 +132,28 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
 
   // Fetch meaning when meaning tab is active
   useEffect(() => {
-    if (activeTab === "meaning") {
+    if (activeTab === "meaning" && !validationError) {
       fetchMeaning();
     }
-  }, [activeTab, fetchMeaning]);
+  }, [activeTab, fetchMeaning, validationError]);
 
   // Fetch related blogs when blogs tab is active
   useEffect(() => {
-    if (activeTab === "blogs") {
+    if (activeTab === "blogs" && !validationError) {
       fetchRelatedBlogs();
     }
-  }, [activeTab, fetchRelatedBlogs]);
+  }, [activeTab, fetchRelatedBlogs, validationError]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+
+    // Validate search query (15-word max)
+    const searchValidation = validateSearchQuery(searchQuery);
+    if (!searchValidation.valid) {
+      toast.error(searchValidation.error);
+      return;
+    }
+
     try {
       setLoadingBlogs(true);
 
@@ -183,6 +195,18 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
     } catch (error) {
       console.error("Error searching:", error);
       toast.error("Search failed");
+
+      // Add error message to chat
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: {
+          error: true,
+          message: error.message || 'Failed to get AI response. Please try again.'
+        },
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoadingBlogs(false);
     }
@@ -193,7 +217,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
       setLoadingSimplify(true);
       // For now, we'll simplify the selected text itself
       // In a real implementation, you'd get the full post content
-      const simplified = await simplifyPost("temp-post-id", selectedText, "detailed");
+      const simplified = await simplifyPost("temp-post-id", selectedText, "detailed_summary");
       setSimplifiedContent(simplified);
       setShowSimplifyDialog(true);
     } catch (error) {
@@ -235,6 +259,23 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
           </button>
         </div>
 
+        {/* Validation Error Display */}
+        {validationError && (
+          <div className="p-4 bg-red-500/10 border-b border-red-500/30">
+            <div className="flex items-start space-x-3">
+              <span className="material-icons text-red-400 text-xl">error</span>
+              <div className="flex-1">
+                <p className="text-red-400 font-semibold text-sm">Selection Error</p>
+                <p className="text-red-300 text-xs mt-1">{validationError}</p>
+                <p className="text-red-200/70 text-xs mt-2">
+                  Selected: {validateTextSelection(selectedText).wordCount} {validateTextSelection(selectedText).wordCount === 1 ? 'word' : 'words'}
+                  {' '}(Max: {TEXT_SELECTION.MAX_WORDS} words)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Selected Text Display */}
         <div className="p-4 bg-rich-black-light border-b border-navbar-border">
           <div className="flex items-center justify-between mb-3">
@@ -252,15 +293,19 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                   <p className="text-white italic">
                     "{simplifyView === "simplified" && simplifiedContent
                       ? simplifiedContent.simplifiedContent
-                      : selectedText}"
+                      : (() => {
+                        const words = selectedText.split(' ');
+                        const truncated = words.slice(0, 15).join(' ');
+                        return truncated + (words.length > 15 ? '...' : '');
+                      })()}"
                   </p>
                 )}
               </div>
             </div>
             <button
               onClick={handleSimplify}
-              disabled={loadingSimplify}
-              className="bg-celadon text-rich-black px-3 py-2 rounded-lg hover:bg-celadon-dark transition-colors font-semibold text-sm disabled:opacity-50 ml-3"
+              disabled={loadingSimplify || validationError}
+              className="bg-celadon text-rich-black px-3 py-2 rounded-lg hover:bg-celadon-dark transition-colors font-semibold text-sm disabled:opacity-50"
             >
               {loadingSimplify ? "Simplifying..." : "Simplify"}
             </button>
@@ -271,19 +316,21 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
             <div className="flex space-x-2">
               <button
                 onClick={() => setSimplifyView("original")}
-                className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${simplifyView === "original"
-                  ? "bg-periwinkle text-rich-black"
-                  : "bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light"
-                  }`}
+                className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
+                  simplifyView === "original"
+                    ? "bg-periwinkle text-rich-black"
+                    : "bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light"
+                }`}
               >
                 Original
               </button>
               <button
                 onClick={() => setSimplifyView("simplified")}
-                className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${simplifyView === "simplified"
-                  ? "bg-periwinkle text-rich-black"
-                  : "bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light"
-                  }`}
+                className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
+                  simplifyView === "simplified"
+                    ? "bg-periwinkle text-rich-black"
+                    : "bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light"
+                }`}
               >
                 Simplified
               </button>
@@ -293,44 +340,60 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
 
         {/* Tab Navigation */}
         <div className="flex border-b border-navbar-border">
-          <button
-            onClick={() => setActiveTab("meaning")}
-            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "meaning"
-              ? "text-white bg-medium-slate-blue"
-              : "text-periwinkle hover:bg-periwinkle-light"
-              }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <span className="material-icons text-lg">book</span>
-              <span>Meaning</span>
+          {validationError ? (
+            // NO TABS if validation error (including >15 words)
+            <div className="w-full p-4 text-center">
+              <span className="material-icons text-red-400 text-2xl mb-2 block">error</span>
+              <p className="text-red-400 font-semibold text-sm">Selection Error</p>
+              <p className="text-red-300 text-xs mt-1">{validationError}</p>
             </div>
-          </button>
+          ) : (
+            <>
+              {/* Meaning Tab - ONLY for single word selection */}
+              {validateTextSelection(selectedText).wordCount === 1 && (
+                <button
+                  onClick={() => setActiveTab("meaning")}
+                  className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "meaning"
+                    ? "text-white bg-medium-slate-blue"
+                    : "text-periwinkle hover:bg-periwinkle-light"
+                    }`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <span className="material-icons text-lg">book</span>
+                    <span>Meaning</span>
+                  </div>
+                </button>
+              )}
 
-          <button
-            onClick={() => setActiveTab("search")}
-            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "search"
-              ? "text-white bg-medium-slate-blue"
-              : "text-periwinkle hover:bg-periwinkle-light"
-              }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <span className="material-icons text-lg">search</span>
-              <span>Search</span>
-            </div>
-          </button>
+              {/* Search Tab - Always visible when no error */}
+              <button
+                onClick={() => setActiveTab("search")}
+                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "search"
+                  ? "text-white bg-medium-slate-blue"
+                  : "text-periwinkle hover:bg-periwinkle-light"
+                  }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="material-icons text-lg">search</span>
+                  <span>Search</span>
+                </div>
+              </button>
 
-          <button
-            onClick={() => setActiveTab("blogs")}
-            className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "blogs"
-              ? "text-white bg-medium-slate-blue"
-              : "text-periwinkle hover:bg-periwinkle-light"
-              }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <span className="material-icons text-lg">article</span>
-              <span>Blogs</span>
-            </div>
-          </button>
+              {/* Blogs Tab - Always visible when no error */}
+              <button
+                onClick={() => setActiveTab("blogs")}
+                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "blogs"
+                  ? "text-white bg-medium-slate-blue"
+                  : "text-periwinkle hover:bg-periwinkle-light"
+                  }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="material-icons text-lg">article</span>
+                  <span>Blogs</span>
+                </div>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Tab Content */}
@@ -346,43 +409,58 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                 </div>
               ) : meaningData ? (
                 <>
-                  <div>
-                    <h4 className="text-periwinkle font-semibold text-lg mb-2">
-                      {meaningData.word}
-                      {meaningData.partOfSpeech && (
-                        <span className="text-sm font-normal ml-2 text-celadon">
-                          {meaningData.partOfSpeech}
-                        </span>
-                      )}
-                    </h4>
-                    {meaningData.pronunciation && (
-                      <p className="text-periwinkle/80 text-sm mb-3">
-                        {meaningData.pronunciation}
-                      </p>
-                    )}
-                    <p className="text-white leading-relaxed">
-                      {meaningData.definition}
-                    </p>
-                    {meaningData.examples && meaningData.examples.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-periwinkle text-xs font-semibold">Examples:</p>
-                        {meaningData.examples.slice(0, 2).map((example, idx) => (
-                          <p key={idx} className="text-white/80 text-sm italic">
-                            "{example}"
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                    {meaningData.synonyms && meaningData.synonyms.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-periwinkle text-xs font-semibold mb-1">Synonyms:</p>
-                        <p className="text-white/80 text-sm">
-                          {meaningData.synonyms.join(", ")}
+                  {meaningData.error ? (
+                    // Error State - AI service failed
+                    <div className="text-center py-8 px-4">
+                      <span className="material-icons text-5xl text-red-400 mb-3 block">error_outline</span>
+                      <p className="text-red-400 font-semibold mb-2">AI Service Error</p>
+                      <p className="text-periwinkle/80 text-sm">{meaningData.message}</p>
+                      <button
+                        onClick={fetchMeaning}
+                        className="mt-4 px-4 py-2 bg-periwinkle text-rich-black rounded-lg hover:bg-periwinkle-dark transition-colors text-sm font-semibold"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : (
+                    // Success State - AI data loaded
+                    <div>
+                      <h4 className="text-periwinkle font-semibold text-lg mb-2">
+                        {meaningData.word}
+                        {meaningData.partOfSpeech && (
+                          <span className="text-sm font-normal ml-2 text-celadon">
+                            {meaningData.partOfSpeech}
+                          </span>
+                        )}
+                      </h4>
+                      {meaningData.pronunciation && (
+                        <p className="text-periwinkle/80 text-sm mb-3">
+                          {meaningData.pronunciation}
                         </p>
-                      </div>
-                    )}
-                  </div>
-
+                      )}
+                      <p className="text-white leading-relaxed">
+                        {meaningData.definition}
+                      </p>
+                      {meaningData.examples && meaningData.examples.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          <p className="text-periwinkle text-xs font-semibold">Examples:</p>
+                          {meaningData.examples.slice(0, 2).map((example, idx) => (
+                            <p key={idx} className="text-white/80 text-sm italic">
+                              "{example}"
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      {meaningData.synonyms && meaningData.synonyms.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-periwinkle text-xs font-semibold mb-1">Synonyms:</p>
+                          <p className="text-white/80 text-sm">
+                            {meaningData.synonyms.join(", ")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-8">
@@ -399,27 +477,14 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => {
-                    const selectedWord = selectedText.split(" ")[0];
-                    const newValue = e.target.value;
-
-                    // Allow free typing, but ensure the input always starts with the selected word
-                    if (newValue.trim() === "" || !newValue.toLowerCase().includes(selectedWord.toLowerCase())) {
-                      // If empty or doesn't contain selected word, reset to selected word + space
-                      setSearchQuery(selectedWord + " ");
-                    } else {
-                      // Allow the input as-is, but ensure it starts with selected word
-                      const startsWithWord = newValue.toLowerCase().startsWith(selectedWord.toLowerCase());
-                      if (!startsWithWord) {
-                        // Prepend the selected word if it's not at the beginning
-                        setSearchQuery(selectedWord + " " + newValue);
-                      } else {
-                        setSearchQuery(newValue);
-                      }
+                    const value = e.target.value;
+                    const words = value.split(/\s+/).filter(word => word.length > 0);
+                    if (words.length <= 15) {
+                      setSearchQuery(value);
                     }
                   }}
                   onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full bg-rich-black-light border border-navbar-border rounded-lg px-4 py-3 text-white placeholder-periwinkle focus:outline-none focus:border-periwinkle"
-                  placeholder="Type your question..."
+                  className="w-full bg-rich-black-light border border-navbar-border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none focus:border-periwinkle"
                 />
                 <button
                   onClick={handleSearch}
@@ -429,6 +494,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                   <span className="material-icons">send</span>
                 </button>
               </div>
+
 
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {loadingBlogs ? (
@@ -443,7 +509,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                     {chatMessages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} `}
                       >
                         <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-rich-black-light border border-navbar-border text-white">
                           <div className="space-y-2">
@@ -452,6 +518,15 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
 
                               // Handle structured object content
                               if (typeof content === 'object' && content !== null) {
+                                if (content.error) {
+                                  return (
+                                    <div className="text-center py-4">
+                                      <span className="material-icons text-red-400 text-2xl mb-2 block">error_outline</span>
+                                      <p className="text-red-400 font-semibold text-sm mb-1">AI Response Error</p>
+                                      <p className="text-red-300 text-xs">{content.message}</p>
+                                    </div>
+                                  );
+                                }
                                 return (
                                   <>
                                     {content.summary && (
@@ -567,7 +642,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                         {blog.title}
                       </h5>
                       <p className="text-periwinkle/80 text-xs mb-2">
-                        {blog.snippet || "No description available"}
+                        {stripHTML(blog.snippet) || "No description available"}
                       </p>
                       <div className="flex items-center justify-between">
                         <span className="text-celadon text-xs">{blog.readTime}</span>

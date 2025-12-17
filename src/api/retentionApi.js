@@ -49,6 +49,82 @@ api.interceptors.request.use((config) => {
 });
 
 
+/**
+ * Log user activity (read, like, upvote, comment, etc.)
+ * This tracks ALL user activities in the retention service
+ */
+export const logActivity = async (activityType, postId, commentId = null) => {
+  try {
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      console.warn('❌ [ACTIVITY-API] No user ID found, skipping activity log');
+      return { ok: false, message: 'No user ID' };
+    }
+
+    console.log('📤 [ACTIVITY-API] Sending activity request:', {
+      userId,
+      activityType,
+      postId,
+      commentId
+    });
+
+    const response = await api.post('/activity/log', {
+      user_id: userId,
+      activity_type: activityType,
+      post_id: postId,
+      comment_id: commentId
+    });
+
+    console.log('✅ [ACTIVITY-API] Activity logged successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ [ACTIVITY-API] Error logging activity:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    // Don't throw - activity logging should not block user experience
+    return { ok: false, error: error.message };
+  }
+};
+
+/**
+ * Remove user activity (for vote/interaction removals)
+ * Removes the blog post from the activity array completely
+ */
+export const removeActivity = async (activityType, postId) => {
+  try {
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      console.warn('❌ [ACTIVITY-REMOVE-API] No user ID found, skipping activity removal');
+      return { ok: false, message: 'No user ID' };
+    }
+
+    console.log('🗑️ [ACTIVITY-REMOVE-API] Sending remove request:', {
+      userId,
+      activityType,
+      postId
+    });
+
+    const response = await api.post('/activity/remove', {
+      user_id: userId,
+      activity_type: activityType,
+      post_id: postId
+    });
+
+    console.log('✅ [ACTIVITY-REMOVE-API] Activity removed successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ [ACTIVITY-REMOVE-API] Error removing activity:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    // Don't throw - activity removal should not block user experience
+    return { ok: false, error: error.message };
+  }
+};
+
 // Get user's activity history (for History page)
 export const getActivityHistory = async (skip = 0, limit = 50) => {
   try {
@@ -236,6 +312,8 @@ export const resetStreak = async (userId = null) => {
 };
 // Export object for hooks that use named import { retentionApi }
 export const retentionApi = {
+  logActivity,
+  removeActivity,
   getActivityHistory,
   getUserStreak,
   getUserBadges,

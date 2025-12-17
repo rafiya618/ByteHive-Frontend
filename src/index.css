@@ -83,3 +83,58 @@
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Search input icon overlap fix */
+.search-input-container {
+  position: relative;
+}
+
+.search-input-container input {
+  padding-right: 3rem; /* Space for search icon */
+}
+
+.search-input-container .search-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none; /* Icon shouldn't block input */
+}
+
+/* Standardized prose whitespace */
+.prose p {
+  margin-bottom: 1rem;
+}
+
+.prose h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose ul,
+.prose ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+}
+
+.prose pre {
+  margin-bottom: 1.5rem;
+}
+
+/* Remove excessive whitespace */
+.prose > *:first-child {
+  margin-top: 0;
+}
+
+.prose > *:last-child {
+  margin-bottom: 0;
+}
