@@ -3,6 +3,7 @@ import Logo from "../assets/BytehiveLogo.png";
 import { useNavigate } from "react-router-dom";
 import { useProfile } from "../context/profileContext";
 import { useNotifications } from "../context/NotificationContext";
+import { useAuth } from "../context/auth";
 import StreakDropdown from "../components/Retention/StreakDropdown";
 import { getUserStreak } from "../api/retentionApi";
 
@@ -13,6 +14,7 @@ export default function Navbar() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const { profile } = useProfile()
   const { notifications, markAllAsRead } = useNotifications()
+  const { logout } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -142,6 +144,17 @@ export default function Navbar() {
                       <span className="material-icons text-2xl">account_circle</span>
                       <span>Profile</span>
                     </button>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setProfileDropdown(false);
+                        navigate("/");
+                      }}
+                      className="w-full px-4 py-3 text-left flex items-center space-x-3 text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-colors border-t border-navbar-border"
+                    >
+                      <span className="material-icons text-2xl">logout</span>
+                      <span>Logout</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -188,6 +201,13 @@ export default function Navbar() {
           <button onClick={() => navigate("/profile")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
             <span className="material-icons text-2xl">account_circle</span>
             <span>Profile</span>
+          </button>
+          <button onClick={() => {
+            logout();
+            navigate("/");
+          }} className="flex items-center space-x-4 text-red-400 hover:text-red-300 transition-colors w-full cursor-pointer">
+            <span className="material-icons text-2xl">logout</span>
+            <span>Logout</span>
           </button>
         </div>
       )}

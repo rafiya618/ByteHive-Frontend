@@ -23,8 +23,13 @@ const AuthProvider = ({ children }) => {
     setLoading(false); // finished restoring, even if no token
   }, []);
 
+  const logout = () => {
+    localStorage.removeItem("Auth");
+    setAuth({ token: "", user: null });
+  };
+
   return (
-    <AuthContext.Provider value={{ auth, setAuth, loading }}>
+    <AuthContext.Provider value={{ auth, setAuth, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

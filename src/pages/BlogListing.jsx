@@ -12,7 +12,7 @@ import axios from "axios";
 import { useAuth } from "../context/auth";
 import { reGetTrendingPosts, reGetFeed } from "../api/reApi";
 
-const FILTERS = ["All", "Popular", "Newest", "All Blogs"];
+const FILTERS = ["All", "Popular", "Newest"];
 
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80";
@@ -28,6 +28,8 @@ const BlogListing = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const { auth } = useAuth();
 
   const basePosts = (import.meta.env.VITE_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
@@ -100,33 +102,70 @@ const BlogListing = () => {
           
           // Get ALL recommended posts available
           const allRecommended = feedData?.recommended?.posts || [];
-          
-          // Paginate client-side
-          const paginatedRecommended = allRecommended.slice(newOffset, newOffset + limit);
-          const postIds = paginatedRecommended.map((p) => p._id);
 
-          // Fetch full post details from posts service
-          const postDetails = await Promise.all(
-            postIds.map((id) =>
-              axios
-                .get(`${basePosts}/api/posts/${id}`)
-                .then((r) => r?.data?.post || null)
-                .catch(() => null)
-            )
-          );
+          if (allRecommended.length === 0) {
+            // Fallback: mix Trending + Newest when recommendations are empty
+            const [trendingRes, newestRes] = await Promise.all([
+              axios.get(`${baseRE}/trending/posts?limit=50`),
+              axios.get(`${basePosts}/api/posts`, { params: { skip: 0, limit: 50 } }),
+            ]);
 
-          newPosts = normalizePosts(postDetails.filter(Boolean));
-          newTotal = allRecommended.length;
-          const totalFetched = newOffset + paginatedRecommended.length;
-          setHasMore(totalFetched < newTotal);
-          
-          console.log('All (Recommended) filter:', { 
-            newOffset, 
-            paginatedLength: paginatedRecommended.length,
-            allRecommendedLength: allRecommended.length,
-            totalFetched,
-            hasMore: totalFetched < newTotal 
-          });
+            const trendingIds = (trendingRes?.data || []).map((t) => t.postId);
+            const newestRaw = newestRes?.data?.posts || [];
+
+            const trendingDetails = await Promise.all(
+              trendingIds.map((id) =>
+                axios
+                  .get(`${basePosts}/api/posts/${id}`)
+                  .then((r) => r?.data?.post || null)
+                  .catch(() => null)
+              )
+            );
+
+            // Merge and dedupe by _id
+            const combined = [...trendingDetails.filter(Boolean), ...newestRaw];
+            const seen = new Set();
+            const combinedUnique = [];
+            combined.forEach((p) => {
+              const pid = p?._id;
+              if (!pid || seen.has(pid)) return;
+              seen.add(pid);
+              combinedUnique.push(p);
+            });
+
+            const paginatedFallback = combinedUnique.slice(newOffset, newOffset + limit);
+            newPosts = normalizePosts(paginatedFallback);
+            newTotal = combinedUnique.length;
+            const totalFetched = newOffset + paginatedFallback.length;
+            setHasMore(totalFetched < newTotal);
+          } else {
+            // Paginate recommendations client-side
+            const paginatedRecommended = allRecommended.slice(newOffset, newOffset + limit);
+            const postIds = paginatedRecommended.map((p) => p._id);
+
+            // Fetch full post details from posts service
+            const postDetails = await Promise.all(
+              postIds.map((id) =>
+                axios
+                  .get(`${basePosts}/api/posts/${id}`)
+                  .then((r) => r?.data?.post || null)
+                  .catch(() => null)
+              )
+            );
+
+            newPosts = normalizePosts(postDetails.filter(Boolean));
+            newTotal = allRecommended.length;
+            const totalFetched = newOffset + paginatedRecommended.length;
+            setHasMore(totalFetched < newTotal);
+            
+            console.log('All (Recommended) filter:', { 
+              newOffset, 
+              paginatedLength: paginatedRecommended.length,
+              allRecommendedLength: allRecommended.length,
+              totalFetched,
+              hasMore: totalFetched < newTotal 
+            });
+          }
         } else {
           // Fallback: fetch recent posts if not logged in
           const res = await axios.get(`${basePosts}/api/posts`, {
@@ -139,15 +178,6 @@ const BlogListing = () => {
         }
       } else if (selectedFilter === "Newest") {
         // Fetch newest posts with pagination
-        const res = await axios.get(`${basePosts}/api/posts`, {
-          params: { skip: newOffset, limit },
-        });
-        newPosts = normalizePosts(res?.data?.posts || []);
-        newTotal = Number(res?.data?.total || 0);
-        const totalFetched = newOffset + newPosts.length;
-        setHasMore(totalFetched < newTotal);
-      } else if (selectedFilter === "All Blogs") {
-        // Fetch all blogs with pagination
         const res = await axios.get(`${basePosts}/api/posts`, {
           params: { skip: newOffset, limit },
         });
@@ -191,8 +221,64 @@ const BlogListing = () => {
     loadPosts(offset, true);
   };
 
+  // Search across all posts in DB
+  useEffect(() => {
+    let isMounted = true;
+    
+    const performSearch = async () => {
+      if (!searchQuery || !searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+
+      setSearchLoading(true);
+      try {
+        // Fetch all posts (or use a search endpoint if available)
+        const res = await axios.get(`${basePosts}/api/posts`, {
+          params: { skip: 0, limit: 1000 }, // Fetch large batch for searching
+        });
+        
+        const allPosts = res?.data?.posts || [];
+        const q = searchQuery.trim().toLowerCase();
+        
+        // Filter posts by search query across title, description, community, tags
+        const filtered = allPosts.filter((post) => {
+          const title = (post.post_title || "").toLowerCase();
+          const desc = (post.small_description || "").toLowerCase();
+          const comm = (post.community || "").toLowerCase();
+          const tags = (post.tags || []).map(t => t.toLowerCase()).join(" ");
+          
+          return (
+            title.includes(q) ||
+            desc.includes(q) ||
+            comm.includes(q) ||
+            tags.includes(q)
+          );
+        });
+
+        if (isMounted) {
+          setSearchResults(normalizePosts(filtered));
+        }
+      } catch (e) {
+        console.error("Search error:", e?.message);
+        if (isMounted) {
+          setSearchResults([]);
+        }
+      } finally {
+        if (isMounted) {
+          setSearchLoading(false);
+        }
+      }
+    };
+
+    performSearch();
+    return () => {
+      isMounted = false;
+    };
+  }, [searchQuery]);
+
   // Filter and display posts
-  const displayedPosts = blogs.filter((b) => {
+  const displayedPosts = searchQuery && searchQuery.trim() ? searchResults : blogs.filter((b) => {
     if (!searchQuery || !searchQuery.trim()) return true;
     const q = searchQuery.trim().toLowerCase();
     return (
@@ -246,18 +332,22 @@ const BlogListing = () => {
         <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Column - Blog Feed */}
           <div className="w-full lg:flex-1 lg:max-w-3xl">
-            {/* Filter Bar */}
-            <div className="mb-6 overflow-x-auto">
-              <BlogFilterBar
-                filters={FILTERS}
-                selected={selectedFilter}
-                onSelect={setSelectedFilter}
-              />
-            </div>
+            {/* Filter Bar - Hide when searching */}
+            {!searchQuery && (
+              <div className="mb-6 overflow-x-auto">
+                <BlogFilterBar
+                  filters={FILTERS}
+                  selected={selectedFilter}
+                  onSelect={setSelectedFilter}
+                />
+              </div>
+            )}
 
             {/* Posts List */}
             <div className="flex flex-col gap-5 sm:gap-7 pb-12">
-              {loading ? (
+              {searchQuery && searchLoading ? (
+                <Loader message="Searching all blogs..." />
+              ) : loading && !searchQuery ? (
                 <Loader message="Loading blogs..." />
               ) : err ? (
                 <div className="text-red-400 text-center py-8">{err}</div>
@@ -267,8 +357,8 @@ const BlogListing = () => {
                 displayedPosts.map((blog) => <BlogCard key={blog.id} {...blog} />)
               )}
 
-              {/* Load More / Pagination */}
-              {!loading && !err && blogs.length > 0 && (
+              {/* Load More / Pagination - Only show when not searching */}
+              {!searchQuery && !loading && !err && blogs.length > 0 && (
                 <div className="flex flex-col items-center gap-3 mt-4">
                   {loadingMore ? (
                     <Loader message="Loading more..." />
@@ -293,7 +383,7 @@ const BlogListing = () => {
 
           {/* Right Column - Sidebar */}
           <aside className="w-full lg:w-[320px] xl:w-[380px] shrink-0 flex flex-col gap-6">
-            <PopularTags />
+            <PopularTags posts={blogs} />
             <PopularCommunities />
             <UpcomingEvents />
           </aside>
