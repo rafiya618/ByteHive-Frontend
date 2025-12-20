@@ -17,19 +17,43 @@ const PopularCommunities = () => {
         // Fetch all communities to map names to IDs
         const allCommunitiesData = await communityApi.getAllCommunities();
         const allCommunities = allCommunitiesData?.communities || [];
+        console.log('All communities fetched:', allCommunities.length);
+        console.log('Available community names:', allCommunities.map(c => c.community_name || c.name));
         
         // Map trending community names to their MongoDB IDs
         const details = trending.map(t => {
-          const community = allCommunities.find(
-            c => c.community_name === t.communityId || c.name === t.communityId
+          console.log('Looking for trending community:', t.communityId);
+          
+          // Try different field combinations for matching
+          let community = allCommunities.find(
+            c => (c.community_name === t.communityId || 
+                  c.name === t.communityId ||
+                  c._id === t.communityId)
           );
           
+          // If no exact match, try case-insensitive
+          if (!community) {
+            community = allCommunities.find(
+              c => (c.community_name?.toLowerCase() === t.communityId?.toLowerCase() || 
+                    c.name?.toLowerCase() === t.communityId?.toLowerCase())
+            );
+          }
+          
+          // Always use the actual MongoDB _id, never fallback to communityId (which is a name)
+          const communityId = community?._id;
+          if (!communityId) {
+            console.warn('Could not find MongoDB ID for community:', t.communityId, 
+                        'Available:', allCommunities.map(c => ({ name: c.community_name, id: c._id })));
+          } else {
+            console.log('✅ Found community ID for', t.communityId, ':', communityId);
+          }
+          
           return {
-            id: community?._id || t.communityId,
+            id: communityId,
             name: t.communityId,
             score: t.score
           };
-        });
+        }).filter(item => item.id); // Filter out items without valid IDs
         
         if (!cancelled) setItems(details);
       } catch (e) {

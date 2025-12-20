@@ -69,7 +69,7 @@ export default function Navbar() {
                   <span className="material-icons text-4xl">bookmark</span>
                 </div>
               </button>
-              <a className="flex flex-col items-center text-columbia-blue hover:text-white transition-colors group" href="#">
+              <a className="flex flex-col items-center text-columbia-blue hover:text-white transition-colors group" href="/communities">
                 <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
                   <span className="material-icons text-4xl">groups</span>
                 </div>
