@@ -3,12 +3,6 @@ import { SIMPLIFICATION_LEVELS } from './ContentModeToggle';
 /**
  * SimplifiedView Component
  * Displays simplified content or error state
- * 
- * @param {Object} props
- * @param {Object} props.simplifiedContent - The simplified content object (or error object)
- * @param {string} props.simplificationLevel - The current simplification level
- * @param {Function} props.onRetry - Handler to retry simplification
- * @param {Function} props.onBackToOriginal - Handler to go back to original view
  */
 const SimplifiedView = ({
     simplifiedContent,
