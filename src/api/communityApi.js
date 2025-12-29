@@ -29,20 +29,20 @@ const API_BASE_URL = 'http://localhost:5001/api';
 const getAuthHeaders = () => {
   const authData = localStorage.getItem('Auth');
   console.log('Auth data from localStorage:', authData);
-  
+
   if (!authData) {
     throw new Error('No token, authorization denied');
   }
-  
+
   try {
     const parsed = JSON.parse(authData);
     const token = parsed.token;
     console.log('Extracted token:', token ? 'Token found' : 'No token in parsed data');
-    
+
     if (!token) {
       throw new Error('No token, authorization denied');
     }
-    
+
     const headers = {
       'Authorization': `Bearer ${token}`
     };
@@ -60,23 +60,23 @@ const getUserIdFromAuth = () => {
   if (!authData) {
     throw new Error('No auth data found');
   }
-  
+
   try {
     const parsed = JSON.parse(authData);
     console.log('Full parsed auth data:', parsed);
-    
+
     if (!parsed.token) {
       throw new Error('No token found in auth data');
     }
-    
+
     // Decode JWT token to extract user ID
     const decoded = _decodeJwt(parsed.token);
     console.log('Decoded JWT payload:', decoded);
     console.log('Available fields in JWT:', Object.keys(decoded));
-    
+
     // Extract user ID from decoded token with detailed logging
     const userId = decoded._id || decoded.id || decoded.user_id || decoded.userId;
-    
+
     console.log('User ID extraction details:', {
       '_id': decoded._id,
       'id': decoded.id,
@@ -84,12 +84,12 @@ const getUserIdFromAuth = () => {
       'userId': decoded.userId,
       'finalUserId': userId
     });
-    
+
     if (!userId) {
       console.error('No user ID found in JWT payload. Token payload:', decoded);
       throw new Error('User ID not found in auth token');
     }
-    
+
     console.log('✅ Successfully extracted user ID from JWT:', userId);
     return userId;
   } catch (error) {
@@ -103,24 +103,27 @@ export const communityApi = {
   discoverCommunities: async (filters = {}) => {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (filters.search) queryParams.append('search', filters.search);
       if (filters.tags) queryParams.append('tags', filters.tags.join(','));
       if (filters.page) queryParams.append('page', filters.page);
       if (filters.limit) queryParams.append('limit', filters.limit);
       if (filters.visible) queryParams.append('visible', filters.visible);
-      
+
+      const user_id = getUserIdFromAuth();
+      if (user_id) queryParams.append('user_id', user_id);
+
       const response = await fetch(
         `${API_BASE_URL}/communities/discover?${queryParams}`,
         {
           method: 'GET',
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error discovering communities:', error);
@@ -198,17 +201,21 @@ export const communityApi = {
     }
   },
 
-  // Get Community Details (Public)
-  getCommunityDetails: async (communityId) => {
+  // Get Community Details (Public/Authenticated)
+  getCommunityDetails: async (communityId, userId = null) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, {
+      const url = new URL(`${API_BASE_URL}/communities/${communityId}`);
+      if (userId) url.searchParams.append('user_id', userId);
+
+      const response = await fetch(url.toString(), {
         method: 'GET',
+        headers: getAuthHeaders() // Include token if available
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error getting community details:', error);
@@ -216,18 +223,11 @@ export const communityApi = {
     }
   },
 
-  // Get Community Posts (helper) - returns an object with community.posts for compatibility
-  getCommunityPosts: async (communityId) => {
+  // Get Community Posts (helper)
+  getCommunityPosts: async (communityId, userId = null) => {
     try {
       // Reuse getCommunityDetails to retrieve posts array
-      const details = await (async () => {
-        const response = await fetch(`${API_BASE_URL}/communities/${communityId}`, { method: 'GET' });
-        if (!response.ok) {
-          const txt = await response.text().catch(() => '');
-          throw new Error(`HTTP error! status: ${response.status} - ${txt}`);
-        }
-        return await response.json();
-      })();
+      const details = await communityApi.getCommunityDetails(communityId, userId);
 
       // Ensure shape: { community: { posts: [...] } }
       const posts = details?.community?.posts || [];
@@ -242,7 +242,7 @@ export const communityApi = {
   createCommunity: async (communityData, imageFile = null) => {
     try {
       const formData = new FormData();
-      
+
       // Extract user_id from auth token using the helper function
       let currentUserId = null;
       try {
@@ -252,7 +252,7 @@ export const communityApi = {
         console.error('❌ Could not extract user ID from auth token:', e);
         throw new Error('User authentication required. Please log in again.');
       }
-      
+
       // Include user_id in the form data
       formData.append('user_id', currentUserId);
       console.log('📤 Added user_id to FormData for backend:', currentUserId);
@@ -263,25 +263,25 @@ export const communityApi = {
         visible: communityData.visible,
         moderation: communityData.moderation
       });
-      
+
       formData.append('community_name', communityData.community_name);
       formData.append('description', communityData.description);
-      
+
       // Send each tag individually for backend compatibility
       if (communityData.community_tags && communityData.community_tags.length > 0) {
         communityData.community_tags.forEach(tag => {
           formData.append('community_tags[]', tag);
         });
       }
-      
+
       if (communityData.visible) {
         formData.append('visible', communityData.visible);
       }
-      
+
       if (communityData.moderation) {
         formData.append('moderation', communityData.moderation);
       }
-      
+
       // Only append image if it exists and is valid
       if (imageFile && imageFile instanceof File) {
         console.log('Adding image to FormData:', {
@@ -293,13 +293,13 @@ export const communityApi = {
       } else if (imageFile) {
         console.warn('Image file is not a valid File object:', typeof imageFile);
       }
-      
+
       // Debug: Log what's being sent
       console.log('FormData contents:');
       for (let [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/communities`, {
         method: 'POST',
         headers: {
@@ -307,15 +307,15 @@ export const communityApi = {
         },
         body: formData,
       });
-      
+
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
-        
+
         try {
           const errorData = await response.json();
           console.error('Backend error response:', errorData);
           errorMessage = errorData.message || errorData.error || errorMessage;
-          
+
           // If there are validation errors, include them
           if (errorData.errors) {
             const validationErrors = Object.entries(errorData.errors)
@@ -336,21 +336,21 @@ export const communityApi = {
             console.error('Could not get error response text:', textError);
           }
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
       const result = await response.json();
       console.log('Community created successfully with user_id:', currentUserId, 'Result:', result);
       return result;
     } catch (error) {
       console.error('Error creating community:', error);
-      
+
       // If it's a network error or parsing error, provide more context
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new Error('Network error: Unable to connect to server. Please check your connection.');
       }
-      
+
       throw error;
     }
   },
@@ -359,28 +359,28 @@ export const communityApi = {
   updateCommunity: async (communityId, communityData, imageFile = null) => {
     try {
       const formData = new FormData();
-      
+
       if (communityData.community_name) {
         formData.append('community_name', communityData.community_name);
       }
       if (communityData.description) {
         formData.append('description', communityData.description);
       }
-      
+
       // Handle tags properly - send each tag individually
       if (communityData.community_tags && communityData.community_tags.length > 0) {
         communityData.community_tags.forEach(tag => {
           formData.append('community_tags[]', tag);
         });
       }
-      
+
       if (communityData.visible) {
         formData.append('visible', communityData.visible);
       }
       if (communityData.moderation) {
         formData.append('moderation', communityData.moderation);
       }
-      
+
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -400,12 +400,12 @@ export const communityApi = {
         },
         body: formData,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error updating community:', error);
@@ -426,12 +426,12 @@ export const communityApi = {
         },
         body: JSON.stringify({ user_id })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error following community:', error);
@@ -452,12 +452,12 @@ export const communityApi = {
         },
         body: JSON.stringify({ user_id })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error unfollowing community:', error);
@@ -469,7 +469,7 @@ export const communityApi = {
   getUserCommunities: async (searchQuery = '', forceRefresh = false) => {
     try {
       console.log('getUserCommunities called with searchQuery:', searchQuery, 'forceRefresh:', forceRefresh);
-      
+
       // Get auth data to extract user id for the route
       let currentUserId = null;
       try {
@@ -492,26 +492,26 @@ export const communityApi = {
       // so also pass user_id as query param for safety.
       const url = `${API_BASE_URL}/communities/user/${encodeURIComponent(currentUserId)}${queryParams}${queryParams ? '&' : '?'}user_id=${encodeURIComponent(currentUserId)}`;
       console.log('Making request to:', url);
-      
+
       const headers = getAuthHeaders();
       console.log('Using headers:', headers);
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: headers,
       });
-      
+
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
-      
+
       const data = await response.json();
       console.log('User communities data received:', data);
-      
+
       // Debug: Check if the returned communities actually belong to the current user
       if (data.owned && currentUserId) {
         console.log('Ownership verification:');
@@ -520,7 +520,7 @@ export const communityApi = {
           console.log(`Community "${community.community_name}" (${community._id}): user_id=${community.user_id}, currentUser=${currentUserId}, matches=${matches}`);
         });
       }
-      
+
       return data;
     } catch (error) {
       console.error('Error getting user communities:', error);
@@ -548,15 +548,40 @@ export const communityApi = {
         },
         body
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error deleting community:', error);
+      throw error;
+    }
+  },
+
+  // Respond to Join Request (Admin)
+  respondToJoinRequest: async (communityId, requesterId, action) => {
+    try {
+      const user_id = getUserIdFromAuth();
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/requests`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id, requesterId, action })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error responding to join request:', error);
       throw error;
     }
   },

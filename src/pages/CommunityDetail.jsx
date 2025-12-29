@@ -20,7 +20,7 @@ const CommunityDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { auth, loading: authLoading } = useAuth(); // Use auth context directly
-  
+
   const [selectedFilter, setSelectedFilter] = useState("Posts");
   const [community, setCommunity] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -35,13 +35,13 @@ const CommunityDetail = () => {
   // Initialize auth check and fetch community data
   useEffect(() => {
     if (!authLoading && !auth?.token) {
-      navigate('/login', { 
+      navigate('/login', {
         state: { from: `/community/${id}` },
-        replace: true 
+        replace: true
       });
       return;
     }
-    
+
     if (!authLoading && auth?.token) {
       fetchCommunityData();
     }
@@ -63,18 +63,25 @@ const CommunityDetail = () => {
 
   const fetchCommunityData = async () => {
     if (!id) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await communityApi.getCommunityDetails(id);
+      const userId = auth.user?._id || auth.user?.id;
+      console.log('🔍 Fetching community details for user:', userId);
+      const response = await communityApi.getCommunityDetails(id, userId);
+      console.log('📦 Community details response:', response);
       setCommunity(response.community);
-      
+
+      if (response.community?.hasRequested) {
+        console.log('✅ Community hasRequested is true');
+      }
+
       // Check if user is following this community
       const isUserFollowing = response.community.members?.includes(auth.user?._id);
       setIsFollowing(isUserFollowing);
-      
+
     } catch (err) {
       console.error('Error fetching community details:', err);
       setError('Failed to load community details. Please try again.');
@@ -85,43 +92,44 @@ const CommunityDetail = () => {
 
   const fetchCommunityPosts = async () => {
     if (!id) return;
-    
+
     setPostsLoading(true);
     try {
       console.log('=== Starting fetchCommunityPosts ===');
       console.log('Community ID:', id);
       console.log('Current community data:', community);
-      
+
       // Step 1: Try to get the community's post IDs using the posts endpoint
       let postIds = [];
-      
+
       try {
         console.log('Step 1: Attempting to get posts via getCommunityPosts API...');
-        const communityPostsResponse = await communityApi.getCommunityPosts(id);
+        const userId = auth.user?._id;
+        const communityPostsResponse = await communityApi.getCommunityPosts(id, userId);
         console.log('getCommunityPosts response:', communityPostsResponse);
         postIds = communityPostsResponse.community?.posts || [];
         console.log('Post IDs from API:', postIds);
       } catch (apiError) {
         console.warn('getCommunityPosts API failed, trying fallback:', apiError);
       }
-      
+
       // Step 1.5: Fallback - if no posts from API, try using community data we already have
       if (postIds.length === 0 && community?.posts) {
         console.log('Fallback: Using posts from existing community data:', community.posts);
         postIds = community.posts;
       }
-      
+
       // Step 1.75: Last resort fallback - refresh community details and get posts
       if (postIds.length === 0) {
         try {
-          console.log('Last resort: Fetching fresh community details...');
-          const freshCommunityResponse = await communityApi.getCommunityDetails(id);
+          const userId = auth.user?._id;
+          const freshCommunityResponse = await communityApi.getCommunityDetails(id, userId);
           console.log('Fresh community response:', freshCommunityResponse);
-          
+
           if (freshCommunityResponse.community?.posts) {
             postIds = freshCommunityResponse.community.posts;
             console.log('Post IDs from fresh community details:', postIds);
-            
+
             // Update the community state with fresh data
             setCommunity(freshCommunityResponse.community);
           }
@@ -129,9 +137,9 @@ const CommunityDetail = () => {
           console.error('Fresh community details fetch failed:', fallbackError);
         }
       }
-      
+
       console.log('Final post IDs to fetch:', postIds);
-      
+
       if (postIds.length === 0) {
         console.log('No post IDs found, setting empty posts array');
         setPosts([]);
@@ -154,7 +162,7 @@ const CommunityDetail = () => {
 
       const postResponses = await Promise.all(postPromises);
       const validPosts = postResponses.filter(post => post !== null);
-      
+
       console.log('Valid posts fetched:', validPosts.length);
       console.log('Post details:', validPosts);
 
@@ -188,7 +196,7 @@ const CommunityDetail = () => {
       console.log('Final transformed posts with user_id:', transformedPosts);
       setPosts(transformedPosts);
       console.log('=== fetchCommunityPosts completed ===');
-      
+
     } catch (err) {
       console.error('Error in fetchCommunityPosts:', err);
       setPosts([]);
@@ -206,9 +214,9 @@ const CommunityDetail = () => {
     setMembersLoading(true);
     try {
       console.log('Fetching profiles for community members:', community.members);
-      
+
       const memberIds = community.members.filter(Boolean);
-      
+
       if (memberIds.length === 0) {
         console.log('No valid member IDs found');
         return;
@@ -224,8 +232,8 @@ const CommunityDetail = () => {
           const profile = profileRes?.data;
 
           if (profile) {
-            return { 
-              id: memberId, 
+            return {
+              id: memberId,
               ...profile,
               name: profile.name || profile.user?.name || profile.username || "Unknown User",
               avatar: profile.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || profile.username || 'User')}&background=0D8ABC&color=fff`,
@@ -264,7 +272,7 @@ const CommunityDetail = () => {
 
       const memberProfilesData = await Promise.all(profilePromises);
       const profilesMap = {};
-      
+
       memberProfilesData.forEach(profile => {
         profilesMap[profile.id] = profile;
       });
@@ -279,30 +287,46 @@ const CommunityDetail = () => {
   };
 
   const handleFollowToggle = async () => {
+    setLoading(true);
     try {
-      if (isFollowing) {
+      if (isFollowing || community?.hasRequested) {
         await communityApi.unfollowCommunity(id);
         setIsFollowing(false);
-        // Update local community data with auth.user._id
+        // Update local community data
         setCommunity(prev => ({
           ...prev,
           members: prev.members?.filter(memberId => memberId !== auth.user._id) || [],
-          no_of_followers: Math.max(0, (prev.no_of_followers || 1) - 1)
+          hasRequested: false, // Ensure this is cleared
+          no_of_followers: isFollowing ? Math.max(0, (prev.no_of_followers || 1) - 1) : prev.no_of_followers
         }));
       } else {
-        await communityApi.followCommunity(id);
+        const res = await communityApi.followCommunity(id);
+
+        if (res.status === 'requested') {
+          setCommunity(prev => ({ ...prev, hasRequested: true }));
+          return; // Don't set isFollowing yet
+        }
+
         setIsFollowing(true);
         // Update local community data with auth.user._id
         setCommunity(prev => ({
           ...prev,
           members: [...(prev.members || []), auth.user._id],
-          no_of_followers: (prev.no_of_followers || 0) + 1
+          no_of_followers: (prev.no_of_followers || 0) + 1,
+          hasRequested: false
         }));
       }
     } catch (err) {
       console.error('Error toggling follow status:', err);
-      setError(`Failed to ${isFollowing ? 'unfollow' : 'follow'} community. Please try again.`);
-      setTimeout(() => setError(null), 3000);
+      // Check if error message is "Join request already pending"
+      if (err.message === 'Join request already pending') {
+        setCommunity(prev => ({ ...prev, hasRequested: true }));
+      } else {
+        setError(`Failed to ${isFollowing || community?.hasRequested ? 'unfollow' : 'follow'} community. Please try again.`);
+        setTimeout(() => setError(null), 3000);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -357,7 +381,7 @@ const CommunityDetail = () => {
       <div className="min-h-screen bg-rich-black flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-400 text-lg mb-4">{error}</div>
-          <button 
+          <button
             onClick={fetchCommunityData}
             className="px-4 py-2 bg-periwinkle text-white rounded-lg hover:bg-periwinkle/80 transition-colors"
           >
@@ -390,7 +414,7 @@ const CommunityDetail = () => {
               <h2 className="font-fenix text-3xl md:text-4xl text-white font-normal">Community Posts</h2>
               <NewPostButton />
             </div>
-            
+
             {postsLoading ? (
               <div className="text-center text-desc py-8">
                 Loading posts...
@@ -422,7 +446,7 @@ const CommunityDetail = () => {
                 <div className="text-desc text-sm">Loading member profiles...</div>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {community.members && community.members.length > 0 ? (
                 // Sort members: Admin first, then moderators, then regular members
@@ -431,7 +455,7 @@ const CommunityDetail = () => {
                     const memberProfile = memberProfiles[memberId];
                     const isAdmin = community.user_id === memberId || community.user_id?._id === memberId;
                     const isModerator = community.moderators && community.moderators.includes(memberId);
-                    
+
                     return {
                       memberId,
                       memberProfile,
@@ -442,8 +466,8 @@ const CommunityDetail = () => {
                   })
                   .sort((a, b) => a.sortOrder - b.sortOrder) // Sort by role priority
                   .map(({ memberId, memberProfile, isAdmin, isModerator }) => (
-                    <MemberCard 
-                      key={memberId} 
+                    <MemberCard
+                      key={memberId}
                       id={memberId}
                       name={memberProfile?.name || (membersLoading ? "Loading..." : "Unknown User")}
                       avatar={memberProfile?.avatar || "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff"}
@@ -461,12 +485,12 @@ const CommunityDetail = () => {
             </div>
           </div>
         );
-        
+
       case "About":
         return (
           <div className="pb-12">
             <h2 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-8">About the Community</h2>
-            <div 
+            <div
               className="bg-navbar-bg rounded-xl p-8 border"
               style={{
                 border: "1px solid var(--navbar-border)",
@@ -476,7 +500,7 @@ const CommunityDetail = () => {
                 <p className="font-lato text-lg leading-relaxed">
                   {community.description}
                 </p>
-                
+
                 <div>
                   <h4 className="font-lato font-semibold text-white text-lg mb-3">Community Settings</h4>
                   <ul className="space-y-2 font-lato">
@@ -500,7 +524,7 @@ const CommunityDetail = () => {
                 <div>
                   <h4 className="font-lato font-semibold text-white text-lg mb-3">Community Admin</h4>
                   <p className="font-lato leading-relaxed">
-                    Created by {community.user_id?.username || 'Unknown'} 
+                    Created by {community.user_id?.username || 'Unknown'}
                     {community.createdAt && ` on ${new Date(community.createdAt).toLocaleDateString()}`}
                   </p>
                 </div>
@@ -551,17 +575,24 @@ const CommunityDetail = () => {
             <div className="flex flex-col lg:flex-row lg:items-start gap-6">
               {/* Left: Avatar + Info */}
               <div className="flex items-start gap-8 flex-1">
-                <img
-                  src={community?.image || DEFAULT_IMAGE}
-                  alt={community?.community_name}
-                  className="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover flex-shrink-0 ml-8"
-                />
+                <div className="relative flex-shrink-0 ml-8">
+                  <img
+                    src={community?.image || DEFAULT_IMAGE}
+                    alt={community?.community_name}
+                    className="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover"
+                  />
+                  {community?.visible === 'private' && (
+                    <div className="absolute bottom-1 right-1 bg-black/40 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center border border-white/20">
+                      <span className="material-icons text-white text-lg">lock</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1">
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6">
                     <h1 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-4 lg:mb-0">
                       {community?.community_name}
                     </h1>
-                    
+
                     {/* Action Buttons - positioned at title level */}
                     <div className="flex gap-3 flex-shrink-0">
                       {isOwner && (
@@ -583,31 +614,33 @@ const CommunityDetail = () => {
                       )}
                       <button
                         onClick={handleFollowToggle}
-                        className={`px-4 py-2 rounded-lg font-lato font-medium text-sm border transition-colors ${
-                          isFollowing
-                            ? isOwner 
-                              ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
-                              : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
+                        disabled={loading}
+                        className={`px-4 py-2 rounded-lg font-lato font-medium text-sm border transition-colors ${isFollowing
+                          ? isOwner
+                            ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
+                            : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
+                          : community?.hasRequested
+                            ? "border-yellow-500 bg-transparent text-yellow-500 cursor-pointer hover:border-red-500 hover:text-red-400" // Requested state
                             : "border-white bg-transparent text-white hover:bg-white/10"
-                        }`}
+                          } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
                         <span className="flex items-center">
                           <span className="material-icons text-base mr-1">
-                            {isFollowing ? "check" : "add"}
+                            {isFollowing ? "check" : (community?.hasRequested ? "hourglass_empty" : "add")}
                           </span>
-                          {isFollowing ? (isOwner ? "Admin" : "Following") : "Follow"}
+                          {isFollowing ? (isOwner ? "Admin" : "Following") : (community?.hasRequested ? "Requested" : "Follow")}
                         </span>
                       </button>
                       <JoinChatButton />
                       <VideoRoomButton />
                     </div>
                   </div>
-                  
+
                   {/* Description spans full width under buttons */}
                   <p className="font-lato text-columbia-blue text-base md:text-lg leading-relaxed mb-6 pr-4">
                     {community?.description}
                   </p>
-                  
+
                   {/* Stats */}
                   <div className="flex items-center gap-6 text-periwinkle font-lato text-sm flex-wrap">
                     <div className="flex items-center gap-1">
@@ -643,7 +676,16 @@ const CommunityDetail = () => {
           </div>
 
           {/* Dynamic Content */}
-          {renderContent()}
+          {community.isPrivateAndNotJoined ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-navbar-bg/50 rounded-2xl border border-white/5">
+              <span className="material-icons text-6xl text-gray-500 mb-4">lock</span>
+              <h3 className="text-2xl font-bold text-white mb-2">Private Community</h3>
+              <p className="text-gray-400 mb-8">Follow this community to request access.</p>
+              {/* Follow button is already in header, but maybe duplicate here? No, header is enough. */}
+            </div>
+          ) : (
+            renderContent()
+          )}
         </div>
       </div>
     </div>

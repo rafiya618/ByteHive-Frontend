@@ -15,7 +15,7 @@ const Communities = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { auth, loading: authLoading } = useAuth();
-  
+
   const [selectedFilter, setSelectedFilter] = useState(FILTERS[0]);
   const [userCommunities, setUserCommunities] = useState({ owned: [], followed: [] });
   const [discoverCommunities, setDiscoverCommunities] = useState([]);
@@ -34,7 +34,7 @@ const Communities = () => {
       console.log('User communities response:', response);
       console.log('Owned communities count:', (response.owned || []).length);
       console.log('Followed communities count:', (response.followed || []).length);
-      
+
       // Log each owned community to see the structure
       if (response.owned && response.owned.length > 0) {
         console.log('Owned communities details:', response.owned.map(c => ({
@@ -45,7 +45,7 @@ const Communities = () => {
           created_by: c.created_by
         })));
       }
-      
+
       setUserCommunities({
         owned: response.owned || [],
         followed: response.followed || []
@@ -66,8 +66,7 @@ const Communities = () => {
       const response = await communityApi.discoverCommunities({
         search: searchQuery,
         page: 1,
-        limit: 20,
-        visible: 'public'
+        limit: 20
       });
       setDiscoverCommunities(response.communities || []);
     } catch (err) {
@@ -82,16 +81,16 @@ const Communities = () => {
   // Check authentication and initialize
   useEffect(() => {
     console.log('Auth state check:', { authLoading, authToken: auth?.token, authUser: auth?.user });
-    
+
     if (!authLoading && !auth?.token) {
       console.log('No auth token, redirecting to login');
-      navigate('/login', { 
+      navigate('/login', {
         state: { from: '/communities' },
-        replace: true 
+        replace: true
       });
       return;
     }
-    
+
     if (!authLoading && auth?.token) {
       console.log('Auth token found, initializing communities page');
       setIsInitialized(true);
@@ -132,59 +131,81 @@ const Communities = () => {
     try {
       if (wasFollowing) {
         await communityApi.unfollowCommunity(communityId);
-        
+
         // Update local state - remove from followed
         setUserCommunities(prev => ({
           ...prev,
           followed: prev.followed.filter(community => community._id !== communityId)
         }));
-        
+
+        // Clear requested state in discover communities results
+        setDiscoverCommunities(prev => prev.map(c =>
+          c._id === communityId ? { ...c, hasRequested: false } : c
+        ));
+
         // If we're on discover view, refresh to show the unfollowed community
         if (selectedFilter === "Discover Communities") {
           fetchDiscoverCommunities();
         }
-        
+
       } else {
-        await communityApi.followCommunity(communityId);
-        
+        const res = await communityApi.followCommunity(communityId);
+
+        if (res.status === 'requested') {
+          // Update discover communities locally to show requested state
+          setDiscoverCommunities(prev => prev.map(c =>
+            c._id === communityId ? { ...c, hasRequested: true } : c
+          ));
+          return res;
+        }
+
         // Update local state - find community and add to followed
         const communityToFollow = discoverCommunities.find(c => c._id === communityId);
         if (communityToFollow) {
-          const updatedCommunity = { 
-            ...communityToFollow, 
+          const updatedCommunity = {
+            ...communityToFollow,
             members: [...(communityToFollow.members || []), auth.user?._id],
-            no_of_followers: communityToFollow.no_of_followers + 1
+            no_of_followers: (communityToFollow.no_of_followers || 0) + 1
           };
-          
+
           setUserCommunities(prev => ({
             ...prev,
             followed: [...prev.followed, updatedCommunity]
           }));
         }
-        
+
         // Refresh discover communities to remove the followed one
         if (selectedFilter === "Discover Communities") {
           fetchDiscoverCommunities();
         }
+        return res;
       }
-      
+
     } catch (err) {
       console.error('Error in follow/unfollow:', err);
-      setError(`Failed to ${wasFollowing ? 'unfollow' : 'follow'} community. Please try again.`);
-      setTimeout(() => setError(null), 3000);
+
+      // Check for pending request error - fetch based error message
+      if (err.message === 'Join request already pending') {
+        setDiscoverCommunities(prev => prev.map(c =>
+          c._id === communityId ? { ...c, hasRequested: true } : c
+        ));
+      } else {
+        setError(`Failed to ${wasFollowing ? 'unfollow' : 'follow'} community. Please try again.`);
+        setTimeout(() => setError(null), 3000);
+      }
     }
   };
 
   const handleDeleteCommunity = async (communityId) => {
     try {
       await communityApi.deleteCommunity(communityId);
-      
+
       // Remove from owned communities
       setUserCommunities(prev => ({
         ...prev,
         owned: prev.owned.filter(community => community._id !== communityId)
       }));
-      
+
     } catch (err) {
       console.error('Error deleting community:', err);
       setError('Failed to delete community. Please try again.');
@@ -196,7 +217,7 @@ const Communities = () => {
     // Update in owned communities
     setUserCommunities(prev => ({
       ...prev,
-      owned: prev.owned.map(community => 
+      owned: prev.owned.map(community =>
         community._id === communityId ? { ...community, ...updatedCommunity } : community
       )
     }));
@@ -204,20 +225,21 @@ const Communities = () => {
 
   // Get filtered communities based on selected filter
   const getFilteredCommunities = () => {
+    const currentUserId = auth.user?._id || auth.user?.id;
+
     if (selectedFilter === "Your Communities") {
       console.log('Filtering user communities:', { owned: userCommunities.owned, followed: userCommunities.followed });
-      console.log('Authenticated user ID:', auth.user?._id);
-      
+
       // Only show communities owned by the authenticated user
       const ownedWithFlags = (userCommunities.owned || [])
         .filter(community => {
           // Only check user_id field as per backend model
-          const isOwner = community.user_id === auth.user?._id;
+          const isOwner = community.user_id === currentUserId;
           console.log('🔍 Community ownership check:', {
             communityId: community._id,
             communityName: community.community_name,
             community_user_id: community.user_id,
-            auth_user_id: auth.user?._id,
+            auth_user_id: currentUserId,
             isOwner
           });
           return isOwner;
@@ -226,6 +248,7 @@ const Communities = () => {
           ...community,
           isFollowing: true,
           isOwned: true,
+          hasRequested: false, // Owner is already "joined"
           memberCount: community.no_of_followers,
           postCount: community.no_of_posts,
           name: community.community_name,
@@ -236,12 +259,12 @@ const Communities = () => {
       const followedWithFlags = (userCommunities.followed || [])
         .filter(community => {
           // Ensure this community is actually followed by the current user
-          const isFollowed = community.members?.includes(auth.user?._id);
+          const isFollowed = community.members?.includes(currentUserId);
           console.log('Community follow check:', {
             communityId: community._id,
             communityName: community.community_name,
             members: community.members,
-            auth_user_id: auth.user?._id,
+            auth_user_id: currentUserId,
             isFollowed
           });
           return isFollowed;
@@ -250,6 +273,7 @@ const Communities = () => {
           ...community,
           isFollowing: true,
           isOwned: false,
+          hasRequested: false, // Already following
           memberCount: community.no_of_followers,
           postCount: community.no_of_posts,
           name: community.community_name,
@@ -264,19 +288,19 @@ const Communities = () => {
         communities: result.map(c => ({ id: c.id, name: c.name, isOwned: c.isOwned }))
       });
       return result;
-      
+
     } else {
       // Show discover communities (exclude user's own communities and ones user already follows)
       return discoverCommunities
         .filter(community => {
           // Exclude communities owned by the user
-          const isOwnedByUser = community.user_id === auth.user?._id ||
-                               community.owner_id === auth.user?._id ||
-                               community.created_by === auth.user?._id;
+          const isOwnedByUser = community.user_id === currentUserId ||
+            community.owner_id === currentUserId ||
+            community.created_by === currentUserId;
 
           // Exclude communities the user already follows
           const isFollowedByUser = (userCommunities.followed || []).some(fc => fc._id === community._id) ||
-                                   (community.members && community.members.includes(auth.user?._id));
+            (community.members && community.members.includes(currentUserId));
 
           return !isOwnedByUser && !isFollowedByUser;
         })
@@ -289,6 +313,7 @@ const Communities = () => {
             ...community,
             isFollowing,
             isOwned: false, // These are not owned by the user
+            hasRequested: community.hasRequested || (community.joinRequests && community.joinRequests.includes(currentUserId)),
             memberCount: community.no_of_followers,
             postCount: community.no_of_posts,
             name: community.community_name,
@@ -355,8 +380,8 @@ const Communities = () => {
 
           {/* Search + Create Community Button */}
           <div className="flex items-center gap-1 w-full md:w-[600px] z-10">
-            <SearchBar 
-              className="flex-1 max-w-xs sm:max-w-md" 
+            <SearchBar
+              className="flex-1 max-w-xs sm:max-w-md"
               placeholder="Search communities"
               onSearch={handleSearch}
             />
@@ -394,9 +419,9 @@ const Communities = () => {
         {!loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {getFilteredCommunities().map((community) => (
-              <CommunityCard 
-                key={community.id || community._id} 
-                {...community} 
+              <CommunityCard
+                key={community.id || community._id}
+                {...community}
                 onFollowToggle={handleFollowToggle}
                 onDelete={handleDeleteCommunity}
                 onUpdate={handleUpdateCommunity}
@@ -409,8 +434,8 @@ const Communities = () => {
         {!loading && getFilteredCommunities().length === 0 && (
           <div className="text-center py-12">
             <div className="text-desc text-lg mb-4">
-              {selectedFilter === "Your Communities" 
-                ? searchQuery 
+              {selectedFilter === "Your Communities"
+                ? searchQuery
                   ? `No communities found matching "${searchQuery}"`
                   : "You haven't joined any communities yet"
                 : searchQuery
@@ -428,7 +453,7 @@ const Communities = () => {
 
         {/* Debug Panel - Remove after testing */}
         <div className="mt-4 p-4 bg-gray-800 rounded">
-          <button 
+          <button
             onClick={() => fetchUserCommunities(true)}
             className="bg-blue-500 text-white px-4 py-2 rounded text-sm mr-2"
           >

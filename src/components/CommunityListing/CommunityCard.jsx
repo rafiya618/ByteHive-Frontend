@@ -2,28 +2,30 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { communityApi } from "../../api/communityApi";
 
-const CommunityCard = ({ 
-  id = 1, 
+const CommunityCard = ({
+  id = 1,
   _id,
-  image, 
-  name, 
+  image,
+  name,
   community_name,
-  description, 
-  memberCount, 
+  description,
+  memberCount,
   no_of_followers,
-  postCount, 
+  postCount,
   no_of_posts,
   community_tags = [],
   visible = "public",
   moderation = "only admin",
   isFollowing = false,
   isOwned = false,
+  hasRequested = false,
   onFollowToggle,
   onDelete,
   onUpdate
 }) => {
   const navigate = useNavigate();
   const [following, setFollowing] = useState(isFollowing);
+  const [requested, setRequested] = useState(hasRequested);
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -40,17 +42,34 @@ const CommunityCard = ({
     setFollowing(isFollowing);
   }, [isFollowing]);
 
+  React.useEffect(() => {
+    setRequested(hasRequested);
+  }, [hasRequested]);
+
   const handleFollowToggle = async (e) => {
     e.stopPropagation();
     e.preventDefault();
     if (loading || isOwned) return;
-    
+
     setLoading(true);
     const previousState = following;
     try {
-      setFollowing(!following);
       if (onFollowToggle) {
-        await onFollowToggle(communityId, following);
+        // Let the parent perform the API call and return the result
+        const result = await onFollowToggle(communityId, following || requested);
+
+        // If the parent returns that it's a join request, we update local state
+        if (result?.status === 'requested') {
+          setFollowing(false);
+          setRequested(true);
+        } else if (result?.status === 'following') {
+          setFollowing(true);
+          setRequested(false);
+        } else {
+          // Unfollowed or cancelled
+          setFollowing(false);
+          setRequested(false);
+        }
       }
     } catch (error) {
       console.error("Error toggling follow status:", error);
@@ -64,7 +83,7 @@ const CommunityCard = ({
     e.stopPropagation();
     e.preventDefault();
     if (deleting) return;
-    
+
     setDeleting(true);
     try {
       if (onDelete) {
@@ -93,7 +112,7 @@ const CommunityCard = ({
   };
 
   return (
-    <div 
+    <div
       className="bg-navbar-bg rounded-xl overflow-hidden border hover:border-periwinkle transition-colors relative w-full"
       style={{ border: "1px solid var(--navbar-border)" }}
     >
@@ -132,8 +151,8 @@ const CommunityCard = ({
                   Delete
                 </button>
               </div>
-              <div 
-                className="fixed inset-0 z-10" 
+              <div
+                className="fixed inset-0 z-10"
                 onClick={() => setShowKebabMenu(false)}
               />
             </>
@@ -144,12 +163,17 @@ const CommunityCard = ({
       <div className="p-4 sm:p-6">
         <div className="flex flex-col md:flex-row items-start gap-4">
           {/* Image */}
-          <div className="flex-shrink-0 mx-auto md:mx-0">
-            <img 
-              alt={communityName} 
-              className="rounded-lg w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-cover" 
-              src={image || "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80"} 
+          <div className="flex-shrink-0 mx-auto md:mx-0 relative">
+            <img
+              alt={communityName}
+              className="rounded-lg w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-cover"
+              src={image || "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80"}
             />
+            {visible === "private" && (
+              <div className="absolute top-1 right-1 bg-black/40 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center border border-white/20">
+                <span className="material-icons text-white text-base">lock</span>
+              </div>
+            )}
           </div>
 
           {/* Content */}
@@ -158,7 +182,7 @@ const CommunityCard = ({
               {communityName}
             </h3>
 
-            <p 
+            <p
               className="font-lato mb-3 text-desc text-sm break-words"
               style={{ lineHeight: "140%" }}
             >
@@ -187,8 +211,8 @@ const CommunityCard = ({
                     }}
                     className="text-xs text-periwinkle hover:text-white mt-2 underline hover:no-underline focus:outline-none"
                   >
-                    {showAllTags 
-                      ? "Show less" 
+                    {showAllTags
+                      ? "Show less"
                       : `+${community_tags.length - 3} more`}
                   </button>
                 )}
@@ -209,29 +233,30 @@ const CommunityCard = ({
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <button 
+              <button
                 onClick={handleViewCommunity}
                 className="px-0 py-2 bg-transparent text-desc cursor-pointer font-lato font-normal text-sm hover:text-white transition-colors"
               >
                 View Community →
               </button>
 
-              <button 
+              <button
                 onClick={handleFollowToggle}
                 disabled={loading}
-                className={`px-4 py-2 rounded-lg font-lato font-medium text-sm border transition-colors w-full sm:w-auto ${
-                  following
-                    ? isOwned 
-                      ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
-                      : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
+                className={`px-4 py-2 rounded-lg font-lato font-medium text-sm border transition-colors w-full sm:w-auto ${following
+                  ? isOwned
+                    ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
+                    : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
+                  : requested
+                    ? "border-yellow-500 bg-transparent text-yellow-500 cursor-pointer hover:border-red-500 hover:text-red-400"
                     : "border-white bg-transparent text-white hover:bg-white/10"
-                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span className="flex items-center justify-center">
                   <span className="material-icons text-base mr-1">
-                    {loading ? "hourglass_empty" : following ? "check" : "add"}
+                    {loading ? "hourglass_empty" : following ? "check" : (requested ? "hourglass_empty" : "add")}
                   </span>
-                  {loading ? "..." : following ? (isOwned ? "Admin" : "Following") : "Follow"}
+                  {loading ? "..." : following ? (isOwned ? "Admin" : "Following") : (requested ? "Requested" : "Follow")}
                 </span>
               </button>
             </div>
@@ -265,7 +290,7 @@ const CommunityCard = ({
               Are you sure you want to delete "{communityName}"? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteConfirm(false);
@@ -274,7 +299,7 @@ const CommunityCard = ({
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
@@ -354,10 +379,10 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear general error when user starts typing
     if (error) setError(null);
-    
+
     // Real-time validation
     if (name === 'community_name') {
       const nameError = validateCommunityName(value);
@@ -366,7 +391,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
         community_name: touched.community_name ? nameError : ''
       }));
     }
-    
+
     if (name === 'description') {
       const descError = validateDescription(value);
       setValidationErrors(prev => ({
@@ -378,7 +403,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    
+
     // Mark field as touched
     setTouched(prev => ({
       ...prev,
@@ -393,7 +418,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
         community_name: nameError
       }));
     }
-    
+
     if (name === 'description') {
       const descError = validateDescription(value);
       setValidationErrors(prev => ({
@@ -406,13 +431,13 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
   const handleTagsChange = (e) => {
     const inputValue = e.target.value;
     setTagsInputValue(inputValue);
-    
+
     // Split by comma and process tags
     const potentialTags = inputValue
       .split(',')
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0);
-    
+
     // Check if trying to exceed 10 tags
     if (potentialTags.length > 10) {
       setTagLimitError(true);
@@ -436,7 +461,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
   const handleTagsBlur = () => {
     // Clear tag limit error on blur
     setTagLimitError(false);
-    
+
     // Clean up the input on blur
     const cleanedValue = tagsInputValue
       .split(',')
@@ -444,7 +469,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
       .filter(tag => tag.length > 0)
       .slice(0, 10)
       .join(', ');
-    
+
     setTagsInputValue(cleanedValue);
   };
 
@@ -455,20 +480,20 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
         setError('Please select an image file');
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         setError('Image file must be less than 5MB');
         return;
       }
 
       setImageFile(file);
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);
       };
       reader.readAsDataURL(file);
-      
+
       if (error) setError(null);
     }
   };
@@ -480,7 +505,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Mark all fields as touched to show validation errors
     setTouched({
       community_name: true,
@@ -507,11 +532,11 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
 
     try {
       const response = await communityApi.updateCommunity(community._id, formData, imageFile);
-      
+
       if (onUpdate) {
         onUpdate(community._id, response.community);
       }
-      
+
       onClose();
     } catch (err) {
       console.error('Error updating community:', err);
@@ -522,12 +547,12 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
   };
 
   // Check if form is valid for button state
-  const isFormValid = !validateCommunityName(formData.community_name) && 
-                     !validateDescription(formData.description);
+  const isFormValid = !validateCommunityName(formData.community_name) &&
+    !validateDescription(formData.description);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pt-24 pb-8">
-      <div 
+      <div
         className="bg-navbar-bg border border-navbar-border rounded-lg w-full max-w-2xl max-h-full overflow-y-auto"
         style={{
           border: "1px solid var(--navbar-border)",
@@ -538,7 +563,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
         {/* Fixed Header */}
         <div className="sticky top-0 bg-navbar-bg p-6 flex justify-between items-center rounded-t-lg">
           <h3 className="text-white font-fenix text-xl">Edit Community</h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-white hover:text-periwinkle transition-colors p-1"
           >
@@ -558,18 +583,17 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
             {/* Community Name */}
             <div>
               <label className="block text-white font-fenix mb-2">Community Name *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="community_name"
                 value={formData.community_name}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 maxLength={50}
-                className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none transition-colors ${
-                  validationErrors.community_name 
-                    ? 'border-red-500 focus:border-red-500' 
-                    : 'border-navbar-border focus:border-periwinkle'
-                }`}
+                className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none transition-colors ${validationErrors.community_name
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-navbar-border focus:border-periwinkle'
+                  }`}
               />
               {validationErrors.community_name && (
                 <p className="text-xs text-red-400 mt-1">
@@ -589,18 +613,17 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
             {/* Description */}
             <div>
               <label className="block text-white font-fenix mb-2">Description *</label>
-              <textarea 
+              <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 rows={4}
                 maxLength={500}
-                className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none transition-colors resize-none ${
-                  validationErrors.description 
-                    ? 'border-red-500 focus:border-red-500' 
-                    : 'border-navbar-border focus:border-periwinkle'
-                }`}
+                className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none transition-colors resize-none ${validationErrors.description
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-navbar-border focus:border-periwinkle'
+                  }`}
               />
               {validationErrors.description && (
                 <p className="text-xs text-red-400 mt-1">
@@ -622,26 +645,25 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
               <label className="block text-white font-fenix mb-2">
                 Tags <span className="text-desc text-sm">(Max 10 tags)</span>
               </label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Enter tags separated by commas"
                 value={tagsInputValue}
                 onChange={handleTagsChange}
                 onBlur={handleTagsBlur}
-                className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none transition-colors ${
-                  tagLimitError 
-                    ? 'border-red-500 focus:border-red-500' 
-                    : 'border-navbar-border focus:border-periwinkle'
-                }`}
+                className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none transition-colors ${tagLimitError
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-navbar-border focus:border-periwinkle'
+                  }`}
               />
-              
+
               {/* Tag limit error message */}
               {tagLimitError && (
                 <p className="text-xs text-red-400 mt-1">
                   You can only add a maximum of 10 tags. Only the first 10 tags have been saved.
                 </p>
               )}
-              
+
               {formData.community_tags.length > 0 && (
                 <div className="mt-2">
                   <div className="flex flex-wrap gap-2">
@@ -651,7 +673,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
                       </span>
                     ))}
                   </div>
-                  
+
                   {formData.community_tags.length > 3 && (
                     <button
                       type="button"
@@ -661,16 +683,15 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
                       }}
                       className="text-xs text-periwinkle hover:text-white mt-2 transition-colors cursor-pointer bg-none border-none p-0 underline hover:no-underline focus:outline-none"
                     >
-                      {showAllTags 
-                        ? `Show less` 
+                      {showAllTags
+                        ? `Show less`
                         : `+${formData.community_tags.length - 3} more tags`
                       }
                     </button>
                   )}
-                  
-                  <p className={`text-xs mt-1 ${
-                    formData.community_tags.length === 10 ? 'text-yellow-400' : 'text-desc'
-                  }`}>
+
+                  <p className={`text-xs mt-1 ${formData.community_tags.length === 10 ? 'text-yellow-400' : 'text-desc'
+                    }`}>
                     {formData.community_tags.length}/10 tags
                     {formData.community_tags.length === 10 && ' (Maximum reached)'}
                   </p>
@@ -682,7 +703,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-white font-fenix mb-2">Visibility</label>
-                <select 
+                <select
                   name="visible"
                   value={formData.visible}
                   onChange={handleInputChange}
@@ -696,7 +717,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
 
               <div>
                 <label className="block text-white font-fenix mb-2">Moderation</label>
-                <select 
+                <select
                   name="moderation"
                   value={formData.moderation}
                   onChange={handleInputChange}
@@ -713,12 +734,12 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
             {/* Image */}
             <div>
               <label className="block text-white font-fenix mb-2">Community Image</label>
-              
+
               {imagePreview && (
                 <div className="relative inline-block mb-4">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
                     className="w-32 h-32 rounded-lg object-cover"
                     style={{
                       objectFit: 'cover',
@@ -735,7 +756,7 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
                   </button>
                 </div>
               )}
-              
+
               <input
                 type="file"
                 accept="image/*"
@@ -748,14 +769,14 @@ const EditCommunityModal = ({ community, onClose, onUpdate }) => {
 
             {/* Buttons */}
             <div className="flex gap-3 justify-end pt-4">
-              <button 
+              <button
                 type="button"
                 onClick={onClose}
                 className="px-6 py-2 border border-navbar-border text-white rounded-lg hover:bg-white/10 transition-colors font-lato font-medium"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 disabled={loading || !isFormValid}
                 className="px-6 py-3 bg-[#6866FF] hover:bg-[#5755D6] text-white rounded-[5px] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center"
