@@ -100,6 +100,7 @@ export const postsApi = {
       tags: postData.tags || [],
       community: postData.community, // Just the community name as string
       user_id: userId, // Keep as string since your model uses String type
+      author_username: postData.author_username || "Anonymous",
       thumbnail: postData.thumbnail || null,
       mediaInputs: postData.mediaInputs || []
     };

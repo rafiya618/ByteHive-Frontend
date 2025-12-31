@@ -30,6 +30,13 @@ import Streak from "./pages/Streak";
 import { useParams } from "react-router-dom";
 import HomePage from "./pages/VideoCall/HomePage";
 import Room from "./pages/VideoCall/Room";
+import Dashboard from "./pages/admin/Dashboard";
+import Users from "./pages/admin/Users";
+import Posts from "./pages/admin/Posts";
+import AdminCommunities from "./pages/admin/Communities";
+import Reports from "./pages/admin/Reports";
+import AdminCommunityDetail from "./pages/Admin/CommunityDetailAdmin";
+
 function RoomWrapper() {
   const { roomId } = useParams();
   return <Room roomId={roomId} />;
@@ -76,6 +83,15 @@ function App() {
                 <Route path="/notification" element={<RequireStep minStep={4}><NotificationPage /></RequireStep>} />
                 <Route path="/preferences" element={<RequireStep minStep={4}><PreferencesPage /></RequireStep>} />
                 <Route path="/enable-notifications" element={<RequireStep minStep={4}><EnableNotifications /></RequireStep>} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/dashboard" element={<Dashboard />} />
+                <Route path="/admin/users" element={<Users />} />
+                <Route path="/admin/posts" element={<Posts />} />
+                <Route path="/admin/communities" element={<AdminCommunities />} />
+                <Route path="/admin/communities/:id" element={<AdminCommunityDetail />} />
+                <Route path="/admin/reports" element={<Reports />} />
+                
                 <Route path="*" element={<PageNotFound />} />
               </Routes>
             </ProtectedRoute>

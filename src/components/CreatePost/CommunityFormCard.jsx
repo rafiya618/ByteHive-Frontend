@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ActionButton from "../../shared/ActionButton";
 import { communityApi } from "../../api/communityApi";
 import { useAuth } from "../../context/auth";
+import { useProfile } from "../../context/profileContext";
 
 const CommunityFormCard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { auth, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
   const editCommunity = location.state?.editCommunity;
   const isEdit = Boolean(editCommunity?._id);
   const [loading, setLoading] = useState(false);
@@ -246,12 +248,20 @@ const CommunityFormCard = () => {
       // Branch by mode: create vs update
       let response;
       if (isEdit) {
-        response = await communityApi.updateCommunity(editCommunity._id, formData, imageFile);
+        const enrichedForm = {
+          ...formData,
+          owner_username: profile?.username || profile?.name || ''
+        };
+        response = await communityApi.updateCommunity(editCommunity._id, enrichedForm, imageFile);
         console.log('Community update successful! Response:', response);
       } else {
         // Try creating community without image first if image upload fails
         try {
-          response = await communityApi.createCommunity(formData, imageFile);
+          const enrichedForm = {
+            ...formData,
+            owner_username: profile?.username || profile?.name || ''
+          };
+          response = await communityApi.createCommunity(enrichedForm, imageFile);
           console.log('Community creation successful! Response:', response);
         } catch (imageError) {
           console.error('Error with image upload:', imageError);
@@ -262,7 +272,11 @@ const CommunityFormCard = () => {
             console.log('Attempting to create community without image...');
             setError('Image upload failed. Creating community without image...');
             await new Promise(resolve => setTimeout(resolve, 1000));
-            response = await communityApi.createCommunity(formData, null);
+            const enrichedForm = {
+              ...formData,
+              owner_username: profile?.username || profile?.name || ''
+            };
+            response = await communityApi.createCommunity(enrichedForm, null);
             console.log('Community creation successful (without image)! Response:', response);
           } else {
             throw imageError;

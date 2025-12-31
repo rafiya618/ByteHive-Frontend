@@ -5,6 +5,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import "./quill-custom.css"; // 👈 add this
 import { useAuth } from "../../context/auth";
+import { useProfile } from "../../context/profileContext";
 import { communityApi } from "../../api/communityApi";
 import { postsApi } from "../../api/postsApi";
 
@@ -22,6 +23,7 @@ const PostFormCard = () => {
   const [allowedCommunities, setAllowedCommunities] = useState([]);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
   const { auth } = useAuth();
+  const { profile } = useProfile();
   const location = useLocation();
   const navigate = useNavigate();
   const editPost = location.state?.editPost || null;
@@ -198,6 +200,7 @@ const PostFormCard = () => {
     setLoading(true);
     try {
       const userId = auth?.user?._id ?? auth?.user?.id ?? auth?.user?.user_id ?? auth?.user?.sub ?? auth?.user?.userId ?? 1;
+      const username = profile?.username || auth?.user?.username || "Anonymous";
       const payload = {
         post_title: title,
         small_description: smallDescription,
@@ -206,6 +209,7 @@ const PostFormCard = () => {
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         community,
         user_id: userId,
+        author_username: username,
         thumbnail,
         mediaInputs,
       };

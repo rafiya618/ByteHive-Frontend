@@ -10,6 +10,7 @@ import JoinChatButton from "../components/CommunityDetail/JoinChatButton";
 import VideoRoomButton from "../components/CommunityDetail/VideoRoomButton";
 import NewPostButton from "../shared/NewPostButton";
 import { communityApi } from "../api/communityApi";
+import { adminCommunityApi } from "../api/adminCommunityApi";
 import { postsApi } from "../api/postsApi";
 import { getProfile } from "../api/ProfileApi";
 
@@ -23,6 +24,8 @@ const CommunityDetail = () => {
 
   const [selectedFilter, setSelectedFilter] = useState("Posts");
   const [community, setCommunity] = useState(null);
+  const [moderatorInput, setModeratorInput] = useState("");
+  const [modActionLoading, setModActionLoading] = useState(false);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
@@ -352,6 +355,37 @@ const CommunityDetail = () => {
     }
   };
 
+  // Admin: add/remove moderators
+  const handleAddModeratorAdmin = async () => {
+    if (!community || !moderatorInput.trim()) return;
+    try {
+      setModActionLoading(true);
+      await adminCommunityApi.addModerator(community._id, moderatorInput.trim());
+      const updated = await communityApi.getCommunityDetails(community._id);
+      setCommunity(updated.community);
+      setModeratorInput("");
+    } catch (err) {
+      console.error('Add moderator failed:', err);
+      alert(err.message || 'Failed to add moderator');
+    } finally {
+      setModActionLoading(false);
+    }
+  };
+
+  const handleRemoveModeratorAdmin = async (userId) => {
+    try {
+      setModActionLoading(true);
+      await adminCommunityApi.removeModerator(community._id, userId);
+      const updated = await communityApi.getCommunityDetails(community._id);
+      setCommunity(updated.community);
+    } catch (err) {
+      console.error('Remove moderator failed:', err);
+      alert(err.message || 'Failed to remove moderator');
+    } finally {
+      setModActionLoading(false);
+    }
+  };
+
   // Show loading while checking auth
   if (authLoading) {
     return (
@@ -666,6 +700,47 @@ const CommunityDetail = () => {
       {/* Content */}
       <div className="w-full flex justify-center px-4 lg:px-8">
         <div className="w-full max-w-7xl">
+          {/* Admin-only moderator management panel */}
+          {auth?.user?.role === 'admin' && (
+            <div className="mb-6 p-4 border border-navbar-border rounded-lg bg-navbar-bg">
+              <h4 className="text-white font-fenix text-lg mb-3">Moderator Management (Admin)</h4>
+              <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                <input
+                  type="text"
+                  value={moderatorInput}
+                  onChange={(e) => setModeratorInput(e.target.value)}
+                  placeholder="Enter userId to add as moderator"
+                  className="flex-1 bg-transparent border border-navbar-border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none focus:border-periwinkle"
+                />
+                <button
+                  onClick={handleAddModeratorAdmin}
+                  disabled={modActionLoading || !moderatorInput.trim()}
+                  className="px-4 py-2 bg-[#6866FF] hover:bg-[#5755D6] text-white rounded-lg disabled:opacity-50"
+                >
+                  {modActionLoading ? 'Adding...' : 'Add Moderator'}
+                </button>
+              </div>
+              {community?.moderators?.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-desc mb-2">Current Moderators:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {community.moderators.map((mId) => (
+                      <div key={mId} className="flex items-center gap-2 bg-chip text-periwinkle px-3 py-1 rounded-xl">
+                        <span>{mId}</span>
+                        <button
+                          onClick={() => handleRemoveModeratorAdmin(mId)}
+                          disabled={modActionLoading}
+                          className="text-pinkish hover:text-white"
+                        >
+                          <span className="material-icons text-sm">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {/* Filter Bar */}
           <div className="mb-8">
             <CommunityFilterBar

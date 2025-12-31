@@ -4,6 +4,7 @@ import { useAuth } from "../../context/auth";
 import { postsApi } from "../../api/postsApi";
 import { getCommentsByPost } from "../../api/commentApi";
 import { savePost, unsavePost, checkSavedStatus } from "../../api/curationApi";
+import { ReportPostModal } from "../posts/ReportPostModal";
 import toast from "react-hot-toast";
 
 const BlogCard = ({
@@ -54,6 +55,7 @@ const BlogCard = ({
   const [savedCategory, setSavedCategory] = useState(null);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const navigate = useNavigate();
   const { auth } = useAuth();
   const toCount = (v) => {
@@ -414,6 +416,17 @@ const BlogCard = ({
                   <span className="material-icons text-sm">schedule</span>
                   Watch Later
                 </button>
+                <hr className="my-2 border-gray-600" />
+                <button
+                  onClick={() => {
+                    setShowBookmarkMenu(false);
+                    setShowReportModal(true);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-red-400 flex items-center gap-2"
+                >
+                  <span className="material-icons text-sm">flag</span>
+                  Report Post
+                </button>
               </>
             )}
           </div>
@@ -542,6 +555,16 @@ const BlogCard = ({
           </div>
         </div>
       </Link>
+
+      {/* Report Post Modal */}
+      <ReportPostModal
+        post={{ id, title }}
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSuccess={() => {
+          setShowReportModal(false);
+        }}
+      />
     </div>
   );
 };

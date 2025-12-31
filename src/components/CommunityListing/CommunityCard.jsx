@@ -19,6 +19,10 @@ const CommunityCard = ({
   isFollowing = false,
   isOwned = false,
   hasRequested = false,
+  admin = false,
+  ownerId,
+  ownerName,
+  viewPath,
   onFollowToggle,
   onDelete,
   onUpdate
@@ -37,6 +41,7 @@ const CommunityCard = ({
   const communityName = community_name || name;
   const followers = no_of_followers || memberCount;
   const posts = no_of_posts || postCount;
+  const ownerLabel = ownerName || ownerId || "Unknown";
 
   React.useEffect(() => {
     setFollowing(isFollowing);
@@ -108,7 +113,11 @@ const CommunityCard = ({
   const handleViewCommunity = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    navigate(`/community/${communityId}`);
+    if (viewPath) {
+      navigate(viewPath);
+    } else {
+      navigate(`/community/${communityId}`);
+    }
   };
 
   return (
@@ -117,7 +126,7 @@ const CommunityCard = ({
       style={{ border: "1px solid var(--navbar-border)" }}
     >
       {/* Kebab Menu */}
-      {isOwned && (
+      {(isOwned || admin) && (
         <div className="absolute top-4 right-4 z-20">
           <button
             onClick={(e) => {
@@ -132,20 +141,22 @@ const CommunityCard = ({
           {showKebabMenu && (
             <>
               <div className="absolute top-8 right-0 bg-navbar-bg border border-navbar-border rounded-lg shadow-lg min-w-[140px] z-30">
-                <button
-                  onClick={handleEdit}
-                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 transition-colors flex items-center gap-2 rounded-t-lg"
-                >
-                  <span className="material-icons text-sm">edit</span>
-                  Edit
-                </button>
+                {!admin && (
+                  <button
+                    onClick={handleEdit}
+                    className="w-full text-left px-4 py-3 text-white hover:bg-white/10 transition-colors flex items-center gap-2 rounded-t-lg"
+                  >
+                    <span className="material-icons text-sm">edit</span>
+                    Edit
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowKebabMenu(false);
                     setShowDeleteConfirm(true);
                   }}
-                  className="w-full text-left px-4 py-3 text-red-400 hover:bg-red-400/10 transition-colors flex items-center gap-2 rounded-b-lg"
+                  className={`w-full text-left px-4 py-3 text-red-400 hover:bg-red-400/10 transition-colors flex items-center gap-2 ${admin ? 'rounded-lg' : 'rounded-b-lg'}`}
                 >
                   <span className="material-icons text-sm">delete</span>
                   Delete
@@ -230,6 +241,13 @@ const CommunityCard = ({
                 <span>{posts?.toLocaleString() || "0"} posts</span>
               </div>
             </div>
+
+            {/* Admin Owner Info */}
+            {admin && (
+              <div className="mb-4 p-2 bg-chip rounded-lg">
+                <p className="text-xs text-periwinkle font-semibold">Owner: {ownerLabel}</p>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">

@@ -245,16 +245,31 @@ export const communityApi = {
 
       // Extract user_id from auth token using the helper function
       let currentUserId = null;
+      let currentUsername = '';
+      let decodedToken = null;
       try {
         currentUserId = getUserIdFromAuth();
         console.log('🔐 Current user ID from token for community creation:', currentUserId);
+        const authData = JSON.parse(localStorage.getItem('Auth') || '{}');
+        if (authData && authData.token) {
+          decodedToken = _decodeJwt(authData.token);
+          currentUsername = decodedToken?.username || decodedToken?.name || '';
+        } else {
+          currentUsername = authData.username || authData.user_name || '';
+        }
       } catch (e) {
         console.error('❌ Could not extract user ID from auth token:', e);
         throw new Error('User authentication required. Please log in again.');
       }
-
-      // Include user_id in the form data
+      
+      // Include user_id and owner_username in the form data
       formData.append('user_id', currentUserId);
+      // Prefer owner_username provided by caller (from Profile Context); fallback to token-derived
+      const providedOwnerUsername = communityData?.owner_username;
+      const ownerUsernameToSend = (providedOwnerUsername && providedOwnerUsername.trim()) ? providedOwnerUsername : currentUsername;
+      if (ownerUsernameToSend) {
+        formData.append('owner_username', ownerUsernameToSend);
+      }
       console.log('📤 Added user_id to FormData for backend:', currentUserId);
       console.log('📋 Community data being sent:', {
         community_name: communityData.community_name,
@@ -381,6 +396,11 @@ export const communityApi = {
         formData.append('moderation', communityData.moderation);
       }
 
+      // Owner username can be updated if needed; include when provided
+      if (communityData.owner_username) {
+        formData.append('owner_username', communityData.owner_username);
+      }
+      
       if (imageFile) {
         formData.append('image', imageFile);
       }
