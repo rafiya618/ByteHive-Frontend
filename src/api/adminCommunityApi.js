@@ -1,17 +1,8 @@
-import { communityApi } from './communityApi.js';
+import { getAuthHeaders } from '../utils/authUtils';
 
-const API_BASE_URL = 'http://localhost:5001/api/admin/communities';
-
-// Reuse auth headers from communityApi
-const getAuthHeaders = () => {
-  // using same helper logic
-  const authData = localStorage.getItem('Auth');
-  if (!authData) throw new Error('No token, authorization denied');
-  const parsed = JSON.parse(authData);
-  const token = parsed.token;
-  if (!token) throw new Error('No token, authorization denied');
-  return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-};
+// Community admin routes live on the community service
+const COMMUNITY_BASE = (import.meta.env.VITE_COMMUNITY_SERVICE_URL || 'http://localhost:5001').replace(/\/$/, '');
+const API_BASE_URL = `${COMMUNITY_BASE}/api/admin/communities`;
 
 export const adminCommunityApi = {
   list: async (params = {}) => {

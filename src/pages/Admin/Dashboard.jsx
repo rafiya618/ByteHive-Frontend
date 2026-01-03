@@ -1,6 +1,22 @@
-import React, { useState, useEffect } from "react";
-import AdminSidebar from "../../components/admin/AdminSidebar";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import AdminSidebar from "../../components/admin/AdminSidebar";
+
+const ADMIN_BASE = (import.meta.env.VITE_ADMIN_SERVICE_URL || "http://localhost:3003").replace(/\/$/, "");
+
+const MetricCard = ({ title, value, icon, bgColor }) => (
+  <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6 hover:bg-dark-indigo/80 transition">
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-gray-400 text-sm font-medium mb-2">{title}</p>
+        <p className="text-white font-fenix text-3xl">{Number(value || 0).toLocaleString()}</p>
+      </div>
+      <div className={`p-3 rounded-lg ${bgColor}`}>
+        <span className="material-icons text-periwinkle text-2xl">{icon}</span>
+      </div>
+    </div>
+  </div>
+);
 
 const Dashboard = () => {
   const [metrics, setMetrics] = useState({
@@ -9,109 +25,88 @@ const Dashboard = () => {
     totalCommunities: 0,
     totalReports: 0,
   });
+
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API calls to your microservices
-        // const usersRes = await axios.get("BASE_URL/api/users/count");
-        // const postsRes = await axios.get("BASE_URL/api/posts/count");
-        // const communitiesRes = await axios.get("BASE_URL/api/communities/count");
-        // const reportsRes = await axios.get("BASE_URL/api/reports/count");
+        setError("");
 
-        // Mock data for now
+        const [statsRes, activityRes] = await Promise.all([
+          axios.get(`${ADMIN_BASE}/api/admin/dashboard/stats`),
+          axios.get(`${ADMIN_BASE}/api/admin/dashboard/activity`)
+        ]);
+
+        const data = statsRes?.data?.data || {};
         setMetrics({
-          totalUsers: 11,
-          totalPosts: 67,
-          totalCommunities: 23,
-          totalReports: 5,
+          totalUsers: data.totalUsers ?? 0,
+          totalPosts: data.totalPosts ?? 0,
+          totalCommunities: data.totalCommunities ?? 0,
+          totalReports: data.totalReports ?? 0,
         });
+
+        setActivity(activityRes?.data?.data || []);
       } catch (err) {
-        setError(err.message || "Failed to fetch metrics");
-        console.error("Error fetching metrics:", err);
+        console.error("Admin dashboard fetch failed", err);
+        setError(err?.response?.data?.message || err.message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMetrics();
+    fetchData();
   }, []);
-
-  const MetricCard = ({ title, value, icon, bgColor }) => (
-    <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6 hover:bg-dark-indigo/80 transition">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-gray-400 text-sm font-medium mb-2">{title}</p>
-          <p className="text-white font-fenix text-3xl">{value}</p>
-        </div>
-        <div className={`p-3 rounded-lg ${bgColor}`}>
-          <span className="material-icons text-periwinkle text-2xl">{icon}</span>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-rich-black flex">
-      {/* Sidebar */}
       <AdminSidebar />
 
-      {/* Main Content */}
       <div className="ml-64 flex-1 p-8">
-        {/* Header */}
         <div className="mb-8">
-          <h2 className="font-fenix text-[28px] text-white font-normal mb-2">
-            Dashboard
-          </h2>
-          <p className="text-gray-400 text-sm">Welcome to the admin panel</p>
+          <h2 className="font-fenix text-[28px] text-white font-normal mb-2">Dashboard</h2>
+          <p className="text-gray-400 text-sm">Live stats and recent activity</p>
         </div>
 
-        {/* Metrics Grid */}
         {loading ? (
-          <div className="text-center text-gray-400 py-12">Loading...</div>
+          <div className="text-center text-gray-400 py-12">Loading dashboard...</div>
         ) : error ? (
-          <div className="text-red-400 text-center py-12">{error}</div>
+          <div className="text-center text-red-400 py-12">{error}</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <MetricCard
-              title="Total Users"
-              value={metrics.totalUsers}
-              icon="person"
-              bgColor="bg-medium-slate-blue/20"
-            />
-            <MetricCard
-              title="Total Posts"
-              value={metrics.totalPosts}
-              icon="article"
-              bgColor="bg-celadon/20"
-            />
-            <MetricCard
-              title="Total Communities"
-              value={metrics.totalCommunities}
-              icon="groups"
-              bgColor="bg-periwinkle/20"
-            />
-            <MetricCard
-              title="Reports"
-              value={metrics.totalReports}
-              icon="flag"
-              bgColor="bg-pinkish/20"
-            />
-          </div>
-        )}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <MetricCard title="Total Users" value={metrics.totalUsers} icon="person" bgColor="bg-medium-slate-blue/20" />
+              <MetricCard title="Total Posts" value={metrics.totalPosts} icon="article" bgColor="bg-celadon/20" />
+              <MetricCard title="Total Communities" value={metrics.totalCommunities} icon="groups" bgColor="bg-periwinkle/20" />
+              <MetricCard title="Reports" value={metrics.totalReports} icon="flag" bgColor="bg-pinkish/20" />
+            </div>
 
-        {/* Recent Activity Section */}
-        <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6">
-          <h3 className="text-white font-fenix text-lg font-normal mb-4">
-            Recent Activity
-          </h3>
-          <div className="text-gray-400 text-sm text-center py-12">
-            Activity data will be displayed here
-          </div>
-        </div>
+            <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-fenix text-lg font-normal">Recent Activity</h3>
+                <span className="text-xs text-gray-400">Latest {activity.length || 0}</span>
+              </div>
+              {activity.length === 0 ? (
+                <div className="text-gray-400 text-sm text-center py-12">No activity yet</div>
+              ) : (
+                <div className="space-y-3">
+                  {activity.map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-3 bg-rich-black border border-navbar-border rounded-md px-4 py-3">
+                      <span className="material-icons text-periwinkle text-base mt-[2px]">history</span>
+                      <div>
+                        <p className="text-white text-sm">{item.what}</p>
+                        <p className="text-gray-400 text-xs">{item.who} · {item.when}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

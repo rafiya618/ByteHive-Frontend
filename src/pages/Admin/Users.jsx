@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import axios from "axios";
 import debounce from "lodash/debounce";
+import { getAuthHeaders } from "../../utils/authUtils";
 
-const BASE_URL = "http://localhost:3000"; // Your backend URL
+// Auth service hosts admin user management
+const BASE_URL = (import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:3000").replace(/\/$/, "");
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -24,6 +26,7 @@ const Users = () => {
           cursor: newCursor,
           limit,
         },
+        headers: getAuthHeaders(),
       });
 
       if (newCursor) {
@@ -72,7 +75,9 @@ const Users = () => {
   // Admin actions
   const handleBlock = async (userId) => {
     try {
-      await axios.put(`${BASE_URL}/admin/users/${userId}/block`);
+      await axios.put(`${BASE_URL}/admin/users/${userId}/block`, {}, {
+        headers: getAuthHeaders(),
+      });
       setUsers((prev) =>
         prev.map((u) =>
           u._id === userId
@@ -87,7 +92,9 @@ const Users = () => {
 
   const handlePromote = async (userId) => {
     try {
-      await axios.put(`${BASE_URL}/admin/users/${userId}/promote`);
+      await axios.put(`${BASE_URL}/admin/users/${userId}/promote`, {}, {
+        headers: getAuthHeaders(),
+      });
       setUsers((prev) =>
         prev.map((u) => (u._id === userId ? { ...u, role: "admin" } : u))
       );
@@ -98,7 +105,9 @@ const Users = () => {
 
   const handleDelete = async (userId) => {
     try {
-      await axios.delete(`${BASE_URL}/admin/users/${userId}`);
+      await axios.delete(`${BASE_URL}/admin/users/${userId}`, {
+        headers: getAuthHeaders(),
+      });
       setUsers((prev) => prev.filter((u) => u._id !== userId));
     } catch (err) {
       console.error(err);

@@ -23,7 +23,8 @@ export const getAuthHeaders = () => {
     }
     
     return {
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     };
   } catch (error) {
     throw new AuthError('Invalid token format, authorization denied');

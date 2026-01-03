@@ -14,7 +14,8 @@ const AuthProvider = ({ children }) => {
         const parsed = JSON.parse(storedData);
         const decoded = jwtDecode(parsed.token);
         setAuth({ token: parsed.token, user: decoded });
-        // console.log(`token: ${parsed.token}, user: ${decoded}` )
+        console.log(`token: ${parsed.token}, user: ${JSON.stringify(decoded)}` )
+        
       } catch (error) {
         console.error("Invalid token", error);
         setAuth({ token: "", user: null });

@@ -1,18 +1,10 @@
-const API_BASE_URL = 'http://localhost:5000/api/admin/posts';
-const COMMUNITY_API_BASE = 'http://localhost:5001/api/admin/communities';
+import { getAuthHeaders } from '../utils/authUtils';
 
-// Get auth headers from localStorage
-const getAuthHeaders = () => {
-  const authData = localStorage.getItem('Auth');
-  if (!authData) throw new Error('No token, authorization denied');
-  const parsed = JSON.parse(authData);
-  const token = parsed.token;
-  if (!token) throw new Error('No token, authorization denied');
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  };
-};
+// Posts admin routes live on the posts service; community admin lives on the community service
+const POSTS_BASE = (import.meta.env.VITE_POSTS_SERVICE_URL || 'http://localhost:5000').replace(/\/$/, '');
+const COMMUNITY_BASE = (import.meta.env.VITE_COMMUNITY_SERVICE_URL || 'http://localhost:5001').replace(/\/$/, '');
+const API_BASE_URL = `${POSTS_BASE}/api/admin/posts`;
+const COMMUNITY_API_BASE = `${COMMUNITY_BASE}/api/admin/communities`;
 
 export const adminPostApi = {
   // List all posts with filters and pagination
@@ -32,7 +24,11 @@ export const adminPostApi = {
       method: 'GET',
       headers: getAuthHeaders(),
     });
-    if (!res.ok) throw new Error('Failed to fetch posts');
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+      console.error('Admin posts fetch failed:', res.status, errorData);
+      throw new Error(errorData.message || `Failed to fetch posts (${res.status})`);
+    }
     return res.json();
   },
 

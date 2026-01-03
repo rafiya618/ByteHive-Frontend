@@ -30,11 +30,11 @@ import Streak from "./pages/Streak";
 import { useParams } from "react-router-dom";
 import HomePage from "./pages/VideoCall/HomePage";
 import Room from "./pages/VideoCall/Room";
-import Dashboard from "./pages/admin/Dashboard";
-import Users from "./pages/admin/Users";
-import Posts from "./pages/admin/Posts";
-import AdminCommunities from "./pages/admin/Communities";
-import Reports from "./pages/admin/Reports";
+import Dashboard from "./pages/Admin/Dashboard";
+import Users from "./pages/Admin/Users";
+import Posts from "./pages/Admin/Posts";
+import AdminCommunities from "./pages/Admin/Communities";
+import Reports from "./pages/Admin/Reports";
 import AdminCommunityDetail from "./pages/Admin/CommunityDetailAdmin";
 
 function RoomWrapper() {
@@ -85,12 +85,12 @@ function App() {
                 <Route path="/enable-notifications" element={<RequireStep minStep={4}><EnableNotifications /></RequireStep>} />
                 
                 {/* Admin Routes */}
-                <Route path="/admin/dashboard" element={<Dashboard />} />
-                <Route path="/admin/users" element={<Users />} />
-                <Route path="/admin/posts" element={<Posts />} />
-                <Route path="/admin/communities" element={<AdminCommunities />} />
-                <Route path="/admin/communities/:id" element={<AdminCommunityDetail />} />
-                <Route path="/admin/reports" element={<Reports />} />
+                <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
+                <Route path="/admin/users" element={<AdminRoute><Users /></AdminRoute>} />
+                <Route path="/admin/posts" element={<AdminRoute><Posts /></AdminRoute>} />
+                <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
+                <Route path="/admin/communities/:id" element={<AdminRoute><AdminCommunityDetail /></AdminRoute>} />
+                <Route path="/admin/reports" element={<AdminRoute><Reports /></AdminRoute>} />
                 
                 <Route path="*" element={<PageNotFound />} />
               </Routes>
@@ -121,6 +121,18 @@ function RequireStep({ minStep, children }) {
   const userStep = auth?.token ? auth?.user?.onboardingStep : 1;
   if (userStep < minStep) {
     return <Navigate to={getRedirectPath(userStep)} />;
+  }
+  return children;
+}
+
+// Restrict admin-only routes; non-admins are redirected home
+function AdminRoute({ children }) {
+  const { auth, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  const role = auth?.user?.role;
+  if (!auth?.token || role !== "admin") {
+    return <Navigate to="/" replace />;
   }
   return children;
 }
