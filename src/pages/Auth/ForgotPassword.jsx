@@ -73,7 +73,7 @@ const ForgotPassword = () => {
 
   return (
     <div className='min-h-screen bg-rich-black  flex flex-col relative text-white'>
-      <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
+      <div className="absolute z-0 blur-overlay" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
       <div className="bg-navbar-bg text-white w-full flex items-center justify-center min-h-screen px-4">
         <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border transition-shadow hover:shadow-xl">
           {step === 1 && (

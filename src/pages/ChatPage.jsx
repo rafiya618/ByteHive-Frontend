@@ -685,7 +685,7 @@ const ChatPage = () => {
         {/* Main Content */}
         <div className="flex flex-col flex-1 relative">
           {/* Background Blur Effect */}
-          <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", 
+          <div className="absolute z-0 blur-overlay" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", 
                background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", 
                borderRadius: 30, pointerEvents: "none" }} />
 

@@ -12,10 +12,24 @@ export default function Navbar() {
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [streakDropdownOpen, setStreakDropdownOpen] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved || 'dark';
+  });
   const { profile } = useProfile()
   const { notifications, markAllAsRead } = useNotifications()
   const { logout } = useAuth()
   const navigate = useNavigate()
+
+  // Apply theme to document on mount and when theme changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     fetchCurrentStreak();
@@ -78,6 +92,19 @@ export default function Navbar() {
 
             {/* Right side (desktop) */}
             <div className="flex items-center space-x-3">
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="text-columbia-blue hover:text-white transition-colors group cursor-pointer"
+              >
+                <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
+                  <span className="material-icons text-4xl">
+                    {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                  </span>
+                </div>
+              </button>
+
               <div className="relative">
                 <button onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center text-pinkish hover:text-pinkish-dark transition-colors group relative cursor-pointer">
                   <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center space-x-1">
@@ -100,11 +127,13 @@ export default function Navbar() {
                   try { await markAllAsRead(); } catch (e) { /* non-blocking */ }
                   navigate("/notification");
                 }}
-                className="text-columbia-blue hover:text-white p-3 rounded-full hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer"
+                className="text-columbia-blue hover:text-white transition-colors group relative cursor-pointer"
               >
-                <span className="material-icons text-3xl">notifications</span>
+                <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
+                  <span className="material-icons text-4xl">notifications</span>
+                </div>
                 {notifications && notifications.some(n => n.status === 'unread') && (
-                  <span className="absolute top-0 right-0 min-w-5 h-5 flex items-center justify-center rounded-full bg-medium-slate-blue text-white text-xs font-bold px-1">
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 flex items-center justify-center rounded-full bg-medium-slate-blue text-white text-xs font-bold px-1 z-10 shadow-sm border border-rich-black-light">
                     {/* Show count of unread instead of total */}
                     {(() => {
                       const count = notifications.filter(n => n.status === 'unread').length;
@@ -197,6 +226,10 @@ export default function Navbar() {
           <button onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center space-x-4 text-pinkish hover:text-pinkish-dark transition-colors w-full cursor-pointer">
             <span className="material-icons text-2xl">local_fire_department</span>
             <span>Streak ({currentStreak})</span>
+          </button>
+          <button onClick={toggleTheme} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+            <span className="material-icons text-2xl">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           <button onClick={() => navigate("/profile")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
             <span className="material-icons text-2xl">account_circle</span>

@@ -1,7 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { getUserStreak, getAllBadges } from '../../api/retentionApi';
 import { updatePreferences } from '../../api/notificationApi';
 import { registerPush } from '../../helpers/registerPush';
+
+// Import Badge Assets
+import L1Badge from '../../assets/badges/NoviceExplorer.png';
+import L2Badge from '../../assets/badges/ActiveContributor.png';
+import L3Badge from '../../assets/badges/EngagedMember.png';
+import L4Badge from '../../assets/badges/CommunityChampion.png';
+import L5Badge from '../../assets/badges/MasterScholar.png';
 
 const scrollbarStyles = `
   .streak-dropdown-scroll::-webkit-scrollbar {
@@ -246,21 +252,44 @@ export default function StreakDropdown({ isOpen, onClose }) {
   };
 
   // Get level badge text
-  const getLevelBadge = (level) => {
-    const badges = ['', 'Novice', 'Explorer', 'Contributor', 'Expert', 'Master'];
-    return badges[level] || 'Novice';
+  const getLevelBadgeName = (level) => {
+    const badges = {
+      1: 'Novice Explorer',
+      2: 'Active Contributor',
+      3: 'Engaged Member',
+      4: 'Community Champion',
+      5: 'Master Scholar'
+    };
+    return badges[level] || 'Novice Explorer';
   };
 
-  // Get badge icon color based on badge type
-  const getBadgeIconColor = (badge) => {
-    switch (badge.badge_id) {
-      case 'novice-explorer': return 'text-blue-400';
-      case 'active-contributor': return 'text-green-400';
-      case 'engaged-member': return 'text-purple-400';
-      case 'community-champion': return 'text-yellow-400';
-      case 'master-scholar': return 'text-red-400';
-      default: return 'text-white';
-    }
+  const getBadgeImage = (level) => {
+    const images = {
+      1: L1Badge,
+      2: L2Badge,
+      3: L3Badge,
+      4: L4Badge,
+      5: L5Badge
+    };
+    return images[level] || L1Badge;
+  };
+
+  // Get badge icon or image
+  const getBadgeIcon = (badge) => {
+    const badges = {
+      'novice-explorer': L1Badge,
+      'active-contributor': L2Badge,
+      'engaged-member': L3Badge,
+      'community-champion': L4Badge,
+      'master-scholar': L5Badge,
+      // Handle badge names as well
+      'Novice Explorer': L1Badge,
+      'Active Contributor': L2Badge,
+      'Engaged Member': L3Badge,
+      'Community Champion': L4Badge,
+      'Master Scholar': L5Badge
+    };
+    return badges[badge.badge_id] || badges[badge.badge_name] || badge.badge_icon || 'military_tech';
   };
 
   if (!isOpen) return null;
@@ -288,9 +317,13 @@ export default function StreakDropdown({ isOpen, onClose }) {
         <div className="streak-dropdown-scroll overflow-y-auto max-h-96 p-5 space-y-4">
 
           {/* Level Badge - Top */}
-          <div className={`bg-gradient-to-r ${getLevelColor(currentLevel)} rounded-lg p-4 text-white text-center`}>
-            <div className="text-4xl font-bold mb-1">LEVEL {currentLevel}</div>
-            <div className="text-sm font-semibold">{getLevelBadge(currentLevel)}</div>
+          <div className={`bg-gradient-to-r ${getLevelColor(currentLevel)} rounded-lg p-4 text-white text-center relative flex flex-col items-center`}>
+            <img 
+              src={getBadgeImage(currentLevel)} 
+              alt={getLevelBadgeName(currentLevel)} 
+              className="w-16 h-16 object-contain mb-2"
+            />
+            <div className="text-sm font-semibold">{getLevelBadgeName(currentLevel)}</div>
           </div>
 
           {/* Header: Streak Stats */}
@@ -440,7 +473,15 @@ export default function StreakDropdown({ isOpen, onClose }) {
                     {/* Badge Icon */}
                     <div className="text-2xl sm:text-3xl mb-2 flex items-center justify-center h-10 sm:h-12">
                       {isEarned ? (
-                        <span className={`material-icons ${getBadgeIconColor(badge)}`}>{badge.badge_icon}</span>
+                        (() => {
+                          const icon = getBadgeIcon(badge);
+                          const isImage = typeof icon !== 'string' || icon.startsWith('data:') || icon.includes('/');
+                          return isImage ? (
+                            <img src={icon} alt={badge.badge_name} className="w-10 h-10 object-contain" />
+                          ) : (
+                            <span className="material-icons text-white">{icon}</span>
+                          );
+                        })()
                       ) : (
                         <span className="material-icons text-white">lock</span>
                       )}

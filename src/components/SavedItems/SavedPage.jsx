@@ -120,7 +120,7 @@ const SavedPage = () => {
     <div className="min-h-screen bg-rich-black text-white relative">
       {/* Background Glow Effect */}
       <div
-        className="absolute z-0"
+        className="absolute z-0 blur-overlay"
         style={{
           width: 637,
           height: 300,

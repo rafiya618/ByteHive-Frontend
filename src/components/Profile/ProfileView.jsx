@@ -36,7 +36,7 @@ const ProfileView = ({ profile = {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 w-full max-w-md mx-auto p-6 rounded-xl shadow-2xl border border-blue-900/30 text-white overflow-hidden">
+    <div className="relative bg-dark-indigo w-full max-w-md mx-auto p-6 rounded-xl shadow-2xl border border-navbar-border text-white overflow-hidden">
       
       {/* Cybersecurity Background Effect - Behind everything */}
       <div className="absolute inset-0 pointer-events-none opacity-20">
@@ -121,10 +121,9 @@ const ProfileView = ({ profile = {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 px-3 py-2 
-                   bg-slate-900/50 backdrop-blur-sm rounded-lg border border-blue-900/50 
+                   bg-rich-black-light backdrop-blur-sm rounded-lg border border-navbar-border 
                    transition-all duration-200 text-sm
-                   hover:bg-blue-900/30 hover:border-blue-400 hover:text-blue-300
-                   hover:shadow-lg hover:shadow-blue-500/20"
+                   hover:bg-periwinkle-light hover:border-periwinkle hover:text-white"
                 >
                   {Icon && (
                     <Icon className="text-base text-blue-400 group-hover:text-blue-300 transition-colors" />

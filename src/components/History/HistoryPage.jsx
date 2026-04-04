@@ -293,7 +293,7 @@ const HistoryPage = () => {
     <div className="min-h-screen bg-rich-black text-white relative">
       {/* Background Glow Effect */}
       <div
-        className="absolute z-0"
+        className="absolute z-0 blur-overlay"
         style={{
           width: 637,
           height: 300,
@@ -382,7 +382,7 @@ const HistoryPage = () => {
                 {Object.entries(groupedHistory).map(([timeGroup, items]) => (
                   <div key={timeGroup} className="space-y-4">
                     {/* Section Header - Google Style */}
-                    <div className="sticky top-0 z-10 bg-rich-black/95 backdrop-blur-sm py-3 border-b border-navbar-border">
+                    <div className="sticky top-0 z-10 bg-rich-black py-3">
                       <h2 className="font-lato text-lg font-semibold text-periwinkle">
                         {timeGroup}
                       </h2>

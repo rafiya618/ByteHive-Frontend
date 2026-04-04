@@ -70,7 +70,7 @@ const EventsListing = () => {
   return (
     <div className="min-h-screen bg-rich-black flex flex-col">
       <Navbar />
-      <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
+      <div className="absolute z-0 blur-overlay" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-9">
           <div className="z-10">

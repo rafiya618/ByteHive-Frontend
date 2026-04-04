@@ -294,7 +294,7 @@ const BlogListing = () => {
       <Navbar />
 
       <div
-        className="absolute z-0"
+        className="absolute z-0 blur-overlay"
         style={{
           width: 637,
           height: 300,

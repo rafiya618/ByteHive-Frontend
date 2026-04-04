@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { getUserStreak, getUserStats, getLeaderboard } from '../api/retentionApi';
 import toast from 'react-hot-toast';
 
+// Import Badge Assets
+import L1Badge from '../assets/badges/NoviceExplorer.png';
+import L2Badge from '../assets/badges/ActiveContributor.png';
+import L3Badge from '../assets/badges/EngagedMember.png';
+import L4Badge from '../assets/badges/CommunityChampion.png';
+import L5Badge from '../assets/badges/MasterScholar.png';
+
 export default function StreakPage() {
   const [streak, setStreak] = useState(null);
   const [stats, setStats] = useState(null);
@@ -42,13 +49,24 @@ export default function StreakPage() {
 
   const getLevelName = (level) => {
     const names = {
-      1: 'Novice',
-      2: 'Apprentice',
-      3: 'Expert',
-      4: 'Master',
-      5: 'Legend'
+      1: 'Novice Explorer',
+      2: 'Active Contributor',
+      3: 'Engaged Member',
+      4: 'Community Champion',
+      5: 'Master Scholar'
     };
-    return names[level] || 'Novice';
+    return names[level] || 'Novice Explorer';
+  };
+
+  const getBadgeImage = (level) => {
+    const images = {
+      1: L1Badge,
+      2: L2Badge,
+      3: L3Badge,
+      4: L4Badge,
+      5: L5Badge
+    };
+    return images[level] || L1Badge;
   };
 
   const getBadgeIcon = (badgeName) => {
@@ -61,13 +79,17 @@ export default function StreakPage() {
       'Comment King': 'chat',
       'Like Legend': 'favorite',
       'Consistency Champion': 'local_fire_department',
-      'Community Champion': 'stars',
+      'Community Champion': L4Badge,
       'Unstoppable': 'flash',
-      'Novice Explorer': 'explore',
-      'Apprentice Adventurer': 'hiking',
-      'Expert Navigator': 'navigation',
-      'Master Voyager': 'flight_takeoff',
-      'Legendary Pioneer': 'rocket'
+      'Novice Explorer': L1Badge,
+      'Active Contributor': L2Badge,
+      'Engaged Member': L3Badge,
+      'Master Scholar': L5Badge,
+      // Legacy names mapping
+      'Apprentice Adventurer': L2Badge,
+      'Expert Navigator': L3Badge,
+      'Master Voyager': L4Badge,
+      'Legendary Pioneer': L5Badge
     };
     return badges[badgeName] || 'military_tech';
   };
@@ -157,8 +179,12 @@ export default function StreakPage() {
               {/* Level and Progress */}
               <div className="bg-periwinkle-light rounded-lg p-8">
                 <div className="flex items-center space-x-6 mb-6">
-                  <div className={`${getLevelColor(streak?.current_level)} rounded-full w-24 h-24 flex items-center justify-center text-white text-4xl font-bold`}>
-                    {streak?.current_level || 1}
+                  <div className="flex items-center justify-center">
+                    <img 
+                      src={getBadgeImage(streak?.current_level)} 
+                      alt={getLevelName(streak?.current_level)} 
+                      className="w-32 h-32 object-contain"
+                    />
                   </div>
                   <div>
                     <p className="text-xs text-columbia-blue uppercase tracking-wider">Current Level</p>
@@ -191,13 +217,22 @@ export default function StreakPage() {
                     <span>Earned Badges</span>
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {streak.badge_details.map((badge, index) => (
-                      <div key={index} className="bg-periwinkle-light rounded-lg p-6 text-center hover:bg-periwinkle-light hover:shadow-lg transition-all">
-                        <span className="material-icons text-4xl mb-3">{getBadgeIcon(badge.badge_name)}</span>
-                        <p className="text-sm font-semibold text-white mb-2">{badge.badge_name}</p>
-                        <p className="text-xs text-columbia-blue">{badge.description}</p>
-                      </div>
-                    ))}
+                    {streak.badge_details.map((badge, index) => {
+                      const icon = getBadgeIcon(badge.badge_name);
+                      const isImage = typeof icon !== 'string' || icon.startsWith('data:') || icon.includes('/');
+                      
+                      return (
+                        <div key={index} className="bg-periwinkle-light rounded-lg p-6 text-center hover:bg-periwinkle-light hover:shadow-lg transition-all flex flex-col items-center">
+                          {isImage ? (
+                            <img src={icon} alt={badge.badge_name} className="w-20 h-20 object-contain mb-3" />
+                          ) : (
+                            <span className="material-icons text-4xl mb-3">{icon}</span>
+                          )}
+                          <p className="text-sm font-semibold text-white mb-2">{badge.badge_name}</p>
+                          <p className="text-xs text-columbia-blue">{badge.description}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

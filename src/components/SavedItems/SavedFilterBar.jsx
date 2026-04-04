@@ -11,8 +11,8 @@ const SavedFilterBar = ({ filters = [], selected, onSelect }) => {
             className="font-lato text-lg px-2 pb-1 border-b-2 transition-all"
             style={{
               fontWeight: isSelected ? 600 : 400,
-              color: isSelected ? "#8B93D1" : "#C9E8FF",
-              borderColor: isSelected ? "#8B93D1" : "transparent",
+              color: isSelected ? "var(--periwinkle)" : "var(--columbia-blue)",
+              borderColor: isSelected ? "var(--periwinkle)" : "transparent",
               opacity: isSelected ? 1 : 0.85,
             }}
             onClick={() => onSelect(filter)}

@@ -43,9 +43,22 @@ const Login = () => {
 
   return (
     <div className='min-h-screen bg-rich-black  flex flex-col relative text-white'>
-       <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
+      {/* Quick Theme Toggle for Auth Pages */}
+      <button 
+        onClick={() => {
+          const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', newTheme);
+          localStorage.setItem('theme', newTheme);
+        }}
+        className="absolute top-6 right-6 z-50 text-columbia-blue hover:text-white p-3 rounded-full hover:bg-periwinkle-light transition-colors flex items-center justify-center cursor-pointer"
+        title="Toggle Theme"
+      >
+        <span className="material-icons text-3xl">light_mode</span>
+      </button>
+
+      <div className="absolute z-0 blur-overlay" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
       <div className="bg-navbar-bg text-white w-full flex items-center justify-center min-h-screen px-4">
-        <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border transition-shadow hover:shadow-xl">
+        <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border transition-shadow hover:shadow-xl relative z-10">
           <h1 className="text-xl md:text-2xl font-bold text-center mb-6">Login to Your Account</h1>
 
           <form onSubmit={HandleSubmit} className="flex flex-col gap-1 mt-8">

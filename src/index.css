@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 :root {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,6 +29,230 @@
   --card-button-hover-bg: #383850;
 }
 
+/* ===== LIGHT MODE: CSS variable overrides ===== */
+[data-theme="light"] {
+  --rich-black: #F0F2F5;
+  --rich-black-light: #E2E8F0; /* Re-applying fix: this gives the icons a visible box against the white navbar */
+  --dark-navy-purple: #FFFFFF;
+  --faint-greyish-overlay: rgba(0, 0, 0, 0.1);
+  --dark-indigo: #F8FAFC;
+  --navbar-bg: #FFFFFF; /* Using solid white for cards so they don't show background through */
+  --periwinkle: #4F46E5;
+  --periwinkle-light: rgba(79, 70, 229, 0.1);
+  --columbia-blue: #1E293B;
+  --celadon: #166534;
+  --medium-slate-blue: #4F46E5;
+  --medium-slate-blue-dark: #4338CA;
+  --periwinkle-dark: #3730A3;
+  --celadon-dark: #14532D;
+  --gray-700: #E2E8F0;
+  --gray-800: #F1F5F9;
+  --navbar-border: rgba(0, 0, 0, 0.12);
+  --pinkish: #BE185D;
+  --pinkish-dark: #9D174D;
+  --card-button-bg: #F1F5F9;
+  --card-button-hover-bg: #E2E8F0;
+}
+
+/* ===== LIGHT MODE: Global class overrides ===== */
+
+/* Body & page */
+[data-theme="light"] body {
+  background-color: #F0F2F5;
+  color: #0F172A;
+}
+
+/* Hide all dark glow/blur overlay divs */
+[data-theme="light"] .blur-overlay,
+[data-theme="light"] .layout-blur-bg {
+  display: none !important;
+}
+
+/* Gradient page backgrounds */
+[data-theme="light"] .bg-gradient-radial-custom {
+  background: linear-gradient(135deg, #EEF2FF 0%, #F0F9FF 100%);
+}
+
+/* ---- Text ---- */
+[data-theme="light"] .text-white {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .text-gray-200 {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .text-gray-300 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .text-gray-400 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .text-gray-500 {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] .text-desc {
+  color: #475569 !important;
+}
+
+/* ---- Backgrounds ---- */
+[data-theme="light"] .bg-gray-600 {
+  background-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] .bg-gray-700 {
+  background-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .bg-gray-800 {
+  background-color: #F1F5F9 !important;
+}
+
+[data-theme="light"] .bg-gray-900 {
+  background-color: #E8EDF2 !important;
+}
+
+[data-theme="light"] .bg-black\/60 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ---- Hover backgrounds ---- */
+/* ---- Hover backgrounds - Disabled in Light Mode ---- */
+[data-theme="light"] .hover\:bg-gray-700:hover {
+  background-color: #E2E8F0 !important; /* Matches base .bg-gray-700 */
+}
+
+[data-theme="light"] .hover\:bg-gray-800:hover {
+  background-color: #F1F5F9 !important; /* Matches base .bg-gray-800 */
+}
+
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: #FFFFFF !important; /* Matches solid navbar-bg */
+}
+
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Completely remove card/link transitions in light mode to force absolute zero hover shift */
+[data-theme="light"] .transition,
+[data-theme="light"] .transition-all,
+[data-theme="light"] .transition-colors,
+[data-theme="light"] a,
+[data-theme="light"] button {
+  transition: none !important;
+}
+
+/* Ensure no default link hover opacity */
+[data-theme="light"] a:hover {
+  opacity: 1 !important;
+}
+
+/* Remove community card hover border effect in light mode */
+[data-theme="light"] .hover\:border-periwinkle:hover {
+  border-color: var(--navbar-border) !important;
+}
+
+/* ---- Prose (Blog Content) in Light Mode ---- */
+[data-theme="light"] .prose-invert,
+[data-theme="light"] .prose {
+  --tw-prose-body: #1E293B;
+  --tw-prose-headings: #0F172A;
+  --tw-prose-lead: #475569;
+  --tw-prose-links: #4F46E5;
+  --tw-prose-bold: #0F172A;
+  --tw-prose-counters: #64748B;
+  --tw-prose-bullets: #CBD5E1;
+  --tw-prose-hr: #E2E8F0;
+  --tw-prose-quotes: #0F172A;
+  --tw-prose-quote-borders: #E2E8F0;
+  --tw-prose-captions: #64748B;
+  --tw-prose-code: #0F172A;
+  --tw-prose-pre-code: #E2E8F0;
+  --tw-prose-pre-bg: #F8FAFC;
+  --tw-prose-th-borders: #E2E8F0;
+  --tw-prose-td-borders: #E2E8F0;
+  color: #1E293B !important;
+}
+
+[data-theme="light"] .prose-invert h1,
+[data-theme="light"] .prose-invert h2,
+[data-theme="light"] .prose-invert h3,
+[data-theme="light"] .prose-invert h4,
+[data-theme="light"] .prose-invert strong,
+[data-theme="light"] .prose-h2\:text-white,
+[data-theme="light"] .prose-h1\:text-white,
+[data-theme="light"] .prose-h3\:text-white {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .prose-p\:text-white,
+[data-theme="light"] .prose-p\:text-gray-200 {
+  color: #1E293B !important;
+}
+
+/* ---- Borders ---- */
+[data-theme="light"] .border-gray-600 {
+  border-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] .border-gray-700 {
+  border-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .border-gray-800 {
+  border-color: #E2E8F0 !important;
+}
+
+/* ---- Inputs & Forms ---- */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  outline-color: #4F46E5 !important;
+}
+
+/* ---- Card/chip ---- */
+[data-theme="light"] .bg-chip {
+  background-color: #E0E7FF !important;
+  color: #4338CA !important;
+}
+
+[data-theme="light"] .icon-periwinkle {
+  color: #4F46E5 !important;
+}
+
+/* ---- Buttons with colored backgrounds keep white text ---- */
+[data-theme="light"] .bg-blue-600,
+[data-theme="light"] .bg-blue-600 *,
+[data-theme="light"] .bg-medium-slate-blue,
+[data-theme="light"] .bg-medium-slate-blue *,
+[data-theme="light"] .bg-periwinkle,
+[data-theme="light"] .bg-periwinkle *,
+[data-theme="light"] .chat-bubble-current,
+[data-theme="light"] .chat-bubble-current * {
+  color: #FFFFFF !important;
+}
+
+/* ---- Scrollbar in light mode ---- */
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #818CF8;
+}
+
 /* Custom radial gradient utility for background */
 .bg-gradient-radial-custom {
   background: radial-gradient(110% 90% at 0% 0%, #22213b 60%, #18162D 100%);
@@ -35,23 +260,51 @@
 
 
 .bg-rich-black {
-  background: #0C0C16;
+  background: var(--rich-black);
 }
+
 .font-fenix {
   font-family: 'Fenix', serif;
 }
-.border-periwinkle-light{
-  color: var(--periwinkle-light); 
-}
-/* index.css additions */
-.text-periwinkle { color: var(--periwinkle); }   
-.text-celadon-dark { color: var(--celadon-dark); }            /* you were using this class but it wasn't defined */
-.bg-chip { background-color: #374053; }                   /* matches the pill bg */
-.icon-periwinkle { color: #B0BAFF !important; }           /* force Material Icons color */
-.text-desc { color: #FFFFFFB2; }                          /* description color */
 
-.bg-navbar-bg { background-color: var(--navbar-bg); }
-.bg-dark-navy-purple { background-color: var(--dark-navy-purple); }
+.border-periwinkle-light {
+  color: var(--periwinkle-light);
+}
+
+/* index.css additions */
+.text-periwinkle {
+  color: var(--periwinkle);
+}
+
+.text-celadon-dark {
+  color: var(--celadon-dark);
+}
+
+/* you were using this class but it wasn't defined */
+.bg-chip {
+  background-color: #374053;
+}
+
+/* matches the pill bg */
+.icon-periwinkle {
+  color: var(--periwinkle) !important;
+}
+
+/* force Material Icons color */
+.text-desc {
+  color: #FFFFFFB2;
+}
+
+/* description color */
+
+.bg-navbar-bg {
+  background-color: var(--navbar-bg);
+}
+
+.bg-dark-navy-purple {
+  background-color: var(--dark-navy-purple);
+}
+
 .bg-dark-indigo {
   background-color: var(--dark-indigo);
   transition: background-color 0.3s ease;
@@ -60,26 +313,61 @@
 /* .bg-dark-indigo:hover {
   background-color: color-mix(in srgb, var(--dark-indigo) 95%, white);
 } */
-.border-navbar-border { border-color: var(--navbar-border);}
-.border-rich-black { border-color: var(--rich-black);}
-.border-dark-indigo { border-color: var(--dark-indigo);}
-.border-faint-greyish-overlay { border-color: var(--faint-greyish-overlay);}
-.bg-rich-black-light { background-color: var(--rich-black-light);}
-.text-columbia-blue { color: var(--columbia-blue);}
-.text-pinkish { color: var(--pinkish);}
-.bg-medium-slate-blue { background-color: var(--medium-slate-blue);}
-.hover\:bg-white\/10:hover { background-color: rgba(255,255,255,0.10);}
-.hover\:border-periwinkle:hover { border-color: var(--periwinkle);}
-.font-fenix { font-family: 'Fenix', serif; }
+.border-navbar-border {
+  border-color: var(--navbar-border);
+}
+
+.border-rich-black {
+  border-color: var(--rich-black);
+}
+
+.border-dark-indigo {
+  border-color: var(--dark-indigo);
+}
+
+.border-faint-greyish-overlay {
+  border-color: var(--faint-greyish-overlay);
+}
+
+.bg-rich-black-light {
+  background-color: var(--rich-black-light);
+}
+
+.text-columbia-blue {
+  color: var(--columbia-blue);
+}
+
+.text-pinkish {
+  color: var(--pinkish);
+}
+
+.bg-medium-slate-blue {
+  background-color: var(--medium-slate-blue);
+}
+
+.hover\:bg-white\/10:hover {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+.hover\:border-periwinkle:hover {
+  border-color: var(--periwinkle);
+}
+
+.font-fenix {
+  font-family: 'Fenix', serif;
+}
 
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4f46e5; /* Tailwind indigo-600 */
+  background: #4f46e5;
+  /* Tailwind indigo-600 */
   border-radius: 9999px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -90,7 +378,8 @@
 }
 
 .search-input-container input {
-  padding-right: 3rem; /* Space for search icon */
+  padding-right: 3rem;
+  /* Space for search icon */
 }
 
 .search-input-container .search-icon {
@@ -98,7 +387,8 @@
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  pointer-events: none; /* Icon shouldn't block input */
+  pointer-events: none;
+  /* Icon shouldn't block input */
 }
 
 /* Standardized prose whitespace */
@@ -131,10 +421,10 @@
 }
 
 /* Remove excessive whitespace */
-.prose > *:first-child {
+.prose>*:first-child {
   margin-top: 0;
 }
 
-.prose > *:last-child {
+.prose>*:last-child {
   margin-bottom: 0;
 }

@@ -150,7 +150,7 @@ export default function BlogDetail() {
     <div className="min-h-screen bg-rich-black relative">
       {/* Glow background */}
       <div
-        className="absolute z-0"
+        className="absolute z-0 blur-overlay"
         style={{
           width: 637,
           height: 300,
@@ -188,7 +188,7 @@ export default function BlogDetail() {
               <input
                 type="text"
                 placeholder="Search in article"
-                className="bg-transparent border border-[#393B5A] text-white rounded-lg h-[49px] pl-12 w-96 text-base focus:outline-none font-lato placeholder-periwinkle"
+                className="bg-transparent border border-navbar-border text-white rounded-lg h-[49px] pl-12 w-96 text-base focus:outline-none font-lato placeholder-periwinkle"
               />
               <span className="material-icons search-icon text-periwinkle text-xl">
                 search
