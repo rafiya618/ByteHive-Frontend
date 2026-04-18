@@ -4,12 +4,12 @@ import Navbar from '../../shared/Navbar';
 import { useAuth } from '../../context/auth';
 
 const Layout = ({ children }) => {
-  const {auth} = useAuth()
+  const { auth } = useAuth()
   return (
     <div className='min-h-screen bg-rich-black  flex flex-col relative text-white'>
-      
+
       <Navbar />
-      
+
       <div
         className="absolute z-0"
         style={{
@@ -25,11 +25,11 @@ const Layout = ({ children }) => {
           pointerEvents: "none",
         }}
       />
-      
+
       {/* marginTop: '80px', padding: '20px' */}
       <main style={{}}>{children}</main>
     </div>
-    
+
   )
 }
 

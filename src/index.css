@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 :root {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -37,21 +38,49 @@
 .bg-rich-black {
   background: #0C0C16;
 }
+
 .font-fenix {
   font-family: 'Fenix', serif;
 }
-.border-periwinkle-light{
-  color: var(--periwinkle-light); 
-}
-/* index.css additions */
-.text-periwinkle { color: var(--periwinkle); }   
-.text-celadon-dark { color: var(--celadon-dark); }            /* you were using this class but it wasn't defined */
-.bg-chip { background-color: #374053; }                   /* matches the pill bg */
-.icon-periwinkle { color: #B0BAFF !important; }           /* force Material Icons color */
-.text-desc { color: #FFFFFFB2; }                          /* description color */
 
-.bg-navbar-bg { background-color: var(--navbar-bg); }
-.bg-dark-navy-purple { background-color: var(--dark-navy-purple); }
+.border-periwinkle-light {
+  color: var(--periwinkle-light);
+}
+
+/* index.css additions */
+.text-periwinkle {
+  color: var(--periwinkle);
+}
+
+.text-celadon-dark {
+  color: var(--celadon-dark);
+}
+
+/* you were using this class but it wasn't defined */
+.bg-chip {
+  background-color: #374053;
+}
+
+/* matches the pill bg */
+.icon-periwinkle {
+  color: #B0BAFF !important;
+}
+
+/* force Material Icons color */
+.text-desc {
+  color: #FFFFFFB2;
+}
+
+/* description color */
+
+.bg-navbar-bg {
+  background-color: var(--navbar-bg);
+}
+
+.bg-dark-navy-purple {
+  background-color: var(--dark-navy-purple);
+}
+
 .bg-dark-indigo {
   background-color: var(--dark-indigo);
   transition: background-color 0.3s ease;
@@ -60,26 +89,61 @@
 /* .bg-dark-indigo:hover {
   background-color: color-mix(in srgb, var(--dark-indigo) 95%, white);
 } */
-.border-navbar-border { border-color: var(--navbar-border);}
-.border-rich-black { border-color: var(--rich-black);}
-.border-dark-indigo { border-color: var(--dark-indigo);}
-.border-faint-greyish-overlay { border-color: var(--faint-greyish-overlay);}
-.bg-rich-black-light { background-color: var(--rich-black-light);}
-.text-columbia-blue { color: var(--columbia-blue);}
-.text-pinkish { color: var(--pinkish);}
-.bg-medium-slate-blue { background-color: var(--medium-slate-blue);}
-.hover\:bg-white\/10:hover { background-color: rgba(255,255,255,0.10);}
-.hover\:border-periwinkle:hover { border-color: var(--periwinkle);}
-.font-fenix { font-family: 'Fenix', serif; }
+.border-navbar-border {
+  border-color: var(--navbar-border);
+}
+
+.border-rich-black {
+  border-color: var(--rich-black);
+}
+
+.border-dark-indigo {
+  border-color: var(--dark-indigo);
+}
+
+.border-faint-greyish-overlay {
+  border-color: var(--faint-greyish-overlay);
+}
+
+.bg-rich-black-light {
+  background-color: var(--rich-black-light);
+}
+
+.text-columbia-blue {
+  color: var(--columbia-blue);
+}
+
+.text-pinkish {
+  color: var(--pinkish);
+}
+
+.bg-medium-slate-blue {
+  background-color: var(--medium-slate-blue);
+}
+
+.hover\:bg-white\/10:hover {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+.hover\:border-periwinkle:hover {
+  border-color: var(--periwinkle);
+}
+
+.font-fenix {
+  font-family: 'Fenix', serif;
+}
 
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4f46e5; /* Tailwind indigo-600 */
+  background: #4f46e5;
+  /* Tailwind indigo-600 */
   border-radius: 9999px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -90,7 +154,8 @@
 }
 
 .search-input-container input {
-  padding-right: 3rem; /* Space for search icon */
+  padding-right: 3rem;
+  /* Space for search icon */
 }
 
 .search-input-container .search-icon {
@@ -98,7 +163,8 @@
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  pointer-events: none; /* Icon shouldn't block input */
+  pointer-events: none;
+  /* Icon shouldn't block input */
 }
 
 /* Standardized prose whitespace */
@@ -131,10 +197,162 @@
 }
 
 /* Remove excessive whitespace */
-.prose > *:first-child {
+.prose>*:first-child {
   margin-top: 0;
 }
 
-.prose > *:last-child {
+.prose>*:last-child {
   margin-bottom: 0;
 }
+
+/* ===================== LIGHT THEME OVERRIDES ===================== */
+[data-theme="light"] {
+  --rich-black: #ffffff;       /* Pure white for main app background as requested */
+  --rich-black-light: #ffffff; /* White for cards */
+  --dark-navy-purple: #f9fafb; /* Very light grey for dropdowns/search bars */
+  --dark-indigo: #e2e8f0;      /* For Layout blur effect */
+  --navbar-bg: #ffffff;        /* White navbar and cards */
+  --faint-greyish-overlay: rgba(0,0,0,0.05); /* Light overlay */
+  /* We removed the columbia-blue override so it stays the native light blue unchanged */
+}
+
+/* Force standard standard colors */
+[data-theme="light"] body,
+[data-theme="light"] html {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-theme="light"] .text-white {
+  color: #000000 !important;
+}
+
+/* Ensure navbar icons, mobile menus, and profile dropdown texts are elegantly black */
+[data-theme="light"] .text-columbia-blue {
+  color: #000000 !important;
+}
+
+/* Ensure unselected filter bar items are black */
+[data-theme="light"] button[style*="var(--columbia-blue)"] {
+  color: #000000 !important;
+}
+
+/* Hardcode tags to always have the EXACT same dark background and purple text as dark mode */
+[data-theme="light"] .bg-chip {
+  background-color: #374053 !important;
+  color: var(--periwinkle) !important;
+}
+
+[data-theme="light"] .bg-periwinkle\/20 {
+  background-color: #31324b !important;
+  color: var(--periwinkle) !important;
+}
+
+[data-theme="light"] .text-periwinkle {
+  color: var(--periwinkle) !important;
+}
+
+/* Specific background updates for layouts and components */
+[data-theme="light"] .bg-rich-black {
+  background-color: #ffffff !important; /* Main page background */
+}
+
+[data-theme="light"] .bg-rich-black-light {
+  background-color: #ffffff !important; /* Card background */
+  border: 1px solid var(--periwinkle) !important; /* Light purple boundary */
+}
+
+[data-theme="light"] .bg-dark-navy-purple {
+  background-color: #f9fafb !important;
+}
+
+[data-theme="light"] .bg-dark-indigo {
+  background-color: #f9fafb !important;
+}
+
+[data-theme="light"] .bg-navbar-bg {
+  background-color: #ffffff !important; /* Card and Navbar background */
+  border: 1px solid var(--periwinkle) !important; /* Light purple boundary */
+  box-shadow: none !important;
+}
+
+[data-theme="light"] .bg-gradient-radial-custom {
+  background: radial-gradient(110% 90% at 0% 0%, #ffffff 60%, #ffffff 100%) !important;
+}
+
+[data-theme="light"] .text-desc {
+  color: #4b5563 !important; /* dark grey for readability */
+}
+
+/* Force simplified view and other prose-invert views to correctly map text colors to black instead of white */
+[data-theme="light"] .prose-invert,
+[data-theme="light"] .prose-invert p,
+[data-theme="light"] .prose-invert h1,
+[data-theme="light"] .prose-invert h2,
+[data-theme="light"] .prose-invert h3,
+[data-theme="light"] .prose-invert h4,
+[data-theme="light"] .prose-invert li,
+[data-theme="light"] .prose-invert strong,
+[data-theme="light"] .text-white\/90 {
+  color: #000000 !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* For Layout.jsx glow elements */
+[data-theme="light"] .absolute.z-0[style*="blur"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Dropdowns and menus borders */
+[data-theme="light"] .border-navbar-border {
+  border-color: var(--periwinkle) !important; /* Light purple boundary */
+}
+
+/* Notification Text Overrides */
+[data-theme="light"] .text-gray-200,
+[data-theme="light"] .text-gray-300,
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-500 {
+  color: #000000 !important;
+}
+
+/* Notification Card Unread Overrides */
+[data-theme="light"] .from-purple-900\/30 {
+  --tw-gradient-from: rgba(176, 186, 255, 0.4) !important;
+  background-color: rgba(176, 186, 255, 0.2) !important;
+}
+
+[data-theme="light"] .to-indigo-900\/30 {
+  --tw-gradient-to: rgba(176, 186, 255, 0.4) !important;
+}
+
+[data-theme="light"] .border-purple-500\/30 {
+  border-color: var(--periwinkle) !important;
+}
+
+[data-theme="light"] .border-gray-800,
+[data-theme="light"] .border-gray-700\/50 {
+  border-color: var(--periwinkle) !important;
+}
+
+/* Background Overrides for Notifications */
+[data-theme="light"] .bg-gray-900,
+[data-theme="light"] .bg-gray-800,
+[data-theme="light"] .bg-gray-800\/50,
+[data-theme="light"] .bg-gray-700\/40,
+[data-theme="light"] .bg-gray-800\/40 {
+  background-color: #ffffff !important;
+}
+
+
+

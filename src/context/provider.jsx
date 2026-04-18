@@ -2,22 +2,25 @@
 import { AuthProvider } from "./auth"
 import { NotificationProvider } from "./NotificationContext";
 import { ProfileProvider } from "./profileContext";
+import { ThemeProvider } from "./ThemeContext";
 // import { CommunityProvider } from "./community"
 // import { PostProvider } from "./post"
 
 const AppProviders = ({ children }) => {
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <NotificationProvider>
-          {children}
-        </NotificationProvider>
-      </ProfileProvider>
-      {/* <CommunityProvider> */}
+    <ThemeProvider>
+      <AuthProvider>
+        <ProfileProvider>
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
+        </ProfileProvider>
+        {/* <CommunityProvider> */}
         {/* <PostProvider> */}
         {/* </PostProvider> */}
-      {/* </CommunityProvider> */}
-    </AuthProvider>
+        {/* </CommunityProvider> */}
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

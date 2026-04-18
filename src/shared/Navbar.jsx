@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useProfile } from "../context/profileContext";
 import { useNotifications } from "../context/NotificationContext";
 import { useAuth } from "../context/auth";
+import { useTheme } from "../context/ThemeContext";
 import StreakDropdown from "../components/Retention/StreakDropdown";
 import { getUserStreak } from "../api/retentionApi";
 
@@ -15,6 +16,7 @@ export default function Navbar() {
   const { profile } = useProfile()
   const { notifications, markAllAsRead } = useNotifications()
   const { logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function Navbar() {
           </div>
 
           {/* DESKTOP NAV */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-3">
             <nav className="flex items-center space-x-3 text-xl">
               <a className="flex flex-col items-center text-columbia-blue hover:text-white transition-colors group" href="/events">
                 <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
@@ -100,11 +102,11 @@ export default function Navbar() {
                   try { await markAllAsRead(); } catch (e) { /* non-blocking */ }
                   navigate("/notification");
                 }}
-                className="text-columbia-blue hover:text-white p-3 rounded-full hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer"
+                className="text-columbia-blue hover:text-white p-3 rounded-md bg-rich-black-light hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer"
               >
-                <span className="material-icons text-3xl">notifications</span>
+                <span className="material-icons text-4xl">notifications</span>
                 {notifications && notifications.some(n => n.status === 'unread') && (
-                  <span className="absolute top-0 right-0 min-w-5 h-5 flex items-center justify-center rounded-full bg-medium-slate-blue text-white text-xs font-bold px-1">
+                  <span className="absolute top-0 right-0 min-w-5 h-5 flex items-center justify-center rounded-full bg-medium-slate-blue text-white text-xs font-bold px-1" style={{ transform: 'translate(25%, -25%)' }}>
                     {/* Show count of unread instead of total */}
                     {(() => {
                       const count = notifications.filter(n => n.status === 'unread').length;
@@ -112,6 +114,17 @@ export default function Navbar() {
                     })()}
                   </span>
                 )}
+              </button>
+
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="text-columbia-blue hover:text-white p-3 rounded-md bg-rich-black-light hover:bg-periwinkle-light transition-colors flex items-center justify-center cursor-pointer"
+              >
+                <span className="material-icons text-4xl">
+                  {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                </span>
               </button>
 
               <div className="flex items-center justify-center relative cursor-pointer" onClick={() => setProfileDropdown(!profileDropdown)}>
@@ -201,6 +214,13 @@ export default function Navbar() {
           <button onClick={() => navigate("/profile")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
             <span className="material-icons text-2xl">account_circle</span>
             <span>Profile</span>
+          </button>
+          {/* Mobile Theme Toggle */}
+          <button onClick={toggleTheme} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+            <span className="material-icons text-2xl">
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           <button onClick={() => {
             logout();

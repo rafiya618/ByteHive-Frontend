@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getUserStreak, getUserStats, getLeaderboard } from '../../api/retentionApi';
 import toast from 'react-hot-toast';
+import L1Icon from '../../assets/L1.png';
+import Badge2Icon from '../../assets/Badge-2.png';
+import Badge5Icon from '../../assets/Badge-5.png';
+import Badge4Icon from '../../assets/Badge-4.png';
+import Badge3Icon from '../../assets/Badge-3.png';
 
 export default function StreakModal({ onClose }) {
   const [streak, setStreak] = useState(null);
@@ -19,7 +24,7 @@ export default function StreakModal({ onClose }) {
         getUserStats(),
         getLeaderboard()
       ]);
-      
+
       setStreak(streakData?.streak || streakData);
       setStats(statsData?.stats || statsData);
       setLeaderboard(leaderboardData?.leaderboard || leaderboardData || []);
@@ -93,31 +98,28 @@ export default function StreakModal({ onClose }) {
         <div className="flex border-b border-navbar-border sticky top-16 bg-rich-black-light z-10">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${
-              activeTab === 'overview'
-                ? 'border-b-2 border-pinkish text-pinkish'
-                : 'text-columbia-blue hover:text-white'
-            }`}
+            className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${activeTab === 'overview'
+              ? 'border-b-2 border-pinkish text-pinkish'
+              : 'text-columbia-blue hover:text-white'
+              }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${
-              activeTab === 'stats'
-                ? 'border-b-2 border-pinkish text-pinkish'
-                : 'text-columbia-blue hover:text-white'
-            }`}
+            className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${activeTab === 'stats'
+              ? 'border-b-2 border-pinkish text-pinkish'
+              : 'text-columbia-blue hover:text-white'
+              }`}
           >
             Stats
           </button>
           <button
             onClick={() => setActiveTab('leaderboard')}
-            className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${
-              activeTab === 'leaderboard'
-                ? 'border-b-2 border-pinkish text-pinkish'
-                : 'text-columbia-blue hover:text-white'
-            }`}
+            className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${activeTab === 'leaderboard'
+              ? 'border-b-2 border-pinkish text-pinkish'
+              : 'text-columbia-blue hover:text-white'
+              }`}
           >
             Leaderboard
           </button>
@@ -195,8 +197,20 @@ export default function StreakModal({ onClose }) {
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {streak.badge_details.map((badge, index) => (
-                      <div key={index} className="bg-periwinkle-light rounded-lg p-4 text-center hover:bg-periwinkle-light hover:shadow-lg transition-all">
-                        <span className="material-icons text-3xl mb-2">{getBadgeIcon(badge.badge_name)}</span>
+                      <div key={index} className="bg-periwinkle-light rounded-lg p-4 text-center hover:bg-periwinkle-light hover:shadow-lg transition-all flex flex-col items-center justify-center">
+                        {badge.badge_name === 'Read Master' ? (
+                          <img src={L1Icon} alt="Read Master" className="w-[180px] h-[180px] object-contain mb-2" />
+                        ) : badge.badge_name === 'Post Prodigy' ? (
+                          <img src={Badge2Icon} alt="Post Prodigy" className="w-[180px] h-[180px] object-contain mb-2" />
+                        ) : badge.badge_name === 'Master Scholar' ? (
+                          <img src={Badge5Icon} alt="Master Scholar" className="w-[400px] h-[400px] object-contain mb-2" />
+                        ) : badge.badge_name === 'Community Champion' ? (
+                          <img src={Badge4Icon} alt="Community Champion" className="w-[120px] h-[120px] object-contain mb-2" />
+                        ) : badge.badge_name === 'Engaged Member' ? (
+                          <img src={Badge3Icon} alt="Engaged Member" className="w-[120px] h-[120px] object-contain mb-2" />
+                        ) : (
+                          <span className="material-icons text-3xl mb-2">{getBadgeIcon(badge.badge_name)}</span>
+                        )}
                         <p className="text-sm font-semibold text-white mb-1">{badge.badge_name}</p>
                         <p className="text-xs text-columbia-blue">{badge.description}</p>
                       </div>

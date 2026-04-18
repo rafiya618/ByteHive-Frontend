@@ -2,6 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getUserStreak, getAllBadges } from '../../api/retentionApi';
 import { updatePreferences } from '../../api/notificationApi';
 import { registerPush } from '../../helpers/registerPush';
+import L1Icon from '../../assets/L1.png';
+import Badge2Icon from '../../assets/Badge-2.png';
+import Badge5Icon from '../../assets/Badge-5.png';
+import Badge4Icon from '../../assets/Badge-4.png';
+import Badge3Icon from '../../assets/Badge-3.png';
 
 const scrollbarStyles = `
   .streak-dropdown-scroll::-webkit-scrollbar {
@@ -428,7 +433,7 @@ export default function StreakDropdown({ isOpen, onClose }) {
                 return (
                   <div
                     key={badge.badge_id}
-                    className={`rounded-xl p-3 text-center transition-all cursor-help ${isEarned
+                    className={`rounded-xl p-2 sm:p-2.5 text-center transition-all cursor-help flex flex-col justify-center min-h-[80px] sm:min-h-[90px] ${isEarned
                       ? 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border-2 border-yellow-500/60 hover:border-yellow-400/80 hover:shadow-lg hover:shadow-yellow-500/20'
                       : 'bg-gray-800/40 border-2 border-gray-700/40 hover:border-gray-600/60 hover:bg-gray-800/60'
                       }`}
@@ -437,31 +442,41 @@ export default function StreakDropdown({ isOpen, onClose }) {
                       : `${badge.badge_name}: ${badge.description}\nRequires: ${badge.requirement_value} ${badge.requirement_type}`
                     }
                   >
-                    {/* Badge Icon */}
-                    <div className="text-2xl sm:text-3xl mb-2 flex items-center justify-center h-10 sm:h-12">
+                    {/* Badge Icon / Image */}
+                    <div className="flex items-center justify-center w-full overflow-hidden rounded-lg" style={{ height: '80px' }}>
                       {isEarned ? (
-                        <span className={`material-icons ${getBadgeIconColor(badge)}`}>{badge.badge_icon}</span>
+                        badge.badge_icon === 'menu_book' ? (
+                          <img src={L1Icon} alt="Badge" style={{ width: '82%', height: '82%', objectFit: 'contain', transform: 'scale(2.85)' }} className="drop-shadow-xl" />
+                        ) : badge.badge_icon === 'create' ? (
+                          <img src={Badge2Icon} alt="Badge" style={{ width: '280%', height: '280%', objectFit: 'contain' }} className="drop-shadow-xl" />
+                        ) : badge.badge_icon === 'school' ? (
+                          <img src={Badge5Icon} alt="Badge" style={{ width: '380%', height: '380%', objectFit: 'contain' }} className="drop-shadow-xl" />
+                        ) : badge.badge_icon === 'flash' ? (
+                          <img src={Badge4Icon} alt="Badge" style={{ width: '100%', height: '100%', objectFit: 'contain' }} className="drop-shadow-xl" />
+                        ) : badge.badge_icon === 'chat' ? (
+                          <img src={Badge3Icon} alt="Badge" style={{ width: '100%', height: '100%', objectFit: 'contain' }} className="drop-shadow-xl" />
+                        ) : (
+                          <span className={`material-icons text-[70px] sm:text-[80px] ${getBadgeIconColor(badge)}`}>{badge.badge_icon}</span>
+                        )
                       ) : (
-                        <span className="material-icons text-white">lock</span>
+                        <div className="h-10 sm:h-12 flex items-center justify-center">
+                          <span className="material-icons text-2xl sm:text-3xl text-white">lock</span>
+                        </div>
                       )}
                     </div>
 
-                    {/* Badge Name - Allow 2 lines */}
-                    <div className={`text-[9px] sm:text-[10px] font-bold mb-1 leading-tight min-h-[2rem] sm:h-8 flex items-center justify-center ${isEarned ? 'text-yellow-300' : 'text-gray-400'
-                      }`}>
-                      <span className="line-clamp-2 px-0.5 sm:px-1 text-center">
-                        {isEarned ? badge.badge_name : 'Locked'}
-                      </span>
-                    </div>
-
-                    {/* Status/Requirement */}
-                    {isEarned && (
-                      <div className="text-[9px] sm:text-[10px] text-yellow-400 font-semibold">✓ Unlocked</div>
-                    )}
+                    {/* Only show text for LOCKED badges */}
                     {!isEarned && (
-                      <div className="text-[9px] sm:text-[10px] text-gray-500 font-medium">
-                        {remaining > 0 ? `Need: ${remaining}` : 'Ready!'}
-                      </div>
+                      <>
+                        <div className="text-[9px] sm:text-[10px] font-bold leading-tight flex items-center justify-center text-gray-400">
+                          <span className="line-clamp-2 px-0.5 sm:px-1 text-center -mt-0.5">
+                            Locked
+                          </span>
+                        </div>
+                        <div className="text-[8px] sm:text-[9px] text-gray-500 font-medium leading-none flex items-center justify-center mt-0.5">
+                          {remaining > 0 ? `Need: ${remaining}` : 'Ready!'}
+                        </div>
+                      </>
                     )}
                   </div>
                 );
