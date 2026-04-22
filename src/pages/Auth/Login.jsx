@@ -37,6 +37,14 @@ const Login = () => {
       toast.success(res.data.message);
       navigate("/");
     } catch (err) {
+      const serverField = err.response?.data?.field;
+      const serverMessage = err.response?.data?.message;
+
+      if (serverField === "account") {
+        toast.error(serverMessage || "Your account is not allowed to login.");
+        return;
+      }
+
       handleFormError(err, setErrors, null);
     }
   };

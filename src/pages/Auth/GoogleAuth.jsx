@@ -15,7 +15,7 @@ const GoogleAuth = () => {
     const message = urlParams.get("message");
 
     if (error) {
-      toast.error(error);
+      toast.error(message || error);
       navigate("/");
     } else if (token) {
       const decoded = jwtDecode(token);

@@ -92,11 +92,16 @@ const Users = () => {
 
   const handlePromote = async (userId) => {
     try {
-      await axios.put(`${BASE_URL}/admin/users/${userId}/promote`, {}, {
+      const res = await axios.put(`${BASE_URL}/admin/users/${userId}/promote`, {}, {
         headers: getAuthHeaders(),
       });
+      const updatedRole = res?.data?.user?.role;
       setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, role: "admin" } : u))
+        prev.map((u) =>
+          u._id === userId
+            ? { ...u, role: updatedRole || (u.role === "admin" ? "user" : "admin") }
+            : u
+        )
       );
     } catch (err) {
       console.error(err);
@@ -221,14 +226,12 @@ const Users = () => {
                           >
                             {user.status === "active" ? "Block" : "Unblock"}
                           </button>
-                          {user.role !== "admin" && (
-                            <button
-                              onClick={() => handlePromote(user._id)}
-                              className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
-                            >
-                              Promote
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handlePromote(user._id)}
+                            className={`px-2 py-1 text-white rounded text-xs ${user.role === "admin" ? "bg-purple-600" : "bg-blue-500"}`}
+                          >
+                            {user.role === "admin" ? "Demote" : "Promote"}
+                          </button>
                           <button
                             onClick={() => handleDelete(user._id)}
                             className="px-2 py-1 bg-red-500 text-white rounded text-xs"

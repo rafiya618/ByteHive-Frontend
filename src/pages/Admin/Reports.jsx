@@ -10,7 +10,7 @@ const REASONS = [
   "spam",
   "hate_speech",
   "harassment",
-  "nudity",
+  // "nudity",
   "fake_information",
   "violence",
   "illegal_activity",
