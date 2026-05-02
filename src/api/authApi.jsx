@@ -25,6 +25,11 @@ export const loginUser = (email, password) => {
   return API.post("/auth/login", { email, password });
 };
 
+// ✅ Verify login OTP and get token
+export const verifyLoginOtp = (email, otp) => {
+  return API.post("/auth/verify-login-otp", { email, otp });
+};
+
 // ✅ Forgot password: send OTP
 export const forgotPassword = (email) => {
   return API.post("/auth/forgot-password", { email });

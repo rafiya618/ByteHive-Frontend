@@ -78,7 +78,6 @@ const CommentBlock = forwardRef(
             <>
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-white font-medium font-lato text-sm">{c.user?.username || "Unknown User"}</span>
-                <span className="text-white font-medium font-lato text-sm">{c._id || "Unknown User"}</span>
                 <span className="text-periwinkle text-xs font-lato">{dayjs(c.createdAt).fromNow()}</span>
               </div>
               <p className="text-white text-sm font-lato leading-relaxed mb-3">{c.text}</p>

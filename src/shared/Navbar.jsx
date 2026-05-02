@@ -100,7 +100,7 @@ export default function Navbar() {
                 onClick={async () => {
                   // Clear unread badge immediately
                   try { await markAllAsRead(); } catch (e) { /* non-blocking */ }
-                  navigate("/notification");
+                  navigate("/notifications");
                 }}
                 className="text-columbia-blue hover:text-white p-3 rounded-md bg-rich-black-light hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer"
               >

@@ -50,7 +50,7 @@ const Navbar = () => {
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link to="/notification" >
+                                    <Link to="/notifications" >
                                         🔔 {unReadCount > 0 ? `(${unReadCount})` : ""}
                                     </Link>
                                 </li>
@@ -60,7 +60,6 @@ const Navbar = () => {
                                         <span>Streak</span>
                                     </button>
                                 </li>
-                                <li ><Link to="/enable-notifications" >Enable Push</Link></li>
                                 <li ><Link to="/login" onClick={HandleLogout}>Logout</Link></li>
                             
                             </>

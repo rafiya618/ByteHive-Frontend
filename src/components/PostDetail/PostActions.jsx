@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { postsApi } from '../../api/postsApi';
 import { communityApi } from '../../api/communityApi';
+import { ReportPostModal } from '../posts/ReportPostModal';
 
 /**
  * PostActions Component
@@ -30,6 +32,7 @@ const PostActions = ({
     setShowBookmarkMenu,
 }) => {
     const navigate = useNavigate();
+    const [showReportModal, setShowReportModal] = useState(false);
     const postId = post._id || post.id;
 
     const handleDelete = async () => {
@@ -142,6 +145,16 @@ const PostActions = ({
                 )}
             </div>
 
+            {/* Report Button */}
+            <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 border border-red-400 text-red-300 rounded-md hover:bg-red-500/10 transition-colors font-lato"
+                title="Report post"
+            >
+                <span className="material-icons text-lg">flag</span>
+                <span>Report</span>
+            </button>
+
             {/* Owner-only actions */}
             {isOwner && (
                 <div className="flex items-center space-x-3">
@@ -163,6 +176,13 @@ const PostActions = ({
                     </button>
                 </div>
             )}
+
+            <ReportPostModal
+                post={post}
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSuccess={() => setShowReportModal(false)}
+            />
         </div>
     );
 };

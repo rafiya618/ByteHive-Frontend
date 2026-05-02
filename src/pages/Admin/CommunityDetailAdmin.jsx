@@ -97,9 +97,11 @@ const CommunityDetailAdmin = () => {
     }));
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4">
         {normalizedPosts.map((post) => (
-          <BlogCard key={post.id} {...post} />
+          <div key={post.id} className="w-full">
+            <BlogCard key={post.id} {...post} />
+          </div>
         ))}
       </div>
     );

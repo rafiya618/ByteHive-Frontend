@@ -15,7 +15,7 @@ export async function registerPush(userId) {
   try {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       console.warn("❌ Push notifications not supported in this browser.");
-      return;
+      return { success: false, reason: "unsupported" };
     }
 
     // ✅ Register the service worker (must be in /public)
@@ -26,7 +26,7 @@ export async function registerPush(userId) {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
       console.warn("❌ Notification permission denied");
-      return;
+      return { success: false, reason: "denied" };
     }
 
     // ✅ Subscribe the user
@@ -47,10 +47,13 @@ export async function registerPush(userId) {
 
     if (data.success) {
       console.log("✅ Subscription saved on backend");
+      return { success: true };
     } else {
       console.error("❌ Failed to save subscription:", data);
+      return { success: false, reason: "save_failed" };
     }
   } catch (err) {
     console.error("❌ Error in registerPush:", err);
+    return { success: false, reason: "error", error: err };
   }
 }

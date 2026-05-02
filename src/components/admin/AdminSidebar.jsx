@@ -12,6 +12,7 @@ const AdminSidebar = () => {
     { label: "Posts", path: "/admin/posts", icon: "article" },
     { label: "Communities", path: "/admin/communities", icon: "groups" },
     { label: "Reports", path: "/admin/reports", icon: "flag" },
+    { label: "Announcements", path: "/admin/announcements", icon: "campaign" },
   ];
 
   return (
@@ -21,7 +22,7 @@ const AdminSidebar = () => {
         <h1 className="font-fenix text-xl text-white font-normal">
           Admin Panel
         </h1>
-        <p className="text-periwinkle text-xs mt-1">Management Hub</p>
+        {/* <p className="text-periwinkle text-xs mt-1">Management Hub</p> */}
       </div>
 
       {/* Navigation Menu */}
@@ -43,12 +44,12 @@ const AdminSidebar = () => {
       </nav>
 
       {/* Footer / Help */}
-      <div className="border-t border-navbar-border pt-4 pb-6">
+      {/* <div className="border-t border-navbar-border pt-4 pb-6">
         <button className="w-full px-4 py-3 rounded-lg bg-dark-indigo text-periwinkle text-sm font-medium hover:bg-dark-indigo/80 transition">
           <span className="material-icons text-sm align-middle mr-2">help</span>
           Help & Support
         </button>
-      </div>
+      </div> */}
     </aside>
   );
 };

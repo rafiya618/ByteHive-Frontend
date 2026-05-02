@@ -10,8 +10,6 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import GoogleAuth from "./pages/Auth/GoogleAuth";
 import PageNotFound from "./pages/PageNotFound";
 import NotificationPage from "./pages/Notification/NotificationPage";
-import PreferencesPage from "./pages/Notification/PreferencesPage";
-import EnableNotifications from "./pages/Notification/EnableNotifications";
 import { Toaster } from "react-hot-toast";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileSetupPage from "./pages/Auth/Register/ProfileSetupPage";
@@ -35,7 +33,9 @@ import Users from "./pages/Admin/Users";
 import Posts from "./pages/Admin/Posts";
 import AdminCommunities from "./pages/Admin/Communities";
 import Reports from "./pages/Admin/Reports";
+import Announcements from "./pages/Admin/Announcements";
 import AdminCommunityDetail from "./pages/Admin/CommunityDetailAdmin";
+import SystemAnnouncementPage from "./pages/Notification/SystemAnnouncementPage";
 
 function RoomWrapper() {
   const { roomId } = useParams();
@@ -80,9 +80,7 @@ function App() {
                 <Route path="/history" element={<RequireStep minStep={4}><History /></RequireStep>} />
                 <Route path="/video-home" element={<HomePage />} />
                 <Route path="/room/:roomId" element={<RoomWrapper />} />
-                <Route path="/notification" element={<RequireStep minStep={4}><NotificationPage /></RequireStep>} />
-                <Route path="/preferences" element={<RequireStep minStep={4}><PreferencesPage /></RequireStep>} />
-                <Route path="/enable-notifications" element={<RequireStep minStep={4}><EnableNotifications /></RequireStep>} />
+                <Route path="/notifications" element={<RequireStep minStep={4}><NotificationPage /></RequireStep>} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
@@ -91,6 +89,8 @@ function App() {
                 <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
                 <Route path="/admin/communities/:id" element={<AdminRoute><AdminCommunityDetail /></AdminRoute>} />
                 <Route path="/admin/reports" element={<AdminRoute><Reports /></AdminRoute>} />
+                <Route path="/admin/announcements" element={<AdminRoute><Announcements /></AdminRoute>} />
+                <Route path="/system/announcement/:announcementId" element={<RequireStep minStep={4}><SystemAnnouncementPage /></RequireStep>} />
                 
                 <Route path="*" element={<PageNotFound />} />
               </Routes>

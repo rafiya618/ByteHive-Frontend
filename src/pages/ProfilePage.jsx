@@ -11,6 +11,8 @@ import { communityApi } from "../api/communityApi";
 import { getPreferences, updatePreferences } from "../api/notificationApi";
 import BlogCard from "../components/BlogListing/BlogCard";
 import toast from "react-hot-toast";
+import { registerPush } from "../helpers/registerPush";
+import Modal from "../components/Modal/Modal";
 
 const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
@@ -22,17 +24,15 @@ const ProfilePage = () => {
   const [contentLoading, setContentLoading] = useState(false);
   const [communities, setCommunities] = useState({ owned: [], followed: [] });
   const [prefs, setPrefs] = useState(null);
-  const [settingsForm, setSettingsForm] = useState({
-    email: "",
-    password: "",
-    comment: true,
-    reply: true,
-    community: true,
-    event: true,
-  });
+  const [activeChannel, setActiveChannel] = useState("push");
+  const [pendingPrefs, setPendingPrefs] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const { auth } = useAuth();
   const { profile, fetchProfile, loading } = useProfile();
   const navigate = useNavigate();
+
+  
 
   const userId = auth?.user?._id;
 
@@ -40,7 +40,10 @@ const ProfilePage = () => {
   const socialLinks = safeProfile?.socialLinks || {};
 
   const profileEmail =
-    safeProfile?.user?.email || auth?.user?.email || settingsForm.email || "";
+    safeProfile?.user?.email || auth?.user?.email || "";
+
+  const username =
+    safeProfile?.username || safeProfile?.user?.username || auth?.user?.username || "";
 
   const postsCount = userPosts.length;
   const followingCount = communities.followed.length;
@@ -164,6 +167,7 @@ const ProfilePage = () => {
 
         const prefData = prefsRes?.data || null;
         setPrefs(prefData);
+        setPendingPrefs(prefData ? JSON.parse(JSON.stringify(prefData)) : null);
 
         setSettingsForm((prev) => ({
           ...prev,
@@ -171,7 +175,8 @@ const ProfilePage = () => {
           comment: !!prefData?.perType?.activities?.comment?.push,
           reply: !!prefData?.perType?.activities?.reply?.push,
           community: !!prefData?.perType?.updates?.newPost?.push,
-          event: !!prefData?.perType?.updates?.eventInvite?.push,
+          likePost: !!prefData?.perType?.activities?.likePost?.push,
+          likeComment: !!prefData?.perType?.activities?.likeComment?.push,
         }));
       } catch (err) {
         console.error("Failed to load profile dashboard data:", err);
@@ -207,59 +212,54 @@ const ProfilePage = () => {
     }
   };
 
-  const handleSaveSettings = async () => {
-    if (!userId) return;
+  const updatePendingPrefs = (next) => {
+    const base = pendingPrefs || prefs || {};
+    const newPrefs = typeof next === "function" ? next(base) : next;
+    setPendingPrefs(newPrefs);
+    setIsDirty(JSON.stringify(newPrefs) !== JSON.stringify(prefs));
+  };
 
-    const nextPrefs = prefs
-      ? {
-          ...prefs,
-          perType: {
-            ...prefs.perType,
-            activities: {
-              ...prefs.perType.activities,
-              comment: {
-                ...prefs.perType.activities.comment,
-                push: settingsForm.comment,
-              },
-              reply: {
-                ...prefs.perType.activities.reply,
-                push: settingsForm.reply,
-              },
-            },
-            updates: {
-              ...prefs.perType.updates,
-              newPost: {
-                ...prefs.perType.updates.newPost,
-                push: settingsForm.community,
-              },
-              eventInvite: {
-                ...prefs.perType.updates.eventInvite,
-                push: settingsForm.event,
-              },
-            },
-          },
-        }
-      : null;
-
+  const handleSavePreferences = async () => {
+    if (!userId || !pendingPrefs) return;
+    setIsSaving(true);
     try {
-      if (nextPrefs) {
-        await updatePreferences(userId, nextPrefs);
-        setPrefs(nextPrefs);
-      }
-
-      if (settingsForm.password.trim()) {
-        toast("Password change is not wired to a profile endpoint yet.", {
-          icon: "ℹ️",
-        });
-      }
-
-      toast.success("Settings saved");
-      setSettingsForm((prev) => ({ ...prev, password: "" }));
+      await updatePreferences(userId, pendingPrefs);
+      setPrefs(pendingPrefs);
+      setIsDirty(false);
+      toast.success("Preferences updated");
     } catch (err) {
-      console.error("Failed to save settings:", err);
-      toast.error("Could not save settings");
+      console.error("Failed to update preferences:", err);
+      toast.error("Could not save preferences");
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handlePushToggle = async (checked) => {
+    if (!currentPrefs) return;
+
+    if (checked) {
+      const result = await registerPush(userId);
+
+      if (!result?.success) {
+        if (result?.reason === "denied") {
+          toast.error("Browser notification permission was denied.");
+        } else if (result?.reason === "unsupported") {
+          toast.error("This browser does not support push notifications.");
+        } else {
+          toast.error("Could not enable browser notifications.");
+        }
+        return;
+      }
+    }
+
+    updatePendingPrefs({
+      ...currentPrefs,
+      global: { ...(currentPrefs.global || {}), [activeChannel]: checked },
+    });
+  };
+
+  const currentPrefs = pendingPrefs || prefs;
 
   const tabClass = (tab) =>
     `text-[18px] font-semibold pb-1 border-b-2 transition whitespace-nowrap ${
@@ -339,10 +339,13 @@ const ProfilePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[292px_1fr] gap-4 mt-9 sm:mt-10">
           <aside className="space-y-3">
             <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4 relative">
-              <div className="mb-3">
+              <div className="mb-3 flex items-center gap-3">
                 <h2 className="font-fenix text-[22px] leading-none text-periwinkle">
                   {safeProfile?.name || "User"}
                 </h2>
+                {username && (
+                  <span className="text-columbia-blue text-sm ml-2 opacity-70">@{username}</span>
+                )}
               </div>
 
               <p className="text-desc text-sm leading-relaxed mb-3 max-w-[250px]">
@@ -364,7 +367,7 @@ const ProfilePage = () => {
                 </p>
               </div>
 
-              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 text-periwinkle text-sm">
+              <div className="mt-3 flex flex-wrap gap-2 text-periwinkle text-sm">
                 {Object.entries(socialLinks)
                   .filter(([, value]) => !!value)
                   .map(([key, value]) => (
@@ -373,7 +376,8 @@ const ProfilePage = () => {
                       href={value}
                       target="_blank"
                       rel="noreferrer"
-                      className="hover:text-white transition capitalize"
+                      aria-label={key}
+                      className="inline-flex items-center gap-2 px-3 py-1 border border-navbar-border rounded-md text-columbia-blue text-sm hover:bg-white/5 transition-capitalize"
                     >
                       {key}
                     </a>
@@ -381,7 +385,7 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4">
+              <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4">
               <h3 className="font-fenix text-[22px] text-periwinkle mb-2.5">Stats</h3>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
@@ -442,21 +446,21 @@ const ProfilePage = () => {
           </aside>
 
           <section className="bg-rich-black/70 border border-navbar-border rounded-xl p-4 sm:p-5">
-            <div className="flex items-center gap-5 text-lg mb-2 overflow-x-auto pb-1">
+            <div className="flex items-center gap-5 text-lg mb-4 overflow-x-auto pb-1">
               <button className={tabClass("posts")} onClick={() => setActiveTab("posts")}>Posts</button>
               <button className={tabClass("saved")} onClick={() => setActiveTab("saved")}>Saved</button>
               <button className={tabClass("settings")} onClick={() => setActiveTab("settings")}>Settings</button>
             </div>
 
             {editing ? (
-              <div className="mt-4">
+              <Modal isOpen={editing} onClose={() => setEditing(false)}>
                 <ProfileEdit
                   profile={safeProfile}
                   onSave={handleSave}
                   onCancel={() => setEditing(false)}
                   errors={errors}
                 />
-              </div>
+              </Modal>
             ) : (
               <>
                 {activeTab === "posts" && (
@@ -475,94 +479,148 @@ const ProfilePage = () => {
 
                 {activeTab === "settings" && (
                   <div className="space-y-2">
-                    <h2 className="font-fenix text-[28px] leading-none text-white">Account Settings</h2>
+                    <h2 className="font-fenix text-[28px] leading-none text-white">Notification Preferences</h2>
 
-                    <div className="border border-navbar-border rounded-2xl p-4 sm:p-6 bg-navbar-bg/70">
-                      <div className="space-y-3 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-3">
-                          <label className="text-lg sm:text-xl text-white">Email Address</label>
-                          <input
-                            type="email"
-                            value={settingsForm.email}
-                            onChange={(e) =>
-                              setSettingsForm((prev) => ({ ...prev, email: e.target.value }))
-                            }
-                            className="w-full rounded-xl border border-navbar-border bg-dark-indigo px-4 py-2.5 text-base sm:text-lg text-white"
-                            readOnly
-                          />
+                    {prefs ? (
+                      <div className="border border-navbar-border rounded-2xl p-4 sm:p-6 bg-navbar-bg/70">
+                        {/* Tabs for Push / Email */}
+                        <div className="flex gap-4 mb-6 border-b border-navbar-border pb-4">
+                          {["push", "email"].map((ch) => {
+                            const isSelected = activeChannel === ch;
+                            return (
+                              <button
+                                key={ch}
+                                onClick={() => setActiveChannel(ch)}
+                                className="font-semibold text-base sm:text-lg pb-1 transition-all cursor-pointer"
+                                style={{
+                                  color: isSelected ? "#B0BAFF" : "#77A3D4",
+                                  borderBottom: isSelected ? "2px solid #B0BAFF" : "none",
+                                  opacity: isSelected ? 1 : 0.85,
+                                }}
+                              >
+                                {ch.charAt(0).toUpperCase() + ch.slice(1)}
+                              </button>
+                            );
+                          })}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] items-center gap-3">
-                          <label className="text-lg sm:text-xl text-white">Change Password</label>
-                          <input
-                            type="password"
-                            value={settingsForm.password}
-                            onChange={(e) =>
-                              setSettingsForm((prev) => ({ ...prev, password: e.target.value }))
-                            }
-                            className="w-full rounded-xl border border-navbar-border bg-dark-indigo px-4 py-2.5 text-base sm:text-lg text-white"
-                            placeholder="Enter new password"
-                          />
+                        {/* Global toggle */}
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-dark-indigo/50 border border-navbar-border mb-6">
+                          <span className="capitalize font-medium text-base sm:text-lg text-white">
+                            Enable {activeChannel} Notifications
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={currentPrefs?.global?.[activeChannel]}
+                              onChange={(e) =>
+                                activeChannel === "push"
+                                  ? handlePushToggle(e.target.checked)
+                                  : updatePendingPrefs({
+                                      ...currentPrefs,
+                                      global: { ...(currentPrefs?.global || {}), [activeChannel]: e.target.checked },
+                                    })
+                              }
+                              className="sr-only peer"
+                            />
+                            <div className="w-12 h-6 bg-gray-600 rounded-full transition-colors shadow-inner peer-checked:bg-medium-slate-blue"></div>
+                            <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-6 peer-checked:shadow-[0_0_10px_2px_rgba(168,85,247,0.7)]"></div>
+                          </label>
+                        </div>
+
+                        {/* Per-type preferences grouped */}
+                        <div className="space-y-6">
+                          {["activities", "network", "updates"].map((group) => (
+                            <div key={group}>
+                              <h3 className="capitalize font-semibold mb-3 text-base sm:text-lg text-purple-300">
+                                {group === "activities" ? "Social Interactions" : group === "network" ? "Connections" : "Content Updates"}
+                              </h3>
+                              <div className="space-y-2">
+                                {Object.keys(currentPrefs?.perType?.[group] || {}).map((type) => {
+                                  const typeDescriptions = {
+                                    likePost: "Likes on your post",
+                                    likeComment: "Likes on your comment",
+                                    comment: "Comments on your post",
+                                    reply: "Replies on your comment",
+                                    mention: "Mentions of your username",
+                                    follow: "Started following you",
+                                    friendRequest: "Sent you a friend request",
+                                    connectionAccepted: "Accepted your connection request",
+                                    newPost: "Posted a new post",
+                                    storyUpdate: "Updated their story",
+                                    liveStream: "Started a live stream",
+                                    eventInvite: "Sent you an event invite",
+                                  };
+
+                                  return (
+                                    <div
+                                      key={type}
+                                      className={`p-4 rounded-xl border border-navbar-border transition-all ${
+                                        currentPrefs?.global?.[activeChannel]
+                                          ? "bg-dark-indigo/30 hover:bg-dark-indigo/50"
+                                          : "bg-dark-indigo/10 opacity-50 cursor-not-allowed"
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm sm:text-base text-columbia-blue">
+                                          {typeDescriptions[type] || type}
+                                        </span>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={currentPrefs?.perType?.[group]?.[type]?.[activeChannel]}
+                                            disabled={!currentPrefs?.global?.[activeChannel]}
+                                            onChange={(e) =>
+                                              updatePendingPrefs({
+                                                ...currentPrefs,
+                                                perType: {
+                                                  ...(currentPrefs?.perType || {}),
+                                                  [group]: {
+                                                    ...(currentPrefs?.perType?.[group] || {}),
+                                                    [type]: {
+                                                      ...(currentPrefs?.perType?.[group]?.[type] || {}),
+                                                      [activeChannel]: e.target.checked,
+                                                    },
+                                                  },
+                                                },
+                                              })
+                                            }
+                                            className="sr-only peer"
+                                          />
+                                          <div className="w-12 h-6 bg-gray-600 rounded-full transition-colors shadow-inner peer-checked:bg-medium-slate-blue peer-disabled:bg-gray-700"></div>
+                                          <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-6 peer-checked:shadow-[0_0_10px_2px_rgba(168,85,247,0.7)] peer-disabled:cursor-not-allowed"></div>
+                                        </label>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-between">
+                          <div>
+                            {!currentPrefs?.global?.[activeChannel] && (
+                              <p className="text-center text-columbia-blue italic mt-1 text-sm sm:text-base">
+                                Turn on global {activeChannel} to enable these preferences.
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <button
+                              onClick={handleSavePreferences}
+                              disabled={!isDirty || isSaving}
+                              className={`ml-2 bg-medium-slate-blue hover:bg-medium-slate-blue-dark text-white text-sm sm:text-base font-semibold px-4 py-2 rounded-xl transition ${(!isDirty || isSaving) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            >
+                              {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      <div>
-                        <h3 className="text-2xl sm:text-3xl font-semibold mb-3">Notification Preference</h3>
-                        <div className="space-y-2.5 text-sm sm:text-lg text-columbia-blue">
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={settingsForm.comment}
-                              onChange={(e) =>
-                                setSettingsForm((prev) => ({ ...prev, comment: e.target.checked }))
-                              }
-                              className="w-4 h-4 accent-medium-slate-blue"
-                            />
-                            New comments on your posts
-                          </label>
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={settingsForm.reply}
-                              onChange={(e) =>
-                                setSettingsForm((prev) => ({ ...prev, reply: e.target.checked }))
-                              }
-                              className="w-4 h-4 accent-medium-slate-blue"
-                            />
-                            Replies to your comments
-                          </label>
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={settingsForm.community}
-                              onChange={(e) =>
-                                setSettingsForm((prev) => ({ ...prev, community: e.target.checked }))
-                              }
-                              className="w-4 h-4 accent-medium-slate-blue"
-                            />
-                            Community updates
-                          </label>
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={settingsForm.event}
-                              onChange={(e) =>
-                                setSettingsForm((prev) => ({ ...prev, event: e.target.checked }))
-                              }
-                              className="w-4 h-4 accent-medium-slate-blue"
-                            />
-                            Event reminders
-                          </label>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleSaveSettings}
-                        className="mt-6 bg-medium-slate-blue hover:bg-medium-slate-blue-dark text-white text-base sm:text-lg font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
+                    ) : (
+                      <div className="text-center text-columbia-blue py-8">Loading preferences...</div>
+                    )}
                   </div>
                 )}
               </>

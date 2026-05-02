@@ -66,9 +66,9 @@ const Dashboard = () => {
       <AdminSidebar />
 
       <div className="ml-64 flex-1 p-8">
-        <div className="mb-8">
+        <div className="mb-6">
           <h2 className="font-fenix text-[28px] text-white font-normal mb-2">Dashboard</h2>
-          <p className="text-gray-400 text-sm">Live stats and recent activity</p>
+          {/* <p className="text-gray-400 text-sm">Live stats and recent activity</p> */}
         </div>
 
         {loading ? (
@@ -84,7 +84,7 @@ const Dashboard = () => {
               <MetricCard title="Reports" value={metrics.totalReports} icon="flag" bgColor="bg-pinkish/20" />
             </div>
 
-            <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6">
+            {/* <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-fenix text-lg font-normal">Recent Activity</h3>
                 <span className="text-xs text-gray-400">Latest {activity.length || 0}</span>
@@ -104,7 +104,7 @@ const Dashboard = () => {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
           </>
         )}
       </div>

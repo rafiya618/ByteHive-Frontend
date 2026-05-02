@@ -41,7 +41,7 @@ export const NotificationProvider = ({ children }) => {
         return [notif, ...prev];
       });
 
-      if (location.pathname === "/notification") {
+      if (location.pathname === "/notifications") {
         // If already on notifications page → mark as read (debounced)
         clearTimeout(markTimeout);
         markTimeout = setTimeout(async () => {
