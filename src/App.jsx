@@ -63,6 +63,7 @@ function App() {
                 <Route path="/setup-profile" element={<RequireStep minStep={2}><ProfileSetupPage /></RequireStep>} />
                 <Route path="/select-tags" element={<RequireStep minStep={3}><TagSelectionPage /></RequireStep>} />
                 <Route path="/profile" element={<RequireStep minStep={4}><ProfilePage /></RequireStep>} />
+                <Route path="/profile/:id" element={<RequireStep minStep={4}><ProfilePage /></RequireStep>} />
                 <Route path="/" element={<RequireStep minStep={4}><BlogListing /></RequireStep>} />
                 <Route path="/create-post" element={<CreatePost />} />
                 <Route path="/events" element={<EventsListing />} />

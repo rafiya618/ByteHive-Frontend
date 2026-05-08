@@ -1,9 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const MemberCard = ({ id, name, role, avatar }) => {
+  const navigate = useNavigate();
+  
   const handleViewProfile = () => {
-    // Navigate to member profile
-    console.log(`Navigate to member ${id} profile`);
+    if (id) {
+      navigate(`/profile/${id}`);
+    }
   };
 
   return (

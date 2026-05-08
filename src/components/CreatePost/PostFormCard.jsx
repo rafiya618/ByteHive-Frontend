@@ -88,21 +88,24 @@ const PostFormCard = () => {
         const isUserAllowedToPost = (comm) => {
           if (!comm) return false;
           const moderation = String(comm.moderation || 'only admin').toLowerCase();
-          const owner = String(comm.user_id || '');
+          const owner = String(comm.user_id?._id || comm.user_id || '');
           const moderators = Array.isArray(comm.moderators) ? comm.moderators.map(String) : [];
           const members = Array.isArray(comm.members) ? comm.members.map(String) : [];
           const me = String(currentUserId || '');
 
           const isOwner = owner === me;
+          const isModerator = moderators.includes(me);
+          const isMember = members.includes(me);
+
           if (isOwner) return true;
 
-          if (moderation.includes('moderator')) {
-            return moderators.includes(me);
+          if (moderation === 'allow moderators') {
+            return isModerator;
           }
-          if (moderation.includes('all')) {
-            // allow if member/follower
-            return members.includes(me);
+          if (moderation === 'allow all') {
+            return isModerator || isMember;
           }
+          
           // default "only admin"
           return false;
         };

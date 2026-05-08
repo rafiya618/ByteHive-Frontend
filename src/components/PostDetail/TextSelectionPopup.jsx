@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { getMeaning, searchBlogs, chatAboutWord, simplifyPost } from "../../api/smartReadingApi";
 import toast from "react-hot-toast";
 import { TEXT_SELECTION } from "../../utils/constants";
@@ -19,6 +20,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
   const [showSimplifyDialog, setShowSimplifyDialog] = useState(false);
   const [simplifyView, setSimplifyView] = useState("original"); // "original" or "simplified"
   const [validationError, setValidationError] = useState(null);
+  const navigate = useNavigate();
 
   // Validate selected text on mount and set default tab
   useEffect(() => {
@@ -88,9 +90,16 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
         const cacheExpiry = 60 * 60 * 1000; // 1 hour in milliseconds
 
         if (cacheAge < cacheExpiry) {
-          setRelatedBlogs(data);
-          setLoadingBlogs(false);
-          return;
+          // Safety check: ensure cached items have IDs
+          const hasIds = data.every(p => p.postId || p.id);
+          if (hasIds) {
+            setRelatedBlogs(data);
+            setLoadingBlogs(false);
+            return;
+          } else {
+            console.warn('⚠️ [SMART-LOOKUP] Local cache missing IDs. Invalidate...');
+            localStorage.removeItem(cacheKey);
+          }
         } else {
           localStorage.removeItem(cacheKey);
         }
@@ -634,11 +643,17 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
               ) : relatedBlogs && relatedBlogs.length > 0 ? (
                 <>
                   {relatedBlogs.map((blog, index) => (
-                    <div
+                    <Link
                       key={index}
-                      className="bg-rich-black-light rounded-lg p-3 border border-navbar-border hover:border-periwinkle transition-colors cursor-pointer hover:bg-rich-black-light/80"
+                      to={`/post/${blog.postId || blog.id}`}
+                      onClick={() => {
+                        console.log('🔗 [SMART-LOOKUP] Navigating via Link to:', blog.postId || blog.id);
+                        onClose();
+                      }}
+                      title={`Read "${blog.title}"`}
+                      className="block bg-rich-black-light rounded-lg p-3 border border-navbar-border hover:border-periwinkle transition-all cursor-pointer hover:bg-rich-black-light/80 active:scale-95 group mb-3 last:mb-0"
                     >
-                      <h5 className="text-white font-semibold text-sm mb-2">
+                      <h5 className="text-white font-semibold text-sm mb-2 group-hover:text-periwinkle transition-colors">
                         {blog.title}
                       </h5>
                       <p className="text-periwinkle/80 text-xs mb-2">
@@ -646,11 +661,12 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                       </p>
                       <div className="flex items-center justify-between">
                         <span className="text-celadon text-xs">{blog.readTime}</span>
-                        <span className="material-icons text-periwinkle text-sm">
-                          arrow_forward
-                        </span>
+                        <div className="flex items-center text-periwinkle group-hover:translate-x-1 transition-transform">
+                          <span className="text-xs mr-1">Read more</span>
+                          <span className="material-icons text-sm">arrow_forward</span>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
 
                   <button className="w-full bg-periwinkle text-rich-black py-2 px-4 rounded-lg hover:bg-periwinkle-dark transition-colors font-semibold">

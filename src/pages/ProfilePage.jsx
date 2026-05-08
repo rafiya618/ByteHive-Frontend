@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { updateProfile } from "../api/ProfileApi";
+import { useNavigate, useParams } from "react-router-dom";
+import { getProfile, updateProfile } from "../api/ProfileApi";
 import ProfileEdit from "../components/Profile/ProfileEdit";
 import Layout from "../components/Layout/Layout";
 import { useAuth } from "../context/auth";
@@ -15,6 +15,7 @@ import { registerPush } from "../helpers/registerPush";
 import Modal from "../components/Modal/Modal";
 
 const ProfilePage = () => {
+  const { id: paramId } = useParams();
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [errors, setErrors] = useState({});
@@ -28,13 +29,17 @@ const ProfilePage = () => {
   const [pendingPrefs, setPendingPrefs] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [viewedProfile, setViewedProfile] = useState(null);
   const { auth } = useAuth();
-  const { profile, fetchProfile, loading } = useProfile();
+  const { profile: globalProfile, fetchProfile, loading: globalLoading } = useProfile();
   const navigate = useNavigate();
 
-  
+  const loggedInUserId = auth?.user?._id;
+  const isMyProfile = !paramId || paramId === loggedInUserId;
+  const userId = isMyProfile ? loggedInUserId : paramId;
 
-  const userId = auth?.user?._id;
+  const profile = isMyProfile ? globalProfile : viewedProfile;
+  const loading = isMyProfile ? globalLoading : profileLoading;
 
   const safeProfile = profile || {};
   const socialLinks = safeProfile?.socialLinks || {};
@@ -69,10 +74,27 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
-    if (userId && !profile && !loading) {
-      fetchProfile();
+    if (isMyProfile) {
+      if (userId && !globalProfile && !globalLoading) {
+        fetchProfile();
+      }
+    } else if (userId && !viewedProfile && !profileLoading) {
+      // Fetch other user's profile
+      const fetchOtherProfile = async () => {
+        setProfileLoading(true);
+        try {
+          const res = await getProfile(userId);
+          setViewedProfile(res?.data);
+        } catch (err) {
+          console.error("Failed to fetch viewed profile:", err);
+          toast.error("Could not load profile");
+        } finally {
+          setProfileLoading(false);
+        }
+      };
+      fetchOtherProfile();
     }
-  }, [userId, profile, loading, fetchProfile]);
+  }, [userId, globalProfile, globalLoading, fetchProfile, isMyProfile, viewedProfile, profileLoading]);
 
   useEffect(() => {
     if (!userId) return;
@@ -82,12 +104,21 @@ const ProfilePage = () => {
       setContentLoading(true);
 
       try {
-        const [postsRes, savedRes, communitiesRes, prefsRes] = await Promise.all([
+        const promises = [
           postsApi.getPosts({ user_id: userId, limit: 20 }),
-          getSavedPosts(),
-          communityApi.getUserCommunities(""),
-          getPreferences(userId).catch(() => null),
-        ]);
+          communityApi.getUserCommunities("", false, userId) // Pass userId to get that user's communities
+        ];
+
+        if (isMyProfile) {
+          promises.push(getSavedPosts());
+          promises.push(getPreferences(userId).catch(() => null));
+        }
+
+        const results = await Promise.all(promises);
+        const postsRes = results[0];
+        const communitiesRes = results[1];
+        const savedRes = isMyProfile ? results[2] : null;
+        const prefsRes = isMyProfile ? results[3] : null;
 
         const postItems = postsRes?.posts || postsRes?.data?.posts || [];
         const normalizedPosts = Array.isArray(postItems)
@@ -165,19 +196,21 @@ const ProfilePage = () => {
           followed: communitiesRes?.followed || [],
         });
 
-        const prefData = prefsRes?.data || null;
-        setPrefs(prefData);
-        setPendingPrefs(prefData ? JSON.parse(JSON.stringify(prefData)) : null);
+        if (isMyProfile) {
+          const prefData = prefsRes?.data || null;
+          setPrefs(prefData);
+          setPendingPrefs(prefData ? JSON.parse(JSON.stringify(prefData)) : null);
 
-        setSettingsForm((prev) => ({
-          ...prev,
-          email: safeProfile?.user?.email || auth?.user?.email || "",
-          comment: !!prefData?.perType?.activities?.comment?.push,
-          reply: !!prefData?.perType?.activities?.reply?.push,
-          community: !!prefData?.perType?.updates?.newPost?.push,
-          likePost: !!prefData?.perType?.activities?.likePost?.push,
-          likeComment: !!prefData?.perType?.activities?.likeComment?.push,
-        }));
+          setSettingsForm((prev) => ({
+            ...prev,
+            email: safeProfile?.user?.email || auth?.user?.email || "",
+            comment: !!prefData?.perType?.activities?.comment?.push,
+            reply: !!prefData?.perType?.activities?.reply?.push,
+            community: !!prefData?.perType?.updates?.newPost?.push,
+            likePost: !!prefData?.perType?.activities?.likePost?.push,
+            likeComment: !!prefData?.perType?.activities?.likeComment?.push,
+          }));
+        }
       } catch (err) {
         console.error("Failed to load profile dashboard data:", err);
       } finally {
@@ -320,13 +353,15 @@ const ProfilePage = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-black/50" />
 
-            <button
-              onClick={() => setEditing(true)}
-              className="absolute right-3 top-3 sm:right-5 sm:top-5 bg-medium-slate-blue hover:bg-medium-slate-blue-dark text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer shadow-lg"
-            >
-              <span className="material-icons text-base align-middle mr-1">edit</span>
-              Edit Profile
-            </button>
+            {isMyProfile && (
+              <button
+                onClick={() => setEditing(true)}
+                className="absolute right-3 top-3 sm:right-5 sm:top-5 bg-medium-slate-blue hover:bg-medium-slate-blue-dark text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer shadow-lg"
+              >
+                <span className="material-icons text-base align-middle mr-1">edit</span>
+                Edit Profile
+              </button>
+            )}
           </div>
 
           <img
@@ -405,7 +440,7 @@ const ProfilePage = () => {
 
             <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4">
               <h3 className="font-fenix text-[22px] text-periwinkle mb-2.5">Communities</h3>
-              <p className="text-white text-base sm:text-lg mb-2">Your Communities</p>
+              <p className="text-white text-base sm:text-lg mb-2">{isMyProfile ? 'Your' : 'Member'} Communities</p>
               <div className="space-y-2 mb-4">
                 {allCommunities
                   .filter((community) => community.type === "owned")
@@ -448,8 +483,12 @@ const ProfilePage = () => {
           <section className="bg-rich-black/70 border border-navbar-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center gap-5 text-lg mb-4 overflow-x-auto pb-1">
               <button className={tabClass("posts")} onClick={() => setActiveTab("posts")}>Posts</button>
-              <button className={tabClass("saved")} onClick={() => setActiveTab("saved")}>Saved</button>
-              <button className={tabClass("settings")} onClick={() => setActiveTab("settings")}>Settings</button>
+              {isMyProfile && (
+                <>
+                  <button className={tabClass("saved")} onClick={() => setActiveTab("saved")}>Saved</button>
+                  <button className={tabClass("settings")} onClick={() => setActiveTab("settings")}>Settings</button>
+                </>
+              )}
             </div>
 
             {editing ? (
@@ -465,8 +504,8 @@ const ProfilePage = () => {
               <>
                 {activeTab === "posts" && (
                   <div className="space-y-2">
-                    <h2 className="font-fenix text-[28px] leading-none text-white">Your Posts</h2>
-                    {renderPostList(userPosts, "You have not posted yet.")}
+                    <h2 className="font-fenix text-[28px] leading-none text-white">{isMyProfile ? 'Your' : 'Member'} Posts</h2>
+                    {renderPostList(userPosts, isMyProfile ? "You have not posted yet." : "This member has not posted yet.")}
                   </div>
                 )}
 
