@@ -41,7 +41,7 @@ export async function registerPush(userId) {
 
     // ✅ Send subscription to backend
     const { data } = await axios.post(
-      "http://localhost:3002/push/save-subscription",
+      `${import.meta.env.VITE_NOTIFICATION_SERVICE_URL || "http://localhost:3002"}/push/save-subscription`,
       { userId, subscription }
     );
 

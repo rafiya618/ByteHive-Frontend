@@ -144,7 +144,7 @@ const ChatPage = () => {
   useEffect(() => {
     if (socketRef.current) return; // already initialized
 
-    const s = io("http://localhost:5050", {
+    const s = io(import.meta.env.VITE_CHAT_SERVICE_URL || "http://localhost:5050", {
       transports: ["websocket", "polling"],
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,

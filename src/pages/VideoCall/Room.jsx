@@ -3,7 +3,7 @@ import io from "socket.io-client";
 import * as mediasoupClient from "mediasoup-client";
 import Navbar from "../../shared/Navbar";
 
-const socket = io("http://localhost:8000");
+const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000");
 
 export default function Room({ communityId: propCommunityId }) {
   // Get communityId from URL params if not provided as prop

@@ -1,7 +1,7 @@
 // src/api/chatApi.js
 import { getAuthHeaders } from '../utils/authUtils';
 
-const API_BASE_URL = 'http://localhost:5050/api';
+const API_BASE_URL = `${import.meta.env.VITE_CHAT_SERVICE_URL || 'http://localhost:5050'}/api`;
 
 // Base API request handler for chat
 const chatApiRequest = async (url, options = {}) => {

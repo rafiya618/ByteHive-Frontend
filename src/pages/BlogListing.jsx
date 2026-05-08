@@ -32,8 +32,8 @@ const BlogListing = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const { auth } = useAuth();
 
-  const basePosts = (import.meta.env.VITE_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
-  const baseRE = (import.meta.env.VITE_RE_SERVICE_URL || "http://localhost:5004").replace(/\/$/, "");
+  const basePosts = (import.meta.env.VITE_POSTS_SERVICE_URL || "http://localhost:5000").replace(/\/$/, "");
+  const baseRE = (import.meta.env.VITE_RE_SERVICE_URL || "http://localhost:3005").replace(/\/$/, "");
 
   // Normalize posts for rendering
   const normalizePosts = (posts = []) =>

@@ -2,8 +2,6 @@
 import { io } from "socket.io-client";
 
 // Connect to the gateway (not directly to comment service)
-const socket = io("http://localhost:4000"); 
+const socket = io(import.meta.env.VITE_GATEWAY_URL || "http://localhost:4000"); 
 
 export default socket;
-
-

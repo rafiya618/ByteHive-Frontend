@@ -23,7 +23,7 @@ const _decodeJwt = (token) => {
   throw new Error('jwt-decode: unable to find decode function on module');
 };
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = `${import.meta.env.VITE_COMMUNITY_SERVICE_URL || 'http://localhost:5001'}/api`;
 
 // Helper function to get authorization headers
 const getAuthHeaders = () => {
