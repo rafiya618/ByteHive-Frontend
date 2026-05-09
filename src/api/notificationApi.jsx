@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAuthHeader } from "./authHeader";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_NOTIFICATION_SERVICE_URL,
+  baseURL: import.meta.env.VITE_NOTIFICATION_SERVICE_URL || "http://localhost:3002",
 });
 
 export const getNotifications = (userId) =>

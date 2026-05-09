@@ -28,7 +28,7 @@ const CommunityFormCard = () => {
   const [tagsInputValue, setTagsInputValue] = useState('');
   const [showAllTags, setShowAllTags] = useState(false);
   const [tagLimitError, setTagLimitError] = useState(false);
-  
+
   // Enhanced validation states
   const [validationErrors, setValidationErrors] = useState({
     community_name: '',
@@ -45,9 +45,9 @@ const CommunityFormCard = () => {
   // Auth check
   React.useEffect(() => {
     if (!authLoading && !auth?.token) {
-      navigate('/login', { 
+      navigate('/login', {
         state: { from: location.pathname },
-        replace: true 
+        replace: true
       });
     }
   }, [auth, authLoading, navigate, location.pathname]);
@@ -87,10 +87,10 @@ const CommunityFormCard = () => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear general error when user starts typing
     if (error) setError(null);
-    
+
     // Real-time validation
     if (name === 'community_name') {
       const nameError = validateCommunityName(value);
@@ -99,7 +99,7 @@ const CommunityFormCard = () => {
         community_name: touched.community_name ? nameError : ''
       }));
     }
-    
+
     if (name === 'description') {
       const descError = validateDescription(value);
       setValidationErrors(prev => ({
@@ -111,7 +111,7 @@ const CommunityFormCard = () => {
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    
+
     // Mark field as touched
     setTouched(prev => ({
       ...prev,
@@ -126,7 +126,7 @@ const CommunityFormCard = () => {
         community_name: nameError
       }));
     }
-    
+
     if (name === 'description') {
       const descError = validateDescription(value);
       setValidationErrors(prev => ({
@@ -139,13 +139,13 @@ const CommunityFormCard = () => {
   const handleTagsChange = (e) => {
     const inputValue = e.target.value;
     setTagsInputValue(inputValue);
-    
+
     // Split by comma and process tags
     const potentialTags = inputValue
       .split(',')
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0); // Only filter out completely empty tags
-    
+
     // Check if trying to exceed 10 tags
     if (potentialTags.length > 10) {
       setTagLimitError(true);
@@ -169,14 +169,14 @@ const CommunityFormCard = () => {
   const handleTagsBlur = () => {
     // Clear tag limit error on blur
     setTagLimitError(false);
-    
+
     // Clean up the input on blur - remove trailing comma and extra spaces
     const cleanedValue = tagsInputValue
       .split(',')
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0)
       .join(', ');
-    
+
     setTagsInputValue(cleanedValue);
   };
 
@@ -188,7 +188,7 @@ const CommunityFormCard = () => {
         setError('Please select an image file');
         return;
       }
-      
+
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image file must be less than 5MB');
@@ -196,14 +196,14 @@ const CommunityFormCard = () => {
       }
 
       setImageFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target.result);
       };
       reader.readAsDataURL(file);
-      
+
       if (error) setError(null);
     }
   };
@@ -265,10 +265,10 @@ const CommunityFormCard = () => {
           console.log('Community creation successful! Response:', response);
         } catch (imageError) {
           console.error('Error with image upload:', imageError);
-          
-          if (imageError.message.includes('Image upload failed') || 
-              imageError.message.includes('Image') || 
-              imageError.message.includes('upload')) {
+
+          if (imageError.message.includes('Image upload failed') ||
+            imageError.message.includes('Image') ||
+            imageError.message.includes('upload')) {
             console.log('Attempting to create community without image...');
             setError('Image upload failed. Creating community without image...');
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -283,30 +283,30 @@ const CommunityFormCard = () => {
           }
         }
       }
-      
+
       setSuccess(true);
-      
+
       // Clear the draft since community was created/updated successfully
       localStorage.removeItem('communityDraft');
-      
+
       // Navigate back to communities page after a short delay with state to trigger refresh
       setTimeout(() => {
-        navigate('/communities', { 
-          state: { 
-            refreshCommunities: true, 
-            newCommunity: response?.community || response, 
+        navigate('/communities', {
+          state: {
+            refreshCommunities: true,
+            newCommunity: response?.community || response,
             updatedCommunity: response?.community || response,
             fromEdit: isEdit
-          } 
+          }
         });
       }, 800);
-      
+
     } catch (err) {
       console.error('Error creating community:', err);
-      
+
       // Provide more specific error messages based on common issues
       let errorMessage = err.message || 'Failed to create community. Please try again.';
-      
+
       if (errorMessage.includes('Image upload failed')) {
         errorMessage = 'There was an issue uploading your image. Please try with a different image or create the community without an image.';
       } else if (errorMessage.includes('400')) {
@@ -314,7 +314,7 @@ const CommunityFormCard = () => {
       } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -359,13 +359,13 @@ const CommunityFormCard = () => {
           visible: draft.visible || 'public',
           moderation: draft.moderation || 'only admin'
         });
-        
+
         if (draft.tagsInputValue) {
           setTagsInputValue(draft.tagsInputValue);
         } else if (draft.community_tags && draft.community_tags.length > 0) {
           setTagsInputValue(draft.community_tags.join(', '));
         }
-        
+
         if (draft.imagePreview) {
           setImagePreview(draft.imagePreview);
         }
@@ -376,8 +376,8 @@ const CommunityFormCard = () => {
   }, [isEdit, editCommunity]);
 
   // Check if form is valid for button state
-  const isFormValid = !validateCommunityName(formData.community_name) && 
-                     !validateDescription(formData.description);
+  const isFormValid = !validateCommunityName(formData.community_name) &&
+    !validateDescription(formData.description);
 
   // Show loading while checking auth
   if (authLoading) {
@@ -414,19 +414,18 @@ const CommunityFormCard = () => {
         <label className="block text-white font-fenix mb-2">
           Community Name *
         </label>
-        <input 
-          type="text" 
+        <input
+          type="text"
           name="community_name"
           value={formData.community_name}
           onChange={handleInputChange}
           onBlur={handleBlur}
           maxLength={50}
           placeholder="Choose a unique name for your community"
-          className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none ${
-            validationErrors.community_name 
-              ? 'border-red-500 focus:border-red-500' 
-              : 'border-navbar-border focus:border-periwinkle'
-          }`}
+          className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none ${validationErrors.community_name
+            ? 'border-red-500 focus:border-red-500'
+            : 'border-navbar-border focus:border-periwinkle'
+            }`}
         />
         {validationErrors.community_name && (
           <p className="text-xs text-red-400 mt-1">
@@ -448,7 +447,7 @@ const CommunityFormCard = () => {
         <label className="block text-white font-fenix mb-2">
           Community Description *
         </label>
-        <textarea 
+        <textarea
           name="description"
           value={formData.description}
           onChange={handleInputChange}
@@ -456,11 +455,10 @@ const CommunityFormCard = () => {
           maxLength={500}
           placeholder="Describe what your community is about"
           rows={6}
-          className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none ${
-            validationErrors.description 
-              ? 'border-red-500 focus:border-red-500' 
-              : 'border-navbar-border focus:border-periwinkle'
-          }`}
+          className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none ${validationErrors.description
+            ? 'border-red-500 focus:border-red-500'
+            : 'border-navbar-border focus:border-periwinkle'
+            }`}
         />
         {validationErrors.description && (
           <p className="text-xs text-red-400 mt-1">
@@ -482,26 +480,25 @@ const CommunityFormCard = () => {
         <label className="block text-white font-fenix mb-2">
           Community Tags <span className="text-desc text-sm">(optional)</span>
         </label>
-        <input 
-          type="text" 
+        <input
+          type="text"
           placeholder="Enter tags separated by commas (e.g., JavaScript, React, Web Development) - Max 10 tags"
           value={tagsInputValue}
           onChange={handleTagsChange}
           onBlur={handleTagsBlur}
-          className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none ${
-            tagLimitError 
-              ? 'border-red-500 focus:border-red-500' 
-              : 'border-navbar-border focus:border-periwinkle'
-          }`}
+          className={`w-full bg-transparent border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none ${tagLimitError
+            ? 'border-red-500 focus:border-red-500'
+            : 'border-navbar-border focus:border-periwinkle'
+            }`}
         />
-        
+
         {/* Tag limit error message */}
         {tagLimitError && (
           <p className="text-xs text-red-400 mt-1">
             You can only add a maximum of 10 tags. Only the first 10 tags have been saved.
           </p>
         )}
-        
+
         <p className="text-xs text-desc mt-1">
           Tags help people discover your community (Maximum 10 tags allowed)
         </p>
@@ -514,7 +511,7 @@ const CommunityFormCard = () => {
                 </span>
               ))}
             </div>
-            
+
             {formData.community_tags.length > 3 && (
               <div className="mt-2">
                 <button
@@ -527,17 +524,16 @@ const CommunityFormCard = () => {
                   }}
                   className="text-xs text-periwinkle hover:text-white transition-colors cursor-pointer bg-none border-none p-0 underline hover:no-underline focus:outline-none"
                 >
-                  {showAllTags 
-                    ? `Show less` 
+                  {showAllTags
+                    ? `Show less`
                     : `+${formData.community_tags.length - 3} more tags`
                   }
                 </button>
               </div>
             )}
-            
-            <p className={`text-xs mt-1 ${
-              formData.community_tags.length === 10 ? 'text-yellow-400' : 'text-desc'
-            }`}>
+
+            <p className={`text-xs mt-1 ${formData.community_tags.length === 10 ? 'text-yellow-400' : 'text-desc'
+              }`}>
               {formData.community_tags.length}/10 tags
               {formData.community_tags.length === 10 && ' (Maximum reached)'}
             </p>
@@ -550,7 +546,7 @@ const CommunityFormCard = () => {
         {/* Visibility */}
         <div>
           <label className="block text-white font-fenix mb-2">Visibility</label>
-          <select 
+          <select
             name="visible"
             value={formData.visible}
             onChange={handleInputChange}
@@ -564,7 +560,7 @@ const CommunityFormCard = () => {
         {/* Moderation */}
         <div>
           <label className="block text-white font-fenix mb-2">Moderation</label>
-          <select 
+          <select
             name="moderation"
             value={formData.moderation}
             onChange={handleInputChange}
@@ -580,12 +576,12 @@ const CommunityFormCard = () => {
       {/* Community Avatar */}
       <div>
         <label className="block text-white font-fenix mb-2">Community Image</label>
-        
+
         {imagePreview ? (
           <div className="relative inline-block">
-            <img 
-              src={imagePreview} 
-              alt="Preview" 
+            <img
+              src={imagePreview}
+              alt="Preview"
               className="w-32 h-32 rounded-lg object-cover mb-4"
               style={{
                 objectFit: 'cover', // Ensures image fits properly without zooming
@@ -605,7 +601,7 @@ const CommunityFormCard = () => {
             </button>
           </div>
         ) : (
-          <div 
+          <div
             className="border border-dashed border-navbar-border rounded-lg p-6 text-center text-desc cursor-pointer hover:border-periwinkle transition relative"
             onClick={() => document.getElementById('community-image').click()}
           >
@@ -621,7 +617,7 @@ const CommunityFormCard = () => {
             <p className="text-xs mt-1">PNG, JPG or GIF (MAX. 5MB)</p>
           </div>
         )}
-        
+
         {/* Alternative file input if user prefers */}
         {imagePreview && (
           <div className="mt-4">
@@ -637,15 +633,15 @@ const CommunityFormCard = () => {
 
       {/* Buttons */}
       <div className="flex justify-end gap-3">
-        <ActionButton 
-          variant="secondary" 
+        <ActionButton
+          variant="secondary"
           onClick={handleSaveDraft}
           disabled={loading}
         >
           Save Draft
         </ActionButton>
-        <ActionButton 
-          variant="primary" 
+        <ActionButton
+          variant="primary"
           onClick={handleCreateCommunity}
           disabled={loading || !isFormValid}
         >

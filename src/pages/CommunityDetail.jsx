@@ -59,10 +59,18 @@ const CommunityDetail = () => {
 
   // Fetch member profiles when community loads or Members tab is selected
   useEffect(() => {
-    if (community && selectedFilter === "Members" && community.members && community.members.length > 0) {
+    const isOwnerOrAdmin = community?.user_id === auth?.user?._id || community?.user_id?._id === auth?.user?._id || auth?.user?.role === 'admin';
+    if (community && (selectedFilter === "Members" || isOwnerOrAdmin) && community.members && community.members.length > 0) {
       fetchMemberProfiles();
     }
-  }, [community, selectedFilter]);
+  }, [community, selectedFilter, auth?.user]);
+
+  // Helper to get userId from auth user object robustly
+  const getUserId = () => {
+    const user = auth?.user;
+    if (!user) return null;
+    return user._id || user.id || user.user_id || user.userId;
+  };
 
   const fetchCommunityData = async () => {
     if (!id) return;
@@ -71,7 +79,7 @@ const CommunityDetail = () => {
     setError(null);
 
     try {
-      const userId = auth.user?._id || auth.user?.id;
+      const userId = getUserId();
       console.log('🔍 Fetching community details for user:', userId);
       const response = await communityApi.getCommunityDetails(id, userId);
       console.log('📦 Community details response:', response);
@@ -360,8 +368,9 @@ const CommunityDetail = () => {
     if (!community || !moderatorInput.trim()) return;
     try {
       setModActionLoading(true);
-      await adminCommunityApi.addModerator(community._id, moderatorInput.trim());
-      const updated = await communityApi.getCommunityDetails(community._id);
+      await communityApi.addModerator(community._id, moderatorInput.trim());
+      const userId = getUserId();
+      const updated = await communityApi.getCommunityDetails(community._id, userId);
       setCommunity(updated.community);
       setModeratorInput("");
     } catch (err) {
@@ -375,8 +384,9 @@ const CommunityDetail = () => {
   const handleRemoveModeratorAdmin = async (userId) => {
     try {
       setModActionLoading(true);
-      await adminCommunityApi.removeModerator(community._id, userId);
-      const updated = await communityApi.getCommunityDetails(community._id);
+      await communityApi.removeModerator(community._id, userId);
+      const currentUserId = getUserId();
+      const updated = await communityApi.getCommunityDetails(community._id, currentUserId);
       setCommunity(updated.community);
     } catch (err) {
       console.error('Remove moderator failed:', err);
@@ -437,7 +447,26 @@ const CommunityDetail = () => {
     );
   }
 
-  const isOwner = community?.user_id === auth.user._id || community?.user_id?._id === auth.user._id;
+  const currentUserId = getUserId();
+  const isOwner = String(community?.user_id?._id || community?.user_id) === String(currentUserId);
+
+  const canPost = () => {
+    if (!community || !auth?.user) return false;
+    const userId = auth.user._id || auth.user.id;
+    const commOwnerId = community.user_id?._id || community.user_id;
+    
+    const isAdmin = String(commOwnerId) === String(userId);
+    const isModerator = community.moderators?.map(String).includes(String(userId));
+    const isMember = community.members?.map(String).includes(String(userId));
+    
+    const moderation = String(community.moderation || 'only admin').toLowerCase();
+    
+    if (moderation === 'only admin') return isAdmin;
+    if (moderation === 'allow moderators') return isAdmin || isModerator;
+    if (moderation === 'allow all') return isAdmin || isModerator || isMember;
+    
+    return isAdmin;
+  };
 
   const renderContent = () => {
     switch (selectedFilter) {
@@ -446,7 +475,7 @@ const CommunityDetail = () => {
           <div className="flex flex-col gap-6 pb-12">
             <div className="flex justify-between items-center">
               <h2 className="font-fenix text-3xl md:text-4xl text-white font-normal">Community Posts</h2>
-              <NewPostButton />
+              {canPost() && <NewPostButton />}
             </div>
 
             {postsLoading ? (
@@ -700,18 +729,27 @@ const CommunityDetail = () => {
       {/* Content */}
       <div className="w-full flex justify-center px-4 lg:px-8">
         <div className="w-full max-w-7xl">
-          {/* Admin-only moderator management panel */}
-          {auth?.user?.role === 'admin' && (
+          {/* Community owner or global admin: moderator management panel */}
+          {(isOwner || auth?.user?.role === 'admin') && String(community?.moderation || "").toLowerCase() === "allow moderators" && (
             <div className="mb-6 p-4 border border-navbar-border rounded-lg bg-navbar-bg">
-              <h4 className="text-white font-fenix text-lg mb-3">Moderator Management (Admin)</h4>
+              <h4 className="text-white font-fenix text-lg mb-3">Moderator Management</h4>
               <div className="flex flex-col md:flex-row gap-3 md:items-center">
-                <input
-                  type="text"
+                <select
                   value={moderatorInput}
                   onChange={(e) => setModeratorInput(e.target.value)}
-                  placeholder="Enter userId to add as moderator"
-                  className="flex-1 bg-transparent border border-navbar-border rounded-lg px-4 py-2 text-white placeholder:text-desc focus:outline-none focus:border-periwinkle"
-                />
+                  className="flex-1 bg-navbar-bg border border-navbar-border rounded-lg px-4 py-2 text-white focus:outline-none focus:border-periwinkle"
+                >
+                  <option value="">Select a member to add as moderator</option>
+                  {community?.members?.filter(mId => {
+                    const ownerId = community.user_id?._id || community.user_id;
+                    const moderators = community.moderators || [];
+                    return !moderators.map(String).includes(String(mId)) && String(mId) !== String(ownerId);
+                  }).map(mId => (
+                    <option key={mId} value={mId}>
+                      {memberProfiles[mId]?.name || memberProfiles[mId]?.username || `User ${mId.substring(0, 5)}...`}
+                    </option>
+                  ))}
+                </select>
                 <button
                   onClick={handleAddModeratorAdmin}
                   disabled={modActionLoading || !moderatorInput.trim()}
@@ -724,18 +762,22 @@ const CommunityDetail = () => {
                 <div className="mt-4">
                   <p className="text-desc mb-2">Current Moderators:</p>
                   <div className="flex flex-wrap gap-2">
-                    {community.moderators.map((mId) => (
-                      <div key={mId} className="flex items-center gap-2 bg-chip text-periwinkle px-3 py-1 rounded-xl">
-                        <span>{mId}</span>
-                        <button
-                          onClick={() => handleRemoveModeratorAdmin(mId)}
-                          disabled={modActionLoading}
-                          className="text-pinkish hover:text-white"
-                        >
-                          <span className="material-icons text-sm">close</span>
-                        </button>
-                      </div>
-                    ))}
+                    {community.moderators.map((mId) => {
+                      const profile = memberProfiles[mId];
+                      return (
+                        <div key={mId} className="flex items-center gap-2 bg-chip/50 border border-periwinkle/30 text-periwinkle px-3 py-1.5 rounded-xl hover:bg-chip transition-colors group">
+                          <span className="text-sm font-medium">{profile?.name || profile?.username || `User ${mId.substring(0, 5)}...`}</span>
+                          <button
+                            onClick={() => handleRemoveModeratorAdmin(mId)}
+                            disabled={modActionLoading}
+                            title="Remove Moderator"
+                            className="text-pinkish/70 hover:text-pinkish transition-colors flex items-center justify-center"
+                          >
+                            <span className="material-icons text-[18px]">cancel</span>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

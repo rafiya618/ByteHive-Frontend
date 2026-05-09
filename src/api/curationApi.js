@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-const API_URL = import.meta.env.VITE_CURATION_API_URL || 'http://127.0.0.1:5004/api';
+const API_URL = `${import.meta.env.VITE_CURATION_SERVICE_URL || 'http://localhost:5004'}/api`;
 
 // Create axios instance
 const api = axios.create({

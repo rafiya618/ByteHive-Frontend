@@ -1,7 +1,7 @@
 // src/api/eventApi.js
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/events"; // adjust backend URL
+const API_URL = `${import.meta.env.VITE_POSTS_SERVICE_URL || "http://localhost:5000"}/api/events`; // adjust backend URL
 
 export const createEvent = async (eventData, jwt, googleRefreshToken) => {
   const { data } = await axios.post(API_URL, eventData, {
@@ -53,7 +53,7 @@ export const syncEventToCalendar = async (eventId, token, googleRefreshToken) =>
   console.log("Syncing event to calendar:", { eventId, hasToken: !!token, hasRefreshToken: !!googleRefreshToken });
 
   const res = await axios.post(
-    `http://localhost:5000/api/events/${eventId}/sync`, // Fixed: removed '-calendar' from path
+    `${import.meta.env.VITE_POSTS_SERVICE_URL || "http://localhost:5000"}/api/events/${eventId}/sync`, // Fixed: removed '-calendar' from path
     {},
     {
       headers: {

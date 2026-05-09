@@ -23,7 +23,7 @@ const _decodeJwt = (token) => {
   throw new Error('jwt-decode: unable to find decode function on module');
 };
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = `${import.meta.env.VITE_COMMUNITY_SERVICE_URL || 'http://localhost:5001'}/api`;
 
 // Helper function to get authorization headers
 const getAuthHeaders = () => {
@@ -261,7 +261,7 @@ export const communityApi = {
         console.error('❌ Could not extract user ID from auth token:', e);
         throw new Error('User authentication required. Please log in again.');
       }
-      
+
       // Include user_id and owner_username in the form data
       formData.append('user_id', currentUserId);
       // Prefer owner_username provided by caller (from Profile Context); fallback to token-derived
@@ -400,7 +400,7 @@ export const communityApi = {
       if (communityData.owner_username) {
         formData.append('owner_username', communityData.owner_username);
       }
-      
+
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -486,18 +486,20 @@ export const communityApi = {
   },
 
   // Get User's Communities (Protected)
-  getUserCommunities: async (searchQuery = '', forceRefresh = false) => {
+  getUserCommunities: async (searchQuery = '', forceRefresh = false, targetUserId = null) => {
     try {
-      console.log('getUserCommunities called with searchQuery:', searchQuery, 'forceRefresh:', forceRefresh);
+      console.log('getUserCommunities called with searchQuery:', searchQuery, 'forceRefresh:', forceRefresh, 'targetUserId:', targetUserId);
 
       // Get auth data to extract user id for the route
-      let currentUserId = null;
-      try {
-        currentUserId = getUserIdFromAuth();
-        console.log('Current user ID from token:', currentUserId);
-      } catch (e) {
-        console.error('Could not parse auth data for user ID:', e);
-        throw new Error('User authentication required to fetch your communities');
+      let currentUserId = targetUserId;
+      if (!currentUserId) {
+        try {
+          currentUserId = getUserIdFromAuth();
+          console.log('Current user ID from token:', currentUserId);
+        } catch (e) {
+          console.error('Could not parse auth data for user ID:', e);
+          throw new Error('User authentication required to fetch communities');
+        }
       }
 
       let queryParams = searchQuery.trim() ? `?search=${encodeURIComponent(searchQuery.trim())}` : '';
@@ -605,4 +607,53 @@ export const communityApi = {
       throw error;
     }
   },
+
+  // Moderator Management (Protected - Owner only)
+  addModerator: async (communityId, moderatorUserId) => {
+  try {
+    const user_id = getUserIdFromAuth();
+    const response = await fetch(`${API_BASE_URL}/communities/${communityId}/moderators`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ user_id, moderatorUserId })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to add moderator');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding moderator:', error);
+    throw error;
+  }
+},
+
+  removeModerator: async (communityId, moderatorUserId) => {
+    try {
+      const user_id = getUserIdFromAuth();
+      const response = await fetch(`${API_BASE_URL}/communities/${communityId}/moderators/${moderatorUserId}`, {
+        method: 'DELETE',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to remove moderator');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error removing moderator:', error);
+      throw error;
+    }
+  }
 };

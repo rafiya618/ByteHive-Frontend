@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAuthHeader } from "./authHeader";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_COMMENT_SERVICE_URL,
+  baseURL: import.meta.env.VITE_COMMENT_SERVICE_URL || "http://localhost:3001",
 });
 
 export const addComment = (commentPayload) =>
