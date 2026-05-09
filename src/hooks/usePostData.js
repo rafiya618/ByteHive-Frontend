@@ -47,11 +47,13 @@ export const usePostData = (postId, auth) => {
                         data = resp.post || resp;
                     } catch {
                         // fallback to basic fetch
-                        const res = await axios.get(`http://127.0.0.1:5000/api/posts/${postId}`);
+                        const postsApiUrl = import.meta.env.VITE_POSTS_API_URL || 'http://127.0.0.1:5000/api';
+                        const res = await axios.get(`${postsApiUrl}/posts/${postId}`);
                         data = res.data.post;
                     }
                 } else {
-                    const res = await axios.get(`http://127.0.0.1:5000/api/posts/${postId}`);
+                    const postsApiUrl = import.meta.env.VITE_POSTS_API_URL || 'http://127.0.0.1:5000/api';
+                    const res = await axios.get(`${postsApiUrl}/posts/${postId}`);
                     data = res.data.post;
                 }
 
