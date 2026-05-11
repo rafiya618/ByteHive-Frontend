@@ -105,7 +105,9 @@ const ProfilePage = () => {
 
       try {
         const promises = [
-          postsApi.getPosts({ user_id: userId, limit: 20 }),
+          isMyProfile
+            ? postsApi.getMyPosts({ limit: 20 })
+            : postsApi.getPosts({ user_id: userId, limit: 20 }),
           communityApi.getUserCommunities("", false, userId) // Pass userId to get that user's communities
         ];
 

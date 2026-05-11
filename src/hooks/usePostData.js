@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { postsApi } from '../api/postsApi';
 import { checkSavedStatus, recordView } from '../api/curationApi';
 import { extractUserId } from '../utils/userIdExtractor';
@@ -12,7 +11,7 @@ import { extractUserId } from '../utils/userIdExtractor';
  * @param {Object} auth - Auth context object
  * @returns {Object} Post data and state
  */
-export const usePostData = (postId, auth) => {
+export const usePostData = (postId, auth, options = {}) => {
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -40,19 +39,34 @@ export const usePostData = (postId, auth) => {
             try {
                 let data;
                 const userId = auth?.token ? currentUserId : null;
+                const isAdmin = String(auth?.user?.role || '').toLowerCase() === 'admin';
+                const postFetchOptions = (isAdmin || options?.includeUnapproved) ? { includeUnapproved: true } : {};
 
                 if (userId) {
                     try {
-                        const resp = await postsApi.getPostByIdWithVotes(postId, userId);
-                        data = resp.post || resp;
+                        const [postResp, voteResp] = await Promise.all([
+                            postsApi.getPostById(postId, postFetchOptions),
+                            postsApi.getPostVoteStatus(postId, userId)
+                        ]);
+
+                        data = postResp.post || postResp;
+                        if (voteResp?.ok) {
+                            data = {
+                                ...data,
+                                upvotes: voteResp.upvotes ?? data.upvotes,
+                                downvotes: voteResp.downvotes ?? data.downvotes,
+                                userLiked: voteResp.userLiked ?? false,
+                                userDisliked: voteResp.userDisliked ?? false,
+                            };
+                        }
                     } catch {
                         // fallback to basic fetch
-                        const res = await axios.get(`http://127.0.0.1:5000/api/posts/${postId}`);
-                        data = res.data.post;
+                        const res = await postsApi.getPostById(postId, postFetchOptions);
+                        data = res.post || res;
                     }
                 } else {
-                    const res = await axios.get(`http://127.0.0.1:5000/api/posts/${postId}`);
-                    data = res.data.post;
+                    const res = await postsApi.getPostById(postId, postFetchOptions);
+                    data = res.post || res;
                 }
 
                 setPost(data);
@@ -93,7 +107,25 @@ export const usePostData = (postId, auth) => {
                     console.error('Failed to increment view count:', error);
                 }
             } catch (error) {
-                setError(error?.response?.data?.error || 'Failed to load post');
+                const status = error?.response?.status || error?.status || (error?.message && error.message.toLowerCase().includes('not found') ? 404 : null);
+                // If not found, attempt a fallback fetch that includes unapproved posts
+                if (status === 404) {
+                    try {
+                        const fallback = await postsApi.getPostById(postId, { includeUnapproved: true });
+                        const data2 = fallback.post || fallback;
+                        setPost(data2);
+                        setUpvotes(toCount(data2.upvotes));
+                        setDownvotes(toCount(data2.downvotes));
+                        if (data2.userLiked !== undefined) setIsUpvoted(Boolean(data2.userLiked));
+                        if (data2.userDisliked !== undefined) setIsDownvoted(Boolean(data2.userDisliked));
+                    } catch (err2) {
+                        const msg = err2?.response?.data?.error || err2?.message || 'Failed to load post';
+                        setError(msg);
+                    }
+                } else {
+                    const msg = error?.response?.data?.error || error?.message || 'Failed to load post';
+                    setError(msg);
+                }
             }
             setLoading(false);
         };

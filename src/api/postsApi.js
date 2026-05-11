@@ -15,7 +15,11 @@ const apiRequest = async (url, options = {}) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
+      const message = errorData.error || errorData.message || `HTTP error! status: ${response.status}`;
+      const err = new Error(message);
+      err.status = response.status;
+      err.data = errorData;
+      throw err;
     }
 
     return await response.json();
@@ -126,6 +130,19 @@ export const postsApi = {
     return await apiRequest(`/posts?${queryParams}`);
   },
 
+  // Get My Posts (Authenticated) - includes rejected/pending items for the owner
+  getMyPosts: async (filters = {}) => {
+    const queryParams = new URLSearchParams();
+
+    if (filters.skip) queryParams.append('skip', filters.skip);
+    if (filters.limit) queryParams.append('limit', filters.limit);
+    if (filters.category) queryParams.append('category', filters.category);
+    if (filters.community_id) queryParams.append('community_id', filters.community_id);
+    if (filters.tags) queryParams.append('tags', filters.tags.join(','));
+
+    return await authenticatedRequest(`/posts/me?${queryParams}`);
+  },
+
   // Get Posts with Community Info (Public)
   getPostsWithCommunities: async (filters = {}) => {
     const queryParams = new URLSearchParams();
@@ -143,9 +160,12 @@ export const postsApi = {
   },
 
   // Get Post by ID (Public) - with proper error handling
-  getPostById: async (postId) => {
+  getPostById: async (postId, options = {}) => {
     try {
-      const response = await apiRequest(`/posts/${postId}`);
+      const queryParams = new URLSearchParams();
+      if (options.includeUnapproved) queryParams.append('include_unapproved', 'true');
+      const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+      const response = await apiRequest(`/posts/${postId}${query}`);
 
       // Ensure the response has the expected structure
       if (response.ok && response.post) {

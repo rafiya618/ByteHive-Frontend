@@ -122,7 +122,7 @@ const CommunityCard = ({
 
   return (
     <div
-      className="bg-navbar-bg rounded-xl overflow-hidden border hover:border-periwinkle transition-colors relative w-full"
+      className="bg-navbar-bg rounded-xl overflow-hidden border hover:border-periwinkle transition-colors relative w-full cursor-pointer"
       style={{ border: "1px solid var(--navbar-border)" }}
     >
       {/* Kebab Menu */}

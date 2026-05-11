@@ -14,10 +14,12 @@ export default function Navbar() {
   const [streakDropdownOpen, setStreakDropdownOpen] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(0);
   const { profile } = useProfile()
+  const { auth } = useAuth()
   const { notifications, markAllAsRead } = useNotifications()
   const { logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
+  const isAdmin = auth?.user?.role === "admin"
 
   useEffect(() => {
     fetchCurrentStreak();
@@ -99,7 +101,7 @@ export default function Navbar() {
               <button
                 onClick={async () => {
                   // Clear unread badge immediately
-                  try { await markAllAsRead(); } catch (e) { /* non-blocking */ }
+                  try { await markAllAsRead(); } catch { /* non-blocking */ }
                   navigate("/notifications");
                 }}
                 className="text-columbia-blue hover:text-white p-3 rounded-md bg-rich-black-light hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer"
@@ -157,6 +159,18 @@ export default function Navbar() {
                       <span className="material-icons text-2xl">account_circle</span>
                       <span>Profile</span>
                     </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          navigate("/admin/dashboard");
+                          setProfileDropdown(false);
+                        }}
+                        className="w-full px-4 py-3 text-left flex items-center space-x-3 text-columbia-blue hover:text-white hover:bg-periwinkle-light transition-colors border-t border-navbar-border"
+                      >
+                        <span className="material-icons text-2xl">admin_panel_settings</span>
+                        <span>Admin Panel</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         logout();

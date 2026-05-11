@@ -34,6 +34,18 @@
   background: radial-gradient(110% 90% at 0% 0%, #22213b 60%, #18162D 100%);
 }
 
+button:not(:disabled),
+a,
+[role="button"],
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 
 .bg-rich-black {
   background: #0C0C16;
@@ -355,4 +367,4 @@
 }
 
 
-
+

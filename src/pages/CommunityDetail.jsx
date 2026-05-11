@@ -162,7 +162,7 @@ const CommunityDetail = () => {
       const postPromises = postIds.map(async (postId, index) => {
         try {
           console.log(`Fetching post ${index + 1}/${postIds.length}: ${postId}`);
-          const response = await postsApi.getPostById(postId);
+          const response = await postsApi.getPostById(postId, { includeUnapproved: true });
           console.log(`Post ${postId} response:`, response);
           return response.ok ? response.post : null;
         } catch (error) {

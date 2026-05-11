@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/auth';
 import TextSelectionPopup from './TextSelectionPopup';
 import Comment from './Comment/Comment';
@@ -71,6 +71,8 @@ export default function BlogDetail() {
   }, [postId, auth?.user]);
 
 
+  const location = useLocation();
+
   // Custom hooks for data fetching and state management
   const {
     post,
@@ -89,7 +91,7 @@ export default function BlogDetail() {
     isDownvoted,
     setIsDownvoted,
     currentUserId,
-  } = usePostData(postId, auth);
+  } = usePostData(postId, auth, { includeUnapproved: location?.state?.includeUnapproved });
 
   // Voting hook
   const { toggleUpvote, toggleDownvote, isVoting } = useVoting(

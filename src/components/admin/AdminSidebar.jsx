@@ -43,13 +43,16 @@ const AdminSidebar = () => {
         ))}
       </nav>
 
-      {/* Footer / Help */}
-      {/* <div className="border-t border-navbar-border pt-4 pb-6">
-        <button className="w-full px-4 py-3 rounded-lg bg-dark-indigo text-periwinkle text-sm font-medium hover:bg-dark-indigo/80 transition">
-          <span className="material-icons text-sm align-middle mr-2">help</span>
-          Help & Support
-        </button>
-      </div> */}
+      {/* Footer / User dashboard */}
+      <div className="border-t border-navbar-border pt-4 pb-6">
+        <Link
+          to="/"
+          className="w-full px-4 py-3 rounded-lg bg-dark-indigo text-periwinkle text-xs font-medium hover:bg-dark-indigo/80 transition flex items-center justify-center gap-2"
+        >
+          <span className="material-icons text-xs">home</span>
+          Back to User Dashboard
+        </Link>
+      </div>
     </aside>
   );
 };

@@ -97,7 +97,8 @@ export default function NotificationPage() {
     // Post-related notifications (like/comment/mention on a post)
     const postId = n.postId || target.postId || (n.meta && n.meta.postId);
     if ((type === 'like' || type === 'comment' || type === 'mention') && postId) {
-      navigate(`/ blog / ${postId} `);
+      // Navigate to post detail. Ensure path is correct and request includes unapproved posts
+      navigate(`/post/${postId}`, { state: { includeUnapproved: true } });
       return;
     }
 

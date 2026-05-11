@@ -234,7 +234,7 @@ export const ReportReviewModal = ({ report, reportData, isOpen, onClose, onActio
                   >
                     <option value="">Select an action...</option>
                     <option value="approved">✓ Approve (Dismiss Report)</option>
-                    <option value="removed">⚠ Remove Post (Hide)</option>
+                    {/* <option value="removed">⚠ Remove Post (Hide)</option> */}
                     <option value="deleted">🚫 Delete Post (Permanent)</option>
                     <option value="user_warned">⚡ Warn User</option>
                     <option value="user_banned">🔒 Ban/Suspend User</option>

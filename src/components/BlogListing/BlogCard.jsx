@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/auth";
 import { postsApi } from "../../api/postsApi";
 import { getCommentsByPost } from "../../api/commentApi";
@@ -58,6 +58,7 @@ const BlogCard = ({
   const [showReportModal, setShowReportModal] = useState(false);
   const navigate = useNavigate();
   const { auth } = useAuth();
+  const location = useLocation();
   const toCount = (v) => {
     if (Array.isArray(v)) return v.length;
     if (typeof v === 'number') return v;
@@ -435,6 +436,11 @@ const BlogCard = ({
 
       <Link
         to={`/post/${id}`}
+        state={
+          (auth?.user?.role === 'admin' || location.pathname.startsWith('/community'))
+            ? { includeUnapproved: true }
+            : undefined
+        }
         onClick={async () => {
           try {
             const userId = auth?.user?._id ?? auth?.user?.id ?? auth?.user?.user_id ?? auth?.user?.sub ?? auth?.user?.userId;
@@ -443,7 +449,7 @@ const BlogCard = ({
             await reTrackEvent({ userId: String(userId), action: 'read', entityType: 'post', entityId: id, metadata: { source: 'listing' } });
           } catch {}
         }}
-        className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 transition"
+        className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 transition cursor-pointer"
         style={{ border: "1px solid var(--navbar-border)" }}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 relative">
