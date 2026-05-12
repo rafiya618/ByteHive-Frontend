@@ -3,7 +3,8 @@ import io from "socket.io-client";
 import * as mediasoupClient from "mediasoup-client";
 import Navbar from "../../shared/Navbar";
 
-const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000");
+const VIDEOCALL_SERVER_URL = import.meta.env.VITE_VIDEOCALL_SERVER_URL || "http://localhost:8000";
+const socket = io(VIDEOCALL_SERVER_URL);
 
 export default function Room({ communityId: propCommunityId }) {
   // Get communityId from URL params if not provided as prop
