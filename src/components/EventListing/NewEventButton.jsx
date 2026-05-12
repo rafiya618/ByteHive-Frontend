@@ -7,13 +7,12 @@ const NewPostButton = () => {
   return (
     <button
       onClick={() => navigate("/create-event")}
-      className="ml-2 h-[49px] px-6 bg-[#6866FF] hover:bg-[#5755D6] text-white text-base font-medium rounded-[5px] transition-colors duration-200 flex items-center"
+      className="events-new-btn ml-2 h-[49px] px-6 text-white text-base font-semibold rounded-xl transition-all duration-200 flex items-center justify-center"
       style={{
-        minWidth: 120,
-        borderRadius: "5px",
+        minWidth: 148,
       }}
     >
-      + New Event
+      + Create Event
     </button>
   );
 };

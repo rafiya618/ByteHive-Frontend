@@ -22,17 +22,17 @@ function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-rich-black flex flex-col">
+    <div className="min-h-screen bg-rich-black flex flex-col events-page">
       <Navbar />
       <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="max-w-lg w-full bg-navbar-bg border border-navbar-border rounded-2xl shadow-lg p-8 flex flex-col items-center">
+        <div className="events-hero max-w-lg w-full bg-navbar-bg border border-navbar-border rounded-3xl shadow-lg p-8 flex flex-col items-center">
           <div className="flex items-center gap-3 mb-6">
             <span className="material-icons text-periwinkle text-4xl">videocam</span>
             <h1 className="font-fenix text-3xl text-white">ByteHive Video Rooms</h1>
           </div>
           <button
             onClick={createRoom}
-            className="bg-periwinkle hover:bg-medium-slate-blue text-white font-semibold px-6 py-3 rounded-xl transition-colors flex items-center gap-2 mb-6"
+            className="bh-action-btn bg-periwinkle hover:bg-medium-slate-blue text-white font-semibold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 mb-6"
           >
             <span className="material-icons text-lg">add_circle</span>
             Create Room
@@ -44,12 +44,12 @@ function HomePage() {
                 <input
                   value={roomLink}
                   readOnly
-                  className="flex-1 bg-rich-black-light border border-navbar-border rounded-lg px-4 py-2 text-white font-lato"
+                  className="flex-1 bg-rich-black-light border border-navbar-border rounded-xl px-4 py-2.5 text-white font-lato"
                   style={{ minWidth: 0 }}
                 />
                 <button
                   onClick={copyLink}
-                  className="bg-periwinkle hover:bg-medium-slate-blue text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1"
+                  className="bh-action-btn bg-periwinkle hover:bg-medium-slate-blue text-white px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1"
                 >
                   <span className="material-icons text-base">content_copy</span>
                   Copy

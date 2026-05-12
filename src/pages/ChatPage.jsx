@@ -626,7 +626,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-rich-black">
+    <div className="min-h-screen bg-rich-black events-page">
       {/* Navbar */}
       <Navbar />
       
@@ -685,15 +685,14 @@ const ChatPage = () => {
         {/* Main Content */}
         <div className="flex flex-col flex-1 relative">
           {/* Background Blur Effect */}
-          <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", 
-               background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", 
-               borderRadius: 30, pointerEvents: "none" }} />
+          <div className="absolute z-0 events-neon-orb events-neon-orb-left" />
+          <div className="absolute z-0 events-neon-orb events-neon-orb-right" />
 
           {/* Chat Header */}
-          <div className="w-full pt-8 pb-12 relative z-10">
-            <div className="w-full px-4 lg:px-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6">
+          <div className="w-full pt-8 pb-10 relative z-10 px-4 lg:px-8">
+            <div className="events-hero rounded-3xl border border-navbar-border p-5 md:p-6">
+              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+                <div className="flex items-center gap-5 min-w-0">
                   {/* Mobile hamburger menu */}
                   <button 
                     onClick={toggleSidebar}
@@ -705,10 +704,10 @@ const ChatPage = () => {
                   <img
                     src={community?.image || 'https://ui-avatars.com/api/?name=Community&background=111827&color=fff'}
                     alt={community?.community_name || 'Community'}
-                    className="w-28 h-28 rounded-full object-cover flex-shrink-0"
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover flex-shrink-0 border border-navbar-border"
                   />
-                  <div>
-                    <h1 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-2">
+                  <div className="min-w-0">
+                    <h1 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-2 truncate max-w-[520px]">
                       {community?.community_name || (communityLoading ? 'Loading community...' : 'Community')}
                     </h1>
                     <p className="font-lato text-columbia-blue text-base">
@@ -722,7 +721,7 @@ const ChatPage = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 flex-wrap xl:justify-end">
                   <VideoRoomButton />
                   {['people', 'info'].map(icon => (
                     <button key={icon} className="text-white hover:text-periwinkle transition-colors">
@@ -740,8 +739,8 @@ const ChatPage = () => {
               // Show thread-specific chat interface
               <>
                 {/* Thread Header - with real-time message count */}
-                <div className="px-8 lg:px-16 py-4 border-b border-navbar-border bg-navbar-bg/50">
-                  <div className="flex items-center gap-3">
+                <div className="px-5 lg:px-8 py-4 border-b border-navbar-border bg-navbar-bg/50 rounded-t-2xl">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-periwinkle text-2xl">#</span>
                     <h3 className="text-white font-fenix text-xl">{selectedThread.name}</h3>
                     <span className="text-desc text-sm">
@@ -757,7 +756,7 @@ const ChatPage = () => {
                 </div>
 
                 {/* Messages Area */}
-                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-4 pb-6 px-8 lg:px-16" style={{
+                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-4 pb-6 px-5 lg:px-8" style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: 'var(--rich-black) transparent'
                 }}>

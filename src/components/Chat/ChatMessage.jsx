@@ -11,7 +11,7 @@ const ChatMessage = ({ author, message, time, isCurrentUser }) => {
   const messageWrapperClass = `flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[92%] sm:max-w-[78%] md:max-w-[68%] lg:max-w-[60%]`;
 
   // Moderate padding and full width inside wrapper; same structure both sides (different color)
-  const messageClass = `px-4 py-2 rounded-lg ${isCurrentUser ? '' : 'border'} w-full`;
+  const messageClass = `px-4 py-3 rounded-2xl ${isCurrentUser ? '' : 'border'} w-full shadow-sm`;
   const textColor = isCurrentUser ? 'text-white' : 'text-columbia-blue';
   const nameColor = isCurrentUser ? 'text-white' : 'text-white';
   const timeColor = isCurrentUser ? 'text-white/80' : 'text-periwinkle';

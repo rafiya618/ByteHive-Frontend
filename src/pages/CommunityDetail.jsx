@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import Navbar from "../shared/Navbar";
@@ -10,7 +10,6 @@ import JoinChatButton from "../components/CommunityDetail/JoinChatButton";
 import VideoRoomButton from "../components/CommunityDetail/VideoRoomButton";
 import NewPostButton from "../shared/NewPostButton";
 import { communityApi } from "../api/communityApi";
-import { adminCommunityApi } from "../api/adminCommunityApi";
 import { postsApi } from "../api/postsApi";
 import { getProfile } from "../api/ProfileApi";
 
@@ -35,44 +34,14 @@ const CommunityDetail = () => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Initialize auth check and fetch community data
-  useEffect(() => {
-    if (!authLoading && !auth?.token) {
-      navigate('/login', {
-        state: { from: `/community/${id}` },
-        replace: true
-      });
-      return;
-    }
-
-    if (!authLoading && auth?.token) {
-      fetchCommunityData();
-    }
-  }, [id, auth, authLoading, navigate]);
-
-  // Fetch community posts when community is loaded or filter changes to Posts
-  useEffect(() => {
-    if (community && selectedFilter === "Posts") {
-      fetchCommunityPosts();
-    }
-  }, [community, selectedFilter]);
-
-  // Fetch member profiles when community loads or Members tab is selected
-  useEffect(() => {
-    const isOwnerOrAdmin = community?.user_id === auth?.user?._id || community?.user_id?._id === auth?.user?._id || auth?.user?.role === 'admin';
-    if (community && (selectedFilter === "Members" || isOwnerOrAdmin) && community.members && community.members.length > 0) {
-      fetchMemberProfiles();
-    }
-  }, [community, selectedFilter, auth?.user]);
-
   // Helper to get userId from auth user object robustly
-  const getUserId = () => {
+  const getUserId = useCallback(() => {
     const user = auth?.user;
     if (!user) return null;
     return user._id || user.id || user.user_id || user.userId;
-  };
+  }, [auth?.user]);
 
-  const fetchCommunityData = async () => {
+  const fetchCommunityData = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -99,9 +68,9 @@ const CommunityDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, auth?.user?._id, getUserId]);
 
-  const fetchCommunityPosts = async () => {
+  const fetchCommunityPosts = useCallback(async () => {
     if (!id) return;
 
     setPostsLoading(true);
@@ -214,9 +183,9 @@ const CommunityDetail = () => {
     } finally {
       setPostsLoading(false);
     }
-  };
+  }, [id, community, auth?.user?._id]);
 
-  const fetchMemberProfiles = async () => {
+  const fetchMemberProfiles = useCallback(async () => {
     if (!community?.members || community.members.length === 0) {
       console.log('No members to fetch profiles for');
       return;
@@ -295,7 +264,37 @@ const CommunityDetail = () => {
     } finally {
       setMembersLoading(false);
     }
-  };
+  }, [community?.members]);
+
+  // Initialize auth check and fetch community data
+  useEffect(() => {
+    if (!authLoading && !auth?.token) {
+      navigate('/login', {
+        state: { from: `/community/${id}` },
+        replace: true
+      });
+      return;
+    }
+
+    if (!authLoading && auth?.token) {
+      fetchCommunityData();
+    }
+  }, [id, auth, authLoading, navigate, fetchCommunityData]);
+
+  // Fetch community posts when community is loaded or filter changes to Posts
+  useEffect(() => {
+    if (community && selectedFilter === "Posts") {
+      fetchCommunityPosts();
+    }
+  }, [community, selectedFilter, fetchCommunityPosts]);
+
+  // Fetch member profiles when community loads or Members tab is selected
+  useEffect(() => {
+    const isOwnerOrAdmin = community?.user_id === auth?.user?._id || community?.user_id?._id === auth?.user?._id || auth?.user?.role === 'admin';
+    if (community && (selectedFilter === "Members" || isOwnerOrAdmin) && community.members && community.members.length > 0) {
+      fetchMemberProfiles();
+    }
+  }, [community, selectedFilter, auth?.user, fetchMemberProfiles]);
 
   const handleFollowToggle = async () => {
     setLoading(true);
@@ -399,7 +398,7 @@ const CommunityDetail = () => {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
         <div className="text-white text-lg">Loading...</div>
       </div>
     );
@@ -413,7 +412,7 @@ const CommunityDetail = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
         <div className="text-white text-lg">Loading community...</div>
       </div>
     );
@@ -422,12 +421,12 @@ const CommunityDetail = () => {
   // Error state
   if (error && !community) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
         <div className="text-center">
           <div className="text-red-400 text-lg mb-4">{error}</div>
           <button
             onClick={fetchCommunityData}
-            className="px-4 py-2 bg-periwinkle text-white rounded-lg hover:bg-periwinkle/80 transition-colors"
+            className="bh-action-btn px-4 py-2.5 bg-periwinkle text-white rounded-xl hover:bg-periwinkle/80 transition-all"
           >
             Try Again
           </button>
@@ -439,7 +438,7 @@ const CommunityDetail = () => {
   // No community found
   if (!community) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
         <div className="text-center">
           <div className="text-desc text-lg mb-4">Community not found</div>
         </div>
@@ -473,7 +472,7 @@ const CommunityDetail = () => {
       case "Posts":
         return (
           <div className="flex flex-col gap-6 pb-12">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <h2 className="font-fenix text-3xl md:text-4xl text-white font-normal">Community Posts</h2>
               {canPost() && <NewPostButton />}
             </div>
@@ -503,7 +502,7 @@ const CommunityDetail = () => {
       case "Members":
         return (
           <div className="flex flex-col gap-6 pb-12">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <h2 className="font-fenix text-3xl md:text-4xl text-white font-normal">Community Members</h2>
               {membersLoading && (
                 <div className="text-desc text-sm">Loading member profiles...</div>
@@ -554,7 +553,7 @@ const CommunityDetail = () => {
           <div className="pb-12">
             <h2 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-8">About the Community</h2>
             <div
-              className="bg-navbar-bg rounded-xl p-8 border"
+              className="bg-navbar-bg rounded-2xl p-8 border"
               style={{
                 border: "1px solid var(--navbar-border)",
               }}
@@ -601,30 +600,17 @@ const CommunityDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-rich-black flex flex-col relative">
+    <div className="min-h-screen bg-rich-black flex flex-col relative events-page">
       <Navbar />
 
       {/* Background Glow */}
-      <div
-        className="absolute z-0"
-        style={{
-          width: 637,
-          height: 300,
-          top: -38,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "#1A1842B3",
-          filter: "blur(100px)",
-          boxShadow: "0px 4px 100px 500px #00000066",
-          borderRadius: 30,
-          pointerEvents: "none",
-        }}
-      />
+      <div className="absolute z-0 events-neon-orb events-neon-orb-left" />
+      <div className="absolute z-0 events-neon-orb events-neon-orb-right" />
 
       {/* Error Message */}
       {error && (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-4 text-red-400">
+          <div className="bg-red-600/20 border border-red-600/30 rounded-2xl p-4 text-red-400">
             {error}
           </div>
         </div>
@@ -634,15 +620,15 @@ const CommunityDetail = () => {
       <div className="w-full flex justify-center pt-8 pb-6 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="w-full max-w-7xl">
           {/* Community Info */}
-          <div className="mb-8">
+          <div className="events-hero mb-8 rounded-3xl border border-navbar-border p-6 md:p-8">
             <div className="flex flex-col lg:flex-row lg:items-start gap-6">
               {/* Left: Avatar + Info */}
               <div className="flex items-start gap-8 flex-1">
-                <div className="relative flex-shrink-0 ml-8">
+                <div className="relative flex-shrink-0">
                   <img
                     src={community?.image || DEFAULT_IMAGE}
                     alt={community?.community_name}
-                    className="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover"
+                    className="w-28 h-28 md:w-36 md:h-36 rounded-full object-cover border border-navbar-border"
                   />
                   {community?.visible === 'private' && (
                     <div className="absolute bottom-1 right-1 bg-black/40 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center border border-white/20">
@@ -651,24 +637,24 @@ const CommunityDetail = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6">
-                    <h1 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-4 lg:mb-0">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+                    <h1 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-0">
                       {community?.community_name}
                     </h1>
 
                     {/* Action Buttons - positioned at title level */}
-                    <div className="flex gap-3 flex-shrink-0">
+                    <div className="flex flex-wrap gap-3 flex-shrink-0">
                       {isOwner && (
                         <>
                           <button
                             onClick={handleEditCommunity}
-                            className="px-4 py-2 rounded-lg font-lato font-medium text-sm border border-white bg-transparent text-white hover:bg-white/10 transition-colors"
+                            className="bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border border-white bg-transparent text-white hover:bg-white/10 transition-all"
                           >
                             Edit
                           </button>
                           <button
                             onClick={handleDeleteCommunity}
-                            className="px-4 py-2 rounded-lg font-lato font-medium text-sm border border-red-500 text-red-300 hover:bg-red-500/10 transition-colors disabled:opacity-60"
+                            className="bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border border-red-500 text-red-300 hover:bg-red-500/10 transition-all disabled:opacity-60"
                             disabled={deleting}
                           >
                             {deleting ? 'Deleting...' : 'Delete'}
@@ -678,7 +664,7 @@ const CommunityDetail = () => {
                       <button
                         onClick={handleFollowToggle}
                         disabled={loading}
-                        className={`px-4 py-2 rounded-lg font-lato font-medium text-sm border transition-colors ${isFollowing
+                        className={`bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border transition-all ${isFollowing
                           ? isOwner
                             ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
                             : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
@@ -700,7 +686,7 @@ const CommunityDetail = () => {
                   </div>
 
                   {/* Description spans full width under buttons */}
-                  <p className="font-lato text-columbia-blue text-base md:text-lg leading-relaxed mb-6 pr-4">
+                  <p className="font-lato text-columbia-blue text-base md:text-lg leading-relaxed mb-6 pr-4 max-w-4xl">
                     {community?.description}
                   </p>
 
@@ -727,17 +713,17 @@ const CommunityDetail = () => {
       </div>
 
       {/* Content */}
-      <div className="w-full flex justify-center px-4 lg:px-8">
+      <div className="w-full flex justify-center px-4 lg:px-8 pb-12">
         <div className="w-full max-w-7xl">
           {/* Community owner or global admin: moderator management panel */}
           {(isOwner || auth?.user?.role === 'admin') && String(community?.moderation || "").toLowerCase() === "allow moderators" && (
-            <div className="mb-6 p-4 border border-navbar-border rounded-lg bg-navbar-bg">
+            <div className="mb-6 p-4 border border-navbar-border rounded-2xl bg-navbar-bg">
               <h4 className="text-white font-fenix text-lg mb-3">Moderator Management</h4>
               <div className="flex flex-col md:flex-row gap-3 md:items-center">
                 <select
                   value={moderatorInput}
                   onChange={(e) => setModeratorInput(e.target.value)}
-                  className="flex-1 bg-navbar-bg border border-navbar-border rounded-lg px-4 py-2 text-white focus:outline-none focus:border-periwinkle"
+                  className="flex-1 bg-navbar-bg border border-navbar-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-periwinkle"
                 >
                   <option value="">Select a member to add as moderator</option>
                   {community?.members?.filter(mId => {
@@ -753,7 +739,7 @@ const CommunityDetail = () => {
                 <button
                   onClick={handleAddModeratorAdmin}
                   disabled={modActionLoading || !moderatorInput.trim()}
-                  className="px-4 py-2 bg-[#6866FF] hover:bg-[#5755D6] text-white rounded-lg disabled:opacity-50"
+                  className="bh-action-btn px-4 py-2.5 bg-[#6866FF] hover:bg-[#5755D6] text-white rounded-xl disabled:opacity-50"
                 >
                   {modActionLoading ? 'Adding...' : 'Add Moderator'}
                 </button>

@@ -51,7 +51,7 @@ const ChatInput = ({ onSendMessage, placeholder = "Type your message here...", d
 
   return (
     <div className="relative mb-6 w-full">
-      <div className="flex items-end gap-3 bg-navbar-bg border border-navbar-border rounded-2xl p-3 sm:p-4 w-full">
+      <div className="flex items-end gap-3 bg-navbar-bg border border-navbar-border rounded-2xl p-3 sm:p-4 w-full shadow-[0_18px_40px_rgba(7,10,29,0.18)]">
         {/* Emoji Button */}
         <button 
           className="text-periwinkle hover:text-white p-2 rounded-full hover:bg-periwinkle-light transition-colors flex-shrink-0"
@@ -76,7 +76,7 @@ const ChatInput = ({ onSendMessage, placeholder = "Type your message here...", d
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={isSending || disabled}
-          className="flex-1 min-w-0 w-full bg-transparent text-white placeholder:text-desc resize-none max-h-36 min-h-[36px] focus:outline-none font-lato disabled:opacity-50"
+          className="flex-1 min-w-0 w-full bg-transparent text-white placeholder:text-desc resize-none max-h-36 min-h-[36px] focus:outline-none font-lato disabled:opacity-50 py-1"
           rows={1}
         />
 
@@ -84,7 +84,7 @@ const ChatInput = ({ onSendMessage, placeholder = "Type your message here...", d
         <button
           onClick={handleSendMessage}
           disabled={!message.trim() || isSending || disabled}
-          className="bg-periwinkle hover:bg-periwinkle-dark text-white p-2 sm:p-3 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          className="bh-action-btn bg-periwinkle hover:bg-periwinkle-dark text-white p-2 sm:p-3 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
         >
           {isSending ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>

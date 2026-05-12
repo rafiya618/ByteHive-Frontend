@@ -33,12 +33,11 @@ const FollowingButton = ({ isFollowing: initialFollowing = false, onToggle }) =>
     <button 
       onClick={toggleFollow}
       disabled={loading}
-      className={`h-[49px] px-6 text-white text-base font-medium rounded-[5px] transition-colors duration-200 flex items-center gap-2 border ${
+      className={`bh-action-btn h-[49px] px-6 text-white text-base font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border ${
         loading ? 'opacity-50 cursor-not-allowed' : ''
       }`}
       style={{
-        minWidth: 120,
-        borderRadius: "5px",
+        minWidth: 148,
         backgroundColor: isFollowing ? "transparent" : "var(--medium-slate-blue)",
         borderColor: isFollowing ? "var(--periwinkle)" : "var(--medium-slate-blue)",
       }}

@@ -80,11 +80,13 @@ const [chatInput, setChatInput] = useState("");
       const camTrack = camStream.getVideoTracks()[0];
       try {
         await videoProducerRef.current.replaceTrack({ track: camTrack });
-      } catch (err) {
+      } catch {
         // If replaceTrack fails, close and recreate video producer
         try {
           await videoProducerRef.current.close();
-        } catch {}
+        } catch (closeError) {
+          console.warn("Failed to close video producer during screen-share recovery:", closeError);
+        }
         // Create new video producer
         if (sendTransportRef.current) {
           const newProducer = await sendTransportRef.current.produce({ track: camTrack });
@@ -192,6 +194,7 @@ const [chatInput, setChatInput] = useState("");
       socket.off("peer-left", handlePeerLeft);
       socket.off("peer-joined", handlePeerJoined);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [device]);
 
 
@@ -220,7 +223,7 @@ useEffect(() => {
       }
 
       console.log("Joined room successfully", res);
-      const { routerRtpCapabilities, existingProducers, allProducersByRoom ,chatHistory} = res;
+      const { routerRtpCapabilities, existingProducers, _allProducersByRoom, chatHistory } = res;
       setChatMessages(chatHistory || []);
 
       try {
@@ -484,7 +487,7 @@ useEffect(() => {
                   let existingStreamData = null;
                   
                   // Find existing stream for this peer
-                  for (const [key, streamData] of newStreams.entries()) {
+                    for (const [_key, streamData] of newStreams.entries()) {
                     if (streamData.ownerSocketId === peerKey) {
                       existingStreamData = streamData;
                       break;
@@ -543,7 +546,7 @@ useEffect(() => {
                   
                   setRemoteStreams((prev) => {
                     const newStreams = new Map(prev);
-                    for (const [key, streamData] of newStreams.entries()) {
+                    for (const [_key, streamData] of newStreams.entries()) {
                       if (streamData[`${consumer.kind}ProducerId`] === producerId) {
                         // Remove track from stream
                         const trackToRemove = streamData.stream.getTracks().find(t => t.kind === consumer.kind);
@@ -553,7 +556,7 @@ useEffect(() => {
                         
                         // If no tracks left, remove entire stream
                         if (streamData.stream.getTracks().length === 0) {
-                          newStreams.delete(key);
+                          newStreams.delete(peerKey);
                         }
                         break;
                       }
@@ -678,10 +681,10 @@ useEffect(() => {
   const remoteStreamArray = Array.from(remoteStreams.values());
 
   return (
-    <div className="min-h-screen bg-rich-black flex flex-col">
+    <div className="min-h-screen bg-rich-black flex flex-col events-page">
       <Navbar />
       <div className="flex flex-col items-center justify-center py-10 px-4">
-        <div className="max-w-4xl w-full bg-navbar-bg border border-navbar-border rounded-2xl shadow-lg p-8">
+        <div className="events-hero max-w-4xl w-full bg-navbar-bg border border-navbar-border rounded-3xl shadow-lg p-8">
           <div className="flex items-center gap-3 mb-6">
             <span className="material-icons text-periwinkle text-3xl">videocam</span>
             <h2 className="font-fenix text-2xl text-white">Room: <span className="text-periwinkle">{communityId || 'Loading...'}</span></h2>
@@ -697,13 +700,13 @@ useEffect(() => {
               autoPlay
               playsInline
               muted
-              className="rounded-lg border-2 border-periwinkle bg-black"
+              className="rounded-2xl border-2 border-periwinkle bg-black"
               style={{ width: 240, height: 180 }}
             />
           </div>
           <div className="mb-8">
             <h4 className="text-white font-fenix mb-2">In-Call Chat</h4>
-            <div className="bg-rich-black-light border border-navbar-border rounded-lg p-4 mb-2" style={{ height: 200, overflowY: "auto" }}>
+            <div className="bg-rich-black-light border border-navbar-border rounded-2xl p-4 mb-2" style={{ height: 200, overflowY: "auto" }}>
               {chatMessages.length === 0 ? (
                 <p className="text-desc">No messages yet</p>
               ) : (
@@ -720,12 +723,12 @@ useEffect(() => {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                className="flex-1 bg-rich-black-light border border-navbar-border rounded-lg px-4 py-2 text-white font-lato"
+                className="flex-1 bg-rich-black-light border border-navbar-border rounded-xl px-4 py-2.5 text-white font-lato"
                 placeholder="Type a message..."
               />
               <button
                 onClick={sendMessage}
-                className="bg-periwinkle hover:bg-medium-slate-blue text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1"
+                className="bh-action-btn bg-periwinkle hover:bg-medium-slate-blue text-white px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1"
               >
                 <span className="material-icons text-base">send</span>
                 Send
@@ -745,7 +748,7 @@ useEffect(() => {
                     }}
                     autoPlay
                     playsInline
-                    className="rounded-lg border-2 border-green-400 bg-black"
+                    className="rounded-2xl border-2 border-green-400 bg-black"
                     style={{ width: 240, height: 180 }}
                   />
                   <div className="text-xs text-columbia-blue mt-2">

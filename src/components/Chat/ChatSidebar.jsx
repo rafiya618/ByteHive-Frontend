@@ -51,10 +51,10 @@ const ChatSidebar = ({
     
     return (
       <div 
-        className={`relative p-3 rounded-lg cursor-pointer transition-colors ${
+        className={`relative p-3 rounded-xl cursor-pointer transition-all border ${
           selectedThread?.thread_id === thread.thread_id
-            ? 'bg-periwinkle/20 border border-periwinkle/30'
-            : 'bg-rich-black-light hover:bg-periwinkle/10'
+            ? 'bg-periwinkle/20 border-periwinkle/30'
+            : 'bg-rich-black-light border-transparent hover:bg-periwinkle/10 hover:border-periwinkle/20'
         }`}
       >
         <div 
@@ -117,7 +117,7 @@ const ChatSidebar = ({
     <>
       {/* Desktop Sidebar */}
       <div className="hidden lg:block w-80 bg-navbar-bg border-r border-navbar-border h-full">
-        <div className="p-6">
+        <div className="p-6 h-full flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-white font-fenix text-lg">Threads (Bytes)</h3>
@@ -131,7 +131,7 @@ const ChatSidebar = ({
           </div>
           
           {/* Threads List */}
-          <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-1 flex-1">
             {threads.length === 0 ? (
               <div className="text-desc text-sm text-center py-8">
                 No bytes available yet.
@@ -155,7 +155,7 @@ const ChatSidebar = ({
           
           {/* Sidebar */}
           <div className="relative flex flex-col w-80 bg-navbar-bg border-r border-navbar-border">
-            <div className="p-6">
+            <div className="p-6 h-full flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-white font-fenix text-lg">Threads (Bytes)</h3>
@@ -177,7 +177,7 @@ const ChatSidebar = ({
               </div>
               
               {/* Threads List */}
-              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-1 flex-1">
                 {threads.length === 0 ? (
                   <div className="text-desc text-sm text-center py-8">
                     No bytes available yet.

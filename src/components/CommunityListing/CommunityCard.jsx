@@ -122,7 +122,7 @@ const CommunityCard = ({
 
   return (
     <div
-      className="bg-navbar-bg rounded-xl overflow-hidden border hover:border-periwinkle transition-colors relative w-full cursor-pointer"
+      className="bh-elev-card bg-navbar-bg rounded-2xl overflow-hidden border hover:border-periwinkle transition-all relative w-full cursor-pointer"
       style={{ border: "1px solid var(--navbar-border)" }}
     >
       {/* Kebab Menu */}
@@ -172,12 +172,12 @@ const CommunityCard = ({
       )}
 
       <div className="p-4 sm:p-6">
-        <div className="flex flex-col md:flex-row items-start gap-4">
+        <div className="flex flex-col md:flex-row items-start gap-5">
           {/* Image */}
           <div className="flex-shrink-0 mx-auto md:mx-0 relative">
             <img
               alt={communityName}
-              className="rounded-lg w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-cover"
+              className="rounded-2xl w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 object-cover"
               src={image || "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80"}
             />
             {visible === "private" && (
@@ -189,7 +189,7 @@ const CommunityCard = ({
 
           {/* Content */}
           <div className="flex-grow min-w-0 w-full">
-            <h3 className="font-fenix text-lg sm:text-xl text-white mb-2 break-words">
+            <h3 className="font-fenix text-xl sm:text-2xl text-white mb-2 break-words leading-tight">
               {communityName}
             </h3>
 
@@ -253,7 +253,7 @@ const CommunityCard = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <button
                 onClick={handleViewCommunity}
-                className="px-0 py-2 bg-transparent text-desc cursor-pointer font-lato font-normal text-sm hover:text-white transition-colors"
+                className="px-0 py-2 bg-transparent text-desc cursor-pointer font-lato font-medium text-sm hover:text-white transition-colors"
               >
                 View Community →
               </button>
@@ -261,7 +261,7 @@ const CommunityCard = ({
               <button
                 onClick={handleFollowToggle}
                 disabled={loading}
-                className={`px-4 py-2 rounded-lg font-lato font-medium text-sm border transition-colors w-full sm:w-auto ${following
+                className={`bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border transition-all w-full sm:w-auto ${following
                   ? isOwned
                     ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
                     : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
@@ -302,7 +302,7 @@ const CommunityCard = ({
       {/* Delete Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-navbar-bg border border-navbar-border rounded-lg p-6 max-w-md w-full">
+          <div className="bg-navbar-bg border border-navbar-border rounded-2xl p-6 max-w-md w-full">
             <h3 className="text-white font-fenix text-xl mb-4">Delete Community</h3>
             <p className="text-desc mb-6">
               Are you sure you want to delete "{communityName}"? This action cannot be undone.

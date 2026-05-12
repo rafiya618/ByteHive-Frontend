@@ -45,10 +45,9 @@ const JoinChatButton = () => {
   return (
     <button
       onClick={handleJoinChat}
-      className="h-[49px] px-6 bg-navbar-bg text-white text-base font-medium rounded-[5px] transition-colors duration-200 flex items-center gap-2 border hover:border-periwinkle"
+      className="bh-action-btn h-[49px] px-6 bg-navbar-bg text-white text-base font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border hover:border-periwinkle"
       style={{
-        minWidth: 120,
-        borderRadius: "5px",
+        minWidth: 148,
         borderColor: "var(--periwinkle)",
       }}
     >

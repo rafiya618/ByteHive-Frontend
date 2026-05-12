@@ -21,7 +21,7 @@ const EVENT_TYPES = [
 
 const EventFormCard = ({ initialData = null, onSuccess, onCancel }) => {
   const isEdit = Boolean(initialData);
-  const { auth, googleRefreshToken } = useAuth(); // use your AuthContext
+  const { auth } = useAuth();
   const token = auth?.token || "";
 
   const [title, setTitle] = useState(initialData?.event_name || "");
@@ -96,11 +96,11 @@ const EventFormCard = ({ initialData = null, onSuccess, onCancel }) => {
       let returnedEvent;
 
       if (isEdit) {
-        const res = await apiUpdateEvent(initialData._id, payload, token, googleRefreshToken);
+        const res = await apiUpdateEvent(initialData._id, payload, token);
         returnedEvent = res.event || res; // support both shapes
         onSuccess && onSuccess("updated");
       } else {
-        const res = await apiCreateEvent(payload, token, googleRefreshToken);
+        const res = await apiCreateEvent(payload, token);
         returnedEvent = res.event || res;
         onSuccess && onSuccess("created");
       }
