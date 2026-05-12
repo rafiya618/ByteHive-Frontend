@@ -50,7 +50,7 @@ const SearchBar = ({
   return (
     <div className={`relative flex-grow max-w-xl ${className}`}>
       {/* Search Icon (Left) */}
-      <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-[#B0BAFF] text-xl">
+      <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 search-icon-dark text-xl">
         search
       </span>
 

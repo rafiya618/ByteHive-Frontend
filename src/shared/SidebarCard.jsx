@@ -5,7 +5,7 @@ const SidebarCard = ({ title, description, buttonText, icon }) => {
     <div className="bg-navbar-bg border border-navbar-border rounded-2xl p-5 flex flex-col gap-3">
       <h4 className="font-fenix text-white">{title}</h4>
       <p className="text-desc text-sm">{description}</p>
-      <button className="bg-medium-slate-blue hover:bg-medium-slate-blue-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer">
+      <button className="bg-medium-slate-blue hover:bg-medium-slate-blue-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer font-bold">
         <span className="material-icons">{icon}</span> {buttonText}
       </button>
     </div>

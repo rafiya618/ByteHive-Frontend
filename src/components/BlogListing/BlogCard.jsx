@@ -359,9 +359,9 @@ const BlogCard = ({
       <div className="absolute top-4 right-4 z-20">
         <button
           onClick={toggleBookmark}
-          className={`p-2 rounded-full transition-colors bg-navbar-bg hover:bg-gray-800 ${isBookmarked
-            ? "text-periwinkle"
-            : "text-periwinkle hover:text-white"
+          className={`p-2 transition-colors bg-navbar-bg hover:bg-gray-800 ${isBookmarked
+            ? "text-periwinkle-deeper"
+            : "text-periwinkle-deeper hover:text-white"
             }`}
         >
           <span className="material-icons">
@@ -449,7 +449,7 @@ const BlogCard = ({
             await reTrackEvent({ userId: String(userId), action: 'read', entityType: 'post', entityId: id, metadata: { source: 'listing' } });
           } catch {}
         }}
-        className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 transition cursor-pointer"
+        className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 transition cursor-pointer blog-card"
         style={{ border: "1px solid var(--navbar-border)" }}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 relative">
@@ -466,11 +466,11 @@ const BlogCard = ({
           <div className="md:col-span-2 flex flex-col">
             {/* Community, date, readTime */}
             <div className="flex items-center text-sm mb-2 font-lato">
-              <span className="text-periwinkle px-3 py-1 rounded-xl font-semibold border-solid border-1">
+              <span className="text-periwinkle-deeper px-3 py-1 rounded-xl font-semibold community-badge border border-navbar-border">
                 {community}
               </span>
-              <span className="mx-2 text-periwinkle">·</span>
-              <span className="text-periwinkle">
+              <span className="mx-2 text-periwinkle-deeper">·</span>
+              <span className="text-periwinkle-deeper">
                 {date} • {readTime} read
               </span>
             </div>
@@ -512,13 +512,13 @@ const BlogCard = ({
                   className="w-8 h-8 rounded-full"
                   src={authorInfo?.avatar || 'https://via.placeholder.com/40'}
                 />
-                <span className="font-lato text-periwinkle text-sm">
+                <span className="font-lato text-periwinkle-deeper text-sm">
                   {authorInfo?.name || 'Unknown'}
                 </span>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center space-x-4 text-periwinkle">
+              <div className="flex items-center space-x-4 text-periwinkle-deeper">
                 {/* Upvote */}
                 <button
                   onClick={toggleUpvote}

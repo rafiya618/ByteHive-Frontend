@@ -4,7 +4,7 @@ const ActionButton = ({ children, variant = "primary", ...props }) => {
   const base = "px-5 py-2 rounded-lg font-lato transition-colors cursor-pointer";
   const styles =
     variant === "primary"
-      ? "bg-medium-slate-blue text-white hover:bg-medium-slate-blue-dark"
+      ? "bg-medium-slate-blue text-white font-bold hover:bg-medium-slate-blue-dark"
       : "bg-transparent border border-navbar-border text-periwinkle hover:text-white hover:border-periwinkle";
 
   return (

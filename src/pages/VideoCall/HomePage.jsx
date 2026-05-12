@@ -11,7 +11,7 @@ function HomePage() {
 
   const createRoom = () => {
     const roomId = generateRoomId();
-    const link = `${window.location.origin}/room/${roomId}`;
+    const link = `${import.meta.env.VITE_FRONTEND_URL}/room/${roomId}`;
     setRoomLink(link);
     setCopied(false);
   };

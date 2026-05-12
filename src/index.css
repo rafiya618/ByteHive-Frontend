@@ -179,6 +179,16 @@ button:disabled,
   /* Icon shouldn't block input */
 }
 
+/* Search icon dark styling for both themes */
+.search-icon-dark {
+  color: #393B5A !important;
+}
+
+/* Light theme overrides for search icon */
+[data-theme="light"] .search-icon-dark {
+  color: #4a4a6a !important;
+}
+
 /* Standardized prose whitespace */
 .prose p {
   margin-bottom: 1rem;
@@ -221,47 +231,66 @@ button:disabled,
 [data-theme="light"] {
   --rich-black: #ffffff;       /* Pure white for main app background as requested */
   --rich-black-light: #ffffff; /* White for cards */
-  --dark-navy-purple: #f9fafb; /* Very light grey for dropdowns/search bars */
-  --dark-indigo: #e2e8f0;      /* For Layout blur effect */
+  --dark-navy-purple: #f5f5f5; /* Light grey for dropdowns/search bars */
+  --dark-indigo: #efefef;      /* For Layout blur effect */
   --navbar-bg: #ffffff;        /* White navbar and cards */
-  --faint-greyish-overlay: rgba(0,0,0,0.05); /* Light overlay */
-  /* We removed the columbia-blue override so it stays the native light blue unchanged */
+  --faint-greyish-overlay: rgba(0,0,0,0.15); /* More visible overlay */
+  --periwinkle: #4c52de;       /* Darker periwinkle for light theme */
+  --periwinkle-light: rgba(76, 82, 222, 0.15);
 }
 
 /* Force standard standard colors */
 [data-theme="light"] body,
 [data-theme="light"] html {
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  background: linear-gradient(135deg, #f3f0ff 0%, #ffe8f0 25%, #fff5e8 50%, #e8f5ff 75%, #f0e8ff 100%);
+  background-attachment: fixed;
+  color: #1a1a1a !important;
+  position: relative;
+}
+
+/* Add subtle pattern overlay to light theme */
+[data-theme="light"] body::before,
+[data-theme="light"] html::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(76, 82, 222, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(217, 70, 124, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 [data-theme="light"] .text-white {
-  color: #000000 !important;
+  color: #1a1a1a !important;
 }
 
-/* Ensure navbar icons, mobile menus, and profile dropdown texts are elegantly black */
+/* Ensure navbar icons, mobile menus, and profile dropdown texts are dark */
 [data-theme="light"] .text-columbia-blue {
-  color: #000000 !important;
+  color: #1a1a1a !important;
 }
 
-/* Ensure unselected filter bar items are black */
+/* Ensure unselected filter bar items are dark */
 [data-theme="light"] button[style*="var(--columbia-blue)"] {
-  color: #000000 !important;
+  color: #1a1a1a !important;
 }
 
-/* Hardcode tags to always have the EXACT same dark background and purple text as dark mode */
+/* Lighten tags to fit light theme - light background with dark text */
 [data-theme="light"] .bg-chip {
-  background-color: #374053 !important;
-  color: var(--periwinkle) !important;
+  background-color: #e8ecff !important;
+  color: #4c52de !important;
 }
 
 [data-theme="light"] .bg-periwinkle\/20 {
-  background-color: #31324b !important;
-  color: var(--periwinkle) !important;
+  background-color: #e8ecff !important;
+  color: #4c52de !important;
 }
 
 [data-theme="light"] .text-periwinkle {
-  color: var(--periwinkle) !important;
+  color: #4c52de !important;
 }
 
 /* Specific background updates for layouts and components */
@@ -271,20 +300,20 @@ button:disabled,
 
 [data-theme="light"] .bg-rich-black-light {
   background-color: #ffffff !important; /* Card background */
-  border: 1px solid var(--periwinkle) !important; /* Light purple boundary */
+  border: 1px solid #d0d0e8 !important; /* Medium border for visibility */
 }
 
 [data-theme="light"] .bg-dark-navy-purple {
-  background-color: #f9fafb !important;
+  background-color: #f5f5f5 !important;
 }
 
 [data-theme="light"] .bg-dark-indigo {
-  background-color: #f9fafb !important;
+  background-color: #f5f5f5 !important;
 }
 
 [data-theme="light"] .bg-navbar-bg {
   background-color: #ffffff !important; /* Card and Navbar background */
-  border: 1px solid var(--periwinkle) !important; /* Light purple boundary */
+  border: 1px solid #d0d0e8 !important; /* Medium border for visibility */
   box-shadow: none !important;
 }
 
@@ -293,7 +322,7 @@ button:disabled,
 }
 
 [data-theme="light"] .text-desc {
-  color: #4b5563 !important; /* dark grey for readability */
+  color: #3a3a3a !important; /* Dark grey for better readability */
 }
 
 /* Force simplified view and other prose-invert views to correctly map text colors to black instead of white */
@@ -306,15 +335,15 @@ button:disabled,
 [data-theme="light"] .prose-invert li,
 [data-theme="light"] .prose-invert strong,
 [data-theme="light"] .text-white\/90 {
-  color: #000000 !important;
+  color: #1a1a1a !important;
 }
 
 [data-theme="light"] .hover\:bg-white\/10:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .hover\:bg-white\/5:hover {
-  background-color: rgba(0, 0, 0, 0.02) !important;
+  background-color: rgba(0, 0, 0, 0.03) !important;
 }
 
 /* For Layout.jsx glow elements */
@@ -327,7 +356,7 @@ button:disabled,
 
 /* Dropdowns and menus borders */
 [data-theme="light"] .border-navbar-border {
-  border-color: var(--periwinkle) !important; /* Light purple boundary */
+  border-color: #d0d0e8 !important; /* Medium border for visibility */
 }
 
 /* Notification Text Overrides */
@@ -335,26 +364,26 @@ button:disabled,
 [data-theme="light"] .text-gray-300,
 [data-theme="light"] .text-gray-400,
 [data-theme="light"] .text-gray-500 {
-  color: #000000 !important;
+  color: #1a1a1a !important;
 }
 
 /* Notification Card Unread Overrides */
 [data-theme="light"] .from-purple-900\/30 {
-  --tw-gradient-from: rgba(176, 186, 255, 0.4) !important;
-  background-color: rgba(176, 186, 255, 0.2) !important;
+  --tw-gradient-from: rgba(76, 82, 222, 0.15) !important;
+  background-color: rgba(76, 82, 222, 0.08) !important;
 }
 
 [data-theme="light"] .to-indigo-900\/30 {
-  --tw-gradient-to: rgba(176, 186, 255, 0.4) !important;
+  --tw-gradient-to: rgba(76, 82, 222, 0.15) !important;
 }
 
 [data-theme="light"] .border-purple-500\/30 {
-  border-color: var(--periwinkle) !important;
+  border-color: #d0d0e8 !important;
 }
 
 [data-theme="light"] .border-gray-800,
 [data-theme="light"] .border-gray-700\/50 {
-  border-color: var(--periwinkle) !important;
+  border-color: #d0d0e8 !important;
 }
 
 /* Background Overrides for Notifications */
@@ -364,6 +393,218 @@ button:disabled,
 [data-theme="light"] .bg-gray-700\/40,
 [data-theme="light"] .bg-gray-800\/40 {
   background-color: #ffffff !important;
+}
+
+/* Additional light theme overrides for periwinkle-deeper and celadon colors */
+[data-theme="light"] .text-periwinkle-deeper {
+  color: #4c52de !important;
+}
+
+[data-theme="light"] .text-celadon-dark {
+  color: #2d9e6a !important;
+}
+
+[data-theme="light"] .hover\:border-periwinkle:hover {
+  border-color: #4c52de !important;
+}
+
+/* Make buttons with text-white bold */
+[data-theme="light"] button[style*="bg-medium-slate-blue"] {
+  font-weight: bold !important;
+}
+
+[data-theme="light"] .bg-medium-slate-blue,
+[data-theme="light"] .bg-medium-slate-blue {
+  color: #ffffff !important;
+  font-weight: bold !important;
+}
+
+/* Profile page tab filters - selected state darker */
+[data-theme="light"] button[style*="border-periwinkle"],
+[data-theme="light"] button[style*="border-bottom: 2px solid"] {
+  color: #2d3142 !important;
+}
+
+/* Profile page filter hover state - not white */
+[data-theme="light"] .hover\:text-white:hover,
+[data-theme="light"] button:hover {
+  color: #4a4a6a !important;
+}
+
+/* Light theme search bar styling */
+[data-theme="light"] input[style*="border"][style*="#393B5A"] {
+  border-color: #d0d0e8 !important;
+}
+
+[data-theme="light"] input.bg-transparent {
+  border-color: #d0d0e8 !important;
+}
+
+/* Bold text for all medium-slate-blue buttons */
+.bg-medium-slate-blue {
+  font-weight: bold !important;
+}
+
+.bg-medium-slate-blue-dark {
+  font-weight: bold !important;
+}
+
+/* Light theme profile tab styling - selected darker */
+[data-theme="light"] button[style*="color:"] {
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] button[style*="#B0BAFF"] {
+  color: #3d3d5c !important;
+  border-color: #4c52de !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] button[style*="#77A3D4"]:not([style*="#B0BAFF"]) {
+  color: #5a5a7a !important;
+}
+
+[data-theme="light"] button[style*="#77A3D4"]:hover {
+  color: #4a4a6a !important;
+}
+
+/* Light theme - make all filter/tab buttons have proper contrast */
+[data-theme="light"] [style*="opacity: 1"] {
+  color: #3d3d5c !important;
+}
+
+[data-theme="light"] [style*="opacity: 0.85"] {
+  color: #5a5a7a !important;
+}
+
+[data-theme="light"] [style*="opacity: 0.85"]:hover {
+  color: #4a4a6a !important;
+}
+
+/* Light theme - Fix all hover:text-white cases to use proper colors */
+[data-theme="light"] .hover\:text-white:hover {
+  color: #4a4a6a !important;
+}
+
+[data-theme="light"] button.hover\:text-white:hover,
+[data-theme="light"] a.hover\:text-white:hover {
+  color: #4a4a6a !important;
+}
+
+/* Light theme - specific hover effects for various elements */
+[data-theme="light"] button[style*="color: #"]:hover {
+  color: #4a4a6a !important;
+}
+
+[data-theme="light"] .text-columbia-blue.hover\:text-white:hover {
+  color: #4a4a6a !important;
+}
+
+[data-theme="light"] .text-periwinkle.hover\:text-white:hover {
+  color: #4a4a6a !important;
+}
+
+/* Light theme - Bookmark dropdown styling */
+[data-theme="light"] .absolute.top-full.right-0.bg-dark-navy-purple {
+  background-color: #ffffff !important;
+  border-color: #d0d0e8 !important;
+}
+
+[data-theme="light"] [class*="bg-dark-navy-purple"][class*="border-navbar-border"] {
+  background-color: #ffffff !important;
+  border-color: #d0d0e8 !important;
+}
+
+/* Dropdown menu items styling in light theme */
+[data-theme="light"] .absolute.top-full.right-0.mt-2 button {
+  color: #1a1a1a !important;
+  background-color: transparent !important;
+}
+
+[data-theme="light"] .absolute.top-full.right-0.mt-2 button:hover {
+  background-color: #f0f0f5 !important;
+  color: #1a1a1a !important;
+}
+
+[data-theme="light"] .absolute.top-full.right-0.mt-2 button.text-red-400,
+[data-theme="light"] .absolute.top-full.right-0.mt-2 button.text-red-400:hover {
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] .absolute.top-full.right-0.mt-2 .text-periwinkle {
+  color: #4c52de !important;
+}
+
+/* Dropdown separator lines in light theme */
+[data-theme="light"] .absolute.top-full.right-0.mt-2 hr {
+  border-color: #e0e0e8 !important;
+}
+
+/* Specific override for hover:bg-gray-700 in light theme */
+[data-theme="light"] button[class*="hover:bg-gray-700"]:hover {
+  background-color: #f0f0f5 !important;
+}
+
+
+/* ===================== DARK MODE ICON & BORDER FIXES ===================== */
+/* Ensure material icons remain visible / periwinkle in dark mode */
+[data-theme="dark"] .material-icons {
+  color: var(--periwinkle) !important;
+  opacity: 1 !important;
+}
+
+/* Strengthen navbar-border for better visibility on community avatars in dark */
+[data-theme="dark"] .border-navbar-border {
+  border-color: rgba(176,186,255,0.22) !important;
+}
+
+/* Fallback for avatar circles that use bg-rich-black-light + border */
+[data-theme="dark"] .bg-rich-black-light.border {
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+/* Restore BlogCard bookmark dropdown appearance in dark mode (keep dark background with readable items) */
+[data-theme="dark"] .absolute.top-full.right-0.mt-2 {
+  background-color: var(--dark-navy-purple) !important;
+  border-color: var(--navbar-border) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .absolute.top-full.right-0.mt-2 button {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+
+[data-theme="dark"] .absolute.top-full.right-0.mt-2 button:hover {
+  background-color: rgba(255,255,255,0.03) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .absolute.top-full.right-0.mt-2 hr {
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+/* BlogCard dark-mode text and community badge improvements */
+[data-theme="dark"] .blog-card {
+  color: #EAF0FF; /* slightly bluish white for improved contrast */
+}
+
+[data-theme="dark"] .blog-card .text-periwinkle-deeper {
+  color: var(--periwinkle) !important;
+}
+
+[data-theme="dark"] .blog-card .text-desc {
+  color: #FFFFFFC0 !important;
+}
+
+[data-theme="dark"] .blog-card .community-badge {
+  background-color: transparent !important;
+  border-color: rgba(176,186,255,0.14) !important;
+  color: var(--periwinkle) !important;
+}
+
+[data-theme="light"] .blog-card .community-badge {
+  border-color: #d0d0e8 !important;
 }
 
 

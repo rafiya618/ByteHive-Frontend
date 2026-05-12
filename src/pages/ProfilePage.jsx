@@ -300,7 +300,7 @@ const ProfilePage = () => {
     `text-[18px] font-semibold pb-1 border-b-2 transition whitespace-nowrap ${
       activeTab === tab
         ? "text-white border-periwinkle"
-        : "text-columbia-blue/80 border-transparent hover:text-white"
+        : "text-columbia-blue/80 border-transparent hover:text-gray-400"
     }`;
 
   const renderPostList = (items, emptyMessage) => {
@@ -453,7 +453,7 @@ const ProfilePage = () => {
                       onClick={() => handleCommunityClick(community.id)}
                       className="w-full flex items-center gap-3 text-columbia-blue text-sm sm:text-base text-left hover:text-white transition cursor-pointer"
                     >
-                      <span className="w-7 h-7 rounded-full bg-rich-black-light border border-navbar-border flex items-center justify-center text-xs">
+                      <span className="w-7 h-7 bg-rich-black-light border border-navbar-border flex items-center justify-center text-xs">
                         {(community.name || "C").charAt(0).toUpperCase()}
                       </span>
                       <span className="truncate">{community.name}</span>
@@ -472,7 +472,7 @@ const ProfilePage = () => {
                       onClick={() => handleCommunityClick(community.id)}
                       className="w-full flex items-center gap-3 text-columbia-blue text-sm sm:text-base text-left hover:text-white transition cursor-pointer"
                     >
-                      <span className="w-7 h-7 rounded-full bg-rich-black-light border border-navbar-border flex items-center justify-center text-xs">
+                      <span className="w-7 h-7 bg-rich-black-light border border-navbar-border flex items-center justify-center text-xs">
                         {(community.name || "C").charAt(0).toUpperCase()}
                       </span>
                       <span className="truncate">{community.name}</span>
