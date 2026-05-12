@@ -6,7 +6,6 @@ const REPORT_REASONS = [
   { value: 'spam', label: 'Spam' },
   { value: 'hate_speech', label: 'Hate Speech' },
   { value: 'harassment', label: 'Harassment' },
-  { value: 'nudity', label: 'Nudity' },
   { value: 'fake_information', label: 'Fake Information' },
   { value: 'violence', label: 'Violence' },
   { value: 'illegal_activity', label: 'Illegal Activity' },

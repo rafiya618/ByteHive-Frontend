@@ -1,5 +1,54 @@
 import { jwtDecode } from 'jwt-decode';
 
+export const AUTH_LOGOUT_EVENT = 'bytehive:auth-logout';
+
+const BLOCKED_AUTH_MESSAGE_PATTERN = /\b(blocked|suspend|suspended|banned|ban)\b/i;
+
+const getAuthPayload = () => {
+  const authData = localStorage.getItem('Auth');
+  if (!authData) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(authData);
+  } catch (error) {
+    return null;
+  }
+};
+
+export const getStoredAuthToken = () => {
+  const authData = getAuthPayload();
+  return authData?.token || null;
+};
+
+export const isBlockedAuthResponse = (status, payload = {}) => {
+  if (status !== 403) {
+    return false;
+  }
+
+  const message = [
+    payload?.message,
+    payload?.error,
+    payload?.details,
+    payload?.code,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return BLOCKED_AUTH_MESSAGE_PATTERN.test(message);
+};
+
+export const forceLogout = () => {
+  localStorage.removeItem('Auth');
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AUTH_LOGOUT_EVENT, {
+      detail: { reason: 'blocked' },
+    }));
+  }
+};
+
 export class AuthError extends Error {
   constructor(message) {
     super(message);
@@ -9,48 +58,45 @@ export class AuthError extends Error {
 
 // Get authorization headers for API requests
 export const getAuthHeaders = () => {
-  const authData = localStorage.getItem('Auth');
-  if (!authData) {
+  const token = getStoredAuthToken();
+  if (!token) {
     throw new AuthError('No token, authorization denied');
   }
-  
-  try {
-    const parsed = JSON.parse(authData);
-    const token = parsed.token;
-    
-    if (!token) {
-      throw new AuthError('No token, authorization denied');
-    }
-    
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-  } catch (error) {
-    throw new AuthError('Invalid token format, authorization denied');
+
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+};
+
+export const getAuthToken = () => {
+  const token = getStoredAuthToken();
+  if (!token) {
+    throw new AuthError('No token found');
   }
+
+  return token;
 };
 
 // Extract user ID from JWT token
 export const getUserIdFromToken = () => {
-  const authData = localStorage.getItem('Auth');
+  const authData = getAuthPayload();
   if (!authData) {
     throw new AuthError('No auth data found');
   }
-  
+
   try {
-    const parsed = JSON.parse(authData);
-    if (!parsed.token) {
+    if (!authData.token) {
       throw new AuthError('No token found');
     }
-    
-    const decoded = jwtDecode(parsed.token);
+
+    const decoded = jwtDecode(authData.token);
     const userId = decoded._id || decoded.id || decoded.user_id || decoded.userId;
-    
+
     if (!userId) {
       throw new AuthError('User ID not found in token');
     }
-    
+
     return userId;
   } catch (error) {
     throw new AuthError('Invalid auth token');

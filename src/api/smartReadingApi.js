@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { isValidSimplificationLevel } from '../utils/validation';
+import { getAuthHeaders } from '../utils/authUtils';
 
 const SMART_READING_BASE_URL = `${import.meta.env.VITE_SMART_READING_SERVICE_URL || 'http://localhost:5008'}/smart-reading`;
 
@@ -12,9 +13,9 @@ const smartReadingClient = axios.create({
 // Add request interceptor to include JWT token
 smartReadingClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('Auth');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const authHeaders = getAuthHeaders();
+    if (authHeaders.Authorization) {
+      config.headers.Authorization = authHeaders.Authorization;
     }
     return config;
   },
