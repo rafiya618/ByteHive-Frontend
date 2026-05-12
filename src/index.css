@@ -241,6 +241,10 @@ button:disabled,
   color: var(--pinkish);
 }
 
+.text-pinkish-important {
+  color: var(--pinkish) !important;
+}
+
 .bg-medium-slate-blue {
   background-color: var(--medium-slate-blue);
 }
@@ -922,6 +926,14 @@ button:disabled,
 [data-theme="dark"] .material-icons {
   color: var(--periwinkle) !important;
   opacity: 1 !important;
+}
+
+/* Force pink fire icon in dark mode when explicitly requested */
+[data-theme="dark"] .material-icons.text-pinkish-important,
+.material-icons.text-pinkish-important {
+  color: var(--pinkish) !important;
+  fill: var(--pinkish) !important;
+  -webkit-text-fill-color: var(--pinkish) !important;
 }
 
 /* Strengthen navbar-border for better visibility on community avatars in dark */
