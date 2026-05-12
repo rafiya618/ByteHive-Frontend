@@ -85,7 +85,7 @@ export default function Navbar() {
               <div className="relative">
                 <button onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center text-pinkish hover:text-pinkish-dark transition-colors group relative cursor-pointer">
                   <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center space-x-1">
-                    <span className="material-icons text-4xl" style={{ color: "var(--pinkish)" }}>
+                    <span className="material-icons text-4xl text-pinkish-important">
                       local_fire_department
                     </span>
                     <span className="text-columbia-blue text-sm font-bold">{currentStreak}</span>
@@ -222,7 +222,7 @@ export default function Navbar() {
             <span>History</span>
           </button>
           <button onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center space-x-4 text-pinkish hover:text-pinkish-dark transition-colors w-full cursor-pointer">
-            <span className="material-icons text-2xl">local_fire_department</span>
+            <span className="material-icons text-2xl text-pinkish-important">local_fire_department</span>
             <span>Streak ({currentStreak})</span>
           </button>
           <button onClick={() => navigate("/profile")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
