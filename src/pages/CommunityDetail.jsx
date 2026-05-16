@@ -648,13 +648,13 @@ const CommunityDetail = () => {
                         <>
                           <button
                             onClick={handleEditCommunity}
-                            className="bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border border-white bg-transparent text-white hover:bg-white/10 transition-all"
+                            className="bh-action-btn px-4 py-2.5 rounded-full font-lato font-semibold text-sm border border-navbar-border bg-white/5 text-columbia-blue hover:bg-white/10 transition-all"
                           >
                             Edit
                           </button>
                           <button
                             onClick={handleDeleteCommunity}
-                            className="bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border border-red-500 text-red-300 hover:bg-red-500/10 transition-all disabled:opacity-60"
+                            className="bh-action-btn px-4 py-2.5 rounded-full font-lato font-semibold text-sm border border-red-400 bg-transparent text-red-300 hover:bg-red-500/10 transition-all disabled:opacity-60"
                             disabled={deleting}
                           >
                             {deleting ? 'Deleting...' : 'Delete'}

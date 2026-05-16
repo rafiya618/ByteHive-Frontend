@@ -87,7 +87,7 @@ const EventCard = ({
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             onClick={handleView}
-            className="event-btn-primary text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
+            className="event-btn-primary px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
           >
             View Event <span className="material-icons text-sm">open_in_new</span>
           </button>
@@ -96,8 +96,8 @@ const EventCard = ({
             onClick={() => onToggleInterest?.(event)}
             className={`px-4 py-3 rounded-xl transition-colors font-semibold ${
               isInterested
-                ? "bg-[#D9467C] hover:bg-[#C33] text-white"
-                : "event-btn-secondary text-white"
+                ? "event-btn-interested"
+                : "event-btn-secondary"
             }`}
           >
             {isInterested ? "Interested" : "Mark Interested"}
@@ -105,7 +105,7 @@ const EventCard = ({
 
           <button
             onClick={() => onAddToCalendar?.(event)}
-            className="sm:col-span-2 event-btn-accent px-4 py-3 rounded-xl text-white transition-colors"
+            className="sm:col-span-2 event-btn-accent px-4 py-3 rounded-xl transition-colors"
           >
             Add to Calendar
           </button>

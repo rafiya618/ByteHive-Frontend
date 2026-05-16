@@ -101,7 +101,7 @@ const EventsListing = () => {
 
   const filteredEvents = useMemo(() => {
     const now = new Date();
-    const endOfWeek = addDays(now, 7);
+    const recommendedWindowEnd = addDays(now, 30);
 
     return events.filter((event) => {
       const title = (event.event_name || "").toLowerCase();
@@ -133,7 +133,7 @@ const EventsListing = () => {
         selectedFilter === "All" ||
         (selectedFilter === "Upcoming" && eventDate && isAfter(eventDate, now)) ||
         (selectedFilter === "Recommended" &&
-          ((eventDate && isBefore(eventDate, endOfWeek) && isAfter(eventDate, now)) ||
+          ((eventDate && isAfter(eventDate, now) && isBefore(eventDate, recommendedWindowEnd)) ||
             Boolean(interestedMap[event._id])));
 
       return (
@@ -224,7 +224,7 @@ const EventsListing = () => {
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
               <p className="events-hero-kicker text-xs uppercase tracking-[0.22em] mb-2">Discover and Track</p>
-              <h2 className="font-fenix text-[34px] md:text-[42px] leading-tight text-white font-normal text-left">Neon Events Hub</h2>
+              <h2 className="font-fenix text-[34px] md:text-[42px] leading-tight text-white font-normal text-left">Events Hub</h2>
               <p className="text-desc font-lato mt-2">
               Discover, filter, and track events with in-app calendar integration and reminders.
               </p>

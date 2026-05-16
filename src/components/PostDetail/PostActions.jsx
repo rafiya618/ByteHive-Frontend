@@ -72,9 +72,9 @@ const PostActions = ({
     const isOwner = String(post.user_id || '') === String(currentUserId || '');
 
     return (
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-3">
             {/* Share Button */}
-            <button className="flex items-center space-x-2 px-4 py-2 border border-periwinkle text-periwinkle rounded-md hover:bg-periwinkle-light transition-colors font-lato">
+            <button className="flex items-center space-x-2 px-4 py-2 rounded-full border border-navbar-border bg-white/5 text-columbia-blue hover:bg-white/10 transition-all font-lato">
                 <span className="material-icons text-lg">share</span>
                 <span>Share</span>
             </button>
@@ -83,7 +83,7 @@ const PostActions = ({
             <div className="relative">
                 <button
                     onClick={handleBookmark}
-                    className="flex items-center space-x-2 px-4 py-2 border border-periwinkle text-periwinkle rounded-md hover:bg-periwinkle-light transition-colors font-lato"
+                    className="flex items-center space-x-2 px-4 py-2 rounded-full border border-navbar-border bg-white/5 text-columbia-blue hover:bg-white/10 transition-all font-lato"
                 >
                     <span className="material-icons text-lg">
                         {isBookmarked ? 'bookmark' : 'bookmark_border'}
@@ -148,7 +148,7 @@ const PostActions = ({
             {/* Report Button */}
             <button
                 onClick={() => setShowReportModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 border border-red-400 text-red-300 rounded-md hover:bg-red-500/10 transition-colors font-lato"
+                className="flex items-center space-x-2 px-4 py-2 rounded-full border border-red-400 text-red-300 bg-transparent hover:bg-red-500/10 transition-all font-lato"
                 title="Report post"
             >
                 <span className="material-icons text-lg">flag</span>
@@ -160,7 +160,7 @@ const PostActions = ({
                 <div className="flex items-center space-x-3">
                     <button
                         onClick={() => navigate('/create-post', { state: { editPost: post } })}
-                        className="flex items-center space-x-2 px-4 py-2 border border-amber-400 text-amber-300 rounded-md hover:bg-amber-400/10 transition-colors font-lato"
+                        className="flex items-center space-x-2 px-4 py-2 rounded-full border border-amber-400 text-amber-300 bg-transparent hover:bg-amber-400/10 transition-all font-lato"
                         title="Edit post"
                     >
                         <span className="material-icons text-lg">edit</span>
@@ -168,7 +168,7 @@ const PostActions = ({
                     </button>
                     <button
                         onClick={handleDelete}
-                        className="flex items-center space-x-2 px-4 py-2 border border-red-400 text-red-400 rounded-md hover:bg-red-500/10 transition-colors font-lato"
+                        className="flex items-center space-x-2 px-4 py-2 rounded-full border border-red-400 text-red-400 bg-transparent hover:bg-red-500/10 transition-all font-lato"
                         title="Delete post"
                     >
                         <span className="material-icons text-lg">delete</span>

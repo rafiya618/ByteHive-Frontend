@@ -103,25 +103,25 @@ const Comments = () => {
       </div>
 
       {/* Add Comment Form */}
-      <div className="flex space-x-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-6">
         <img
           src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0SOH_qdug48AdwWxvlB89VAMgWwLvCzU5nSDeh7sGBOxfcwtoGxXGFu3Q2JauQZWpKqk-GCgCttE6cJIsPEkbYBWNgz8qS6HIT-5Sz6LgHkDAzWnkSvAOUOk7CDaVV0qGaLh5TF5SZPN1EfhhvDKzelBH3komHVKuAU_sLPUdP82-LnV5uJEpBfaz0d1ZudZEkDGu7GEHq46ftKnljIDa0wEpEPuusxbFSIsOPoONgMi3EDnu1Bupe8IbBw6vKFxxdMaP6_2s5fii"
           alt="Your avatar"
           className="w-10 h-10 rounded-full flex-shrink-0"
         />
         <div className="flex-1">
-          <form onSubmit={handleSubmitComment} className="flex items-start space-x-3">
+          <form onSubmit={handleSubmitComment} className="flex items-start gap-3">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 bg-rich-black-light border border-navbar-border rounded-lg px-4 py-3 text-white placeholder-periwinkle focus:outline-none focus:border-periwinkle resize-none font-lato text-sm min-h-[44px] max-h-32"
+              className="flex-1 bg-navbar-bg border border-navbar-border rounded-2xl px-4 py-3 text-columbia-blue placeholder:text-desc focus:outline-none focus:border-periwinkle resize-none font-lato text-sm min-h-[44px] max-h-32"
               rows="1"
             />
             <button
               type="submit"
               disabled={!newComment.trim()}
-              className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30"
+              className="border border-navbar-border rounded-full px-4 py-2.5 text-columbia-blue bg-white/5 hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-lato font-medium flex items-center justify-center min-w-[44px]"
             >
               <span className="material-icons text-base">send</span>
             </button>

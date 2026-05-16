@@ -61,8 +61,8 @@ export const ReportPostModal = ({ post, isOpen, onClose, onSuccess }) => {
   if (!isOpen || !post) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-indigo border border-navbar-border rounded-lg max-w-lg w-full">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 px-4 py-8">
+      <div className="relative mx-auto w-full max-w-lg overflow-hidden rounded-lg bg-dark-indigo border border-navbar-border shadow-2xl max-h-[calc(100vh-8rem)]">
         {/* Header */}
         <div className="border-b border-navbar-border p-6 flex justify-between items-center">
           <div>
@@ -80,12 +80,13 @@ export const ReportPostModal = ({ post, isOpen, onClose, onSuccess }) => {
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Post Info */}
-          <div className="bg-dark-navy-purple rounded p-3 border border-navbar-border">
-            <p className="text-xs text-gray-500 uppercase mb-1">Post Title</p>
-            <p className="text-sm text-white line-clamp-2">{post.post_title}</p>
-          </div>
+        <div className="overflow-y-auto custom-scrollbar max-h-[calc(100vh-18rem)]">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {/* Post Info */}
+            <div className="bg-dark-navy-purple rounded p-3 border border-navbar-border">
+              <p className="text-xs text-gray-500 uppercase mb-1">Post Title</p>
+              <p className="text-sm text-white line-clamp-2">{post.post_title}</p>
+            </div>
 
           {/* Reason Dropdown */}
           <div>
@@ -187,7 +188,8 @@ export const ReportPostModal = ({ post, isOpen, onClose, onSuccess }) => {
               ℹ️ All reports are reviewed by our moderation team. False reports may result in account restrictions.
             </p>
           </div>
-        </form>
+          </form>
+        </div>
 
         {/* Footer */}
         <div className="border-t border-navbar-border p-6 flex justify-end gap-3">

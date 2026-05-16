@@ -296,12 +296,19 @@ const ProfilePage = () => {
 
   const currentPrefs = pendingPrefs || prefs;
 
-  const tabClass = (tab) =>
-    `text-[18px] font-semibold pb-1 border-b-2 transition whitespace-nowrap ${
-      activeTab === tab
-        ? "text-white border-periwinkle"
-        : "text-columbia-blue/80 border-transparent hover:text-gray-400"
-    }`;
+  const tabClass = (tab) => {
+    const isSelected = activeTab === tab;
+    return {
+      className: "font-lato text-sm md:text-base px-4 py-2 rounded-full border transition-all whitespace-nowrap",
+      style: {
+        fontWeight: isSelected ? 700 : 500,
+        color: isSelected ? "var(--periwinkle)" : "var(--columbia-blue)",
+        borderColor: isSelected ? "var(--periwinkle)" : "var(--navbar-border)",
+        background: isSelected ? "rgba(105, 114, 255, 0.16)" : "rgba(255,255,255,0.02)",
+        opacity: isSelected ? 1 : 0.85,
+      },
+    };
+  };
 
   const renderPostList = (items, emptyMessage) => {
     if (contentLoading) {
@@ -350,7 +357,7 @@ const ProfilePage = () => {
               className="h-[128px] sm:h-[162px] bg-cover bg-center"
               style={{
                 backgroundImage:
-                  "url(https://images.unsplash.com/photo-1517336714739-489689fd1ca8?auto=format&fit=crop&w=1600&q=80)",
+                  "url(https://media.istockphoto.com/id/2211556065/photo/abstract-geometric-neon-lines-background-fractal-render-colorful-glowing-waves-pattern.jpg?s=612x612&w=0&k=20&c=QZJMndyg-CodUI9S_snz9Ss-fpD6NMOaEaMYleOsYRk=)",
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-black/50" />
@@ -483,12 +490,45 @@ const ProfilePage = () => {
           </aside>
 
           <section className="bg-rich-black/70 border border-navbar-border rounded-xl p-4 sm:p-5">
-            <div className="flex items-center gap-5 text-lg mb-4 overflow-x-auto pb-1">
-              <button className={tabClass("posts")} onClick={() => setActiveTab("posts")}>Posts</button>
+            <div className="flex items-center gap-2 flex-wrap mb-4 overflow-x-auto pb-1">
+              {(() => {
+                const props = tabClass("posts");
+                return (
+                  <button
+                    className={props.className}
+                    style={props.style}
+                    onClick={() => setActiveTab("posts")}
+                  >
+                    Posts
+                  </button>
+                );
+              })()}
               {isMyProfile && (
                 <>
-                  <button className={tabClass("saved")} onClick={() => setActiveTab("saved")}>Saved</button>
-                  <button className={tabClass("settings")} onClick={() => setActiveTab("settings")}>Settings</button>
+                  {(() => {
+                    const props = tabClass("saved");
+                    return (
+                      <button
+                        className={props.className}
+                        style={props.style}
+                        onClick={() => setActiveTab("saved")}
+                      >
+                        Saved
+                      </button>
+                    );
+                  })()}
+                  {(() => {
+                    const props = tabClass("settings");
+                    return (
+                      <button
+                        className={props.className}
+                        style={props.style}
+                        onClick={() => setActiveTab("settings")}
+                      >
+                        Settings
+                      </button>
+                    );
+                  })()}
                 </>
               )}
             </div>
