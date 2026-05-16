@@ -12,6 +12,8 @@
  * @param {Function} props.toggleUpvote - Handler for upvote toggle
  * @param {Function} props.toggleDownvote - Handler for downvote toggle
  */
+import { SecondaryButton } from '../../components/UI';
+
 const VotingActions = ({
     upvotes,
     downvotes,
@@ -24,24 +26,16 @@ const VotingActions = ({
     return (
         <div className="flex items-center space-x-6">
             {/* Upvote */}
-            <button
-                onClick={toggleUpvote}
-                className={`flex items-center space-x-2 transition-colors ${isUpvoted ? 'text-green-400' : 'text-periwinkle hover:text-white'
-                    }`}
-            >
+            <SecondaryButton onClick={toggleUpvote} className={`flex items-center space-x-2 transition-colors ${isUpvoted ? 'text-green-400' : 'text-periwinkle hover:text-white'}`}>
                 <span className="material-icons text-lg">arrow_upward</span>
                 <span className="font-lato font-medium">{upvotes}</span>
-            </button>
+            </SecondaryButton>
 
             {/* Downvote */}
-            <button
-                onClick={toggleDownvote}
-                className={`flex items-center space-x-2 transition-colors ${isDownvoted ? 'text-red-400' : 'text-periwinkle hover:text-white'
-                    }`}
-            >
+            <SecondaryButton onClick={toggleDownvote} className={`flex items-center space-x-2 transition-colors ${isDownvoted ? 'text-red-400' : 'text-periwinkle hover:text-white'}`}>
                 <span className="material-icons text-lg">arrow_downward</span>
                 <span className="font-lato font-medium">{downvotes}</span>
-            </button>
+            </SecondaryButton>
 
             {/* Views */}
             <div className="flex items-center space-x-2 text-periwinkle">

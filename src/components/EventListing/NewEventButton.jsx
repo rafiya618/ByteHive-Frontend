@@ -1,19 +1,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { PrimaryButton } from "../UI";
 
 const NewPostButton = () => {
   const navigate = useNavigate();
 
   return (
-    <button
+    <PrimaryButton
       onClick={() => navigate("/create-event")}
-      className="events-new-btn ml-2 h-[49px] px-6 text-white text-base font-semibold rounded-xl transition-all duration-200 flex items-center justify-center"
-      style={{
-        minWidth: 148,
-      }}
+      className="ml-2 h-[49px]"
+      style={{ minWidth: 132 }}
     >
       + Create Event
-    </button>
+    </PrimaryButton>
   );
 };
 

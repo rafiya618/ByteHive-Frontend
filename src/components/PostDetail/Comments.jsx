@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { retentionApi } from "../../api/retentionApi";
+import { PrimaryButton, SecondaryButton } from "../UI";
 
 const Comments = () => {
   const [newComment, setNewComment] = useState("");
@@ -110,7 +111,7 @@ const Comments = () => {
           className="w-10 h-10 rounded-full flex-shrink-0"
         />
         <div className="flex-1">
-          <form onSubmit={handleSubmitComment} className="flex items-start gap-3">
+            <form onSubmit={handleSubmitComment} className="flex items-start gap-3">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -118,13 +119,9 @@ const Comments = () => {
               className="flex-1 bg-navbar-bg border border-navbar-border rounded-2xl px-4 py-3 text-columbia-blue placeholder:text-desc focus:outline-none focus:border-periwinkle resize-none font-lato text-sm min-h-[44px] max-h-32"
               rows="1"
             />
-            <button
-              type="submit"
-              disabled={!newComment.trim()}
-              className="border border-navbar-border rounded-full px-4 py-2.5 text-columbia-blue bg-white/5 hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-lato font-medium flex items-center justify-center min-w-[44px]"
-            >
+            <PrimaryButton type="submit" disabled={!newComment.trim()} className="min-w-[44px] px-3 py-2.5 flex items-center justify-center">
               <span className="material-icons text-base">send</span>
-            </button>
+            </PrimaryButton>
           </form>
         </div>
       </div>
@@ -152,18 +149,14 @@ const Comments = () => {
 
                 {/* Comment Actions */}
                 <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => toggleLike(comment.id)}
-                    className={`flex items-center space-x-1 text-xs transition-colors font-lato ${comment.isLiked ? "text-white" : "text-periwinkle hover:text-white"
-                      }`}
-                  >
+                  <SecondaryButton onClick={() => toggleLike(comment.id)} className={`flex items-center space-x-1 text-xs transition-colors ${comment.isLiked ? 'text-white' : 'text-periwinkle hover:text-white'}`}>
                     <span className="material-icons text-sm">thumb_up</span>
                     <span>{comment.likes}</span>
-                  </button>
-                  <button className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato">
+                  </SecondaryButton>
+                  <SecondaryButton className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors">
                     <span className="material-icons text-sm">chat_bubble_outline</span>
                     <span>Reply</span>
-                  </button>
+                  </SecondaryButton>
                 </div>
               </div>
 
@@ -189,18 +182,14 @@ const Comments = () => {
                         <p className="text-white text-sm font-lato leading-relaxed mb-3">{reply.content}</p>
 
                         <div className="flex items-center space-x-4">
-                          <button
-                            onClick={() => toggleLike(reply.id, true, comment.id)}
-                            className={`flex items-center space-x-1 text-xs transition-colors font-lato ${reply.isLiked ? "text-white" : "text-periwinkle hover:text-white"
-                              }`}
-                          >
+                          <SecondaryButton onClick={() => toggleLike(reply.id, true, comment.id)} className={`flex items-center space-x-1 text-xs transition-colors ${reply.isLiked ? 'text-white' : 'text-periwinkle hover:text-white'}`}>
                             <span className="material-icons text-sm">thumb_up</span>
                             <span>{reply.likes}</span>
-                          </button>
-                          <button className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato">
+                          </SecondaryButton>
+                          <SecondaryButton className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors">
                             <span className="material-icons text-sm">chat_bubble_outline</span>
                             <span>Reply</span>
-                          </button>
+                          </SecondaryButton>
                         </div>
                       </div>
                     </div>

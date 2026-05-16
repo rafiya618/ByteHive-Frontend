@@ -1,4 +1,7 @@
-// src/components/InputField.jsx
+import React from 'react';
+import DSInput from '../components/UI/Input';
+import DSTextArea from '../components/UI/TextArea';
+
 const InputField = ({
   type,
   value,
@@ -9,30 +12,26 @@ const InputField = ({
   accept,
   required,
   rows = 3, // default for textarea
+  className = '',
+  ...rest
 }) => {
-  // Textarea
-  if (type === "textarea") {
+  if (type === 'textarea') {
     return (
-      <textarea
+      <DSTextArea
         name={name}
         id={id}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-3 py-2 sm:py-2.5 rounded-md 
-                   bg-dark-indigo border border-faint-greyish-overlay  
-                   text-white placeholder-gray-300  
-                   hover:outline-1 hover:outline-white
-                   focus:outline-1 focus:outline-white 
-                   transition-all"
+        className={className}
         {...(required !== undefined ? { required } : {})}
+        {...rest}
       />
     );
   }
 
-  // File Input
-  if (type === "file") {
+  if (type === 'file') {
     return (
       <input
         type="file"
@@ -40,31 +39,24 @@ const InputField = ({
         name={name}
         id={id}
         accept={accept}
-        className="block w-full text-sm text-gray-300 
-                   file:mr-4 file:py-2 file:px-4 file:rounded-md 
-                   file:border-0 file:bg-blue-600 file:text-white 
-                   hover:file:bg-blue-700"
+        className={className}
         {...(required !== undefined ? { required } : {})}
+        {...rest}
       />
     );
   }
 
-  // Default Input
   return (
-    <input
+    <DSInput
       type={type}
       value={value}
       onChange={onChange}
       name={name}
       id={id}
       placeholder={placeholder}
-      className="w-full px-3 py-2 sm:py-2.5 rounded-md 
-                 bg-dark-indigo border border-faint-greyish-overlay  
-                 text-white placeholder-gray-300  
-                 hover:outline-1 hover:outline-white
-                 focus:outline-1 focus:outline-white 
-                 transition-all"
+      className={className}
       {...(required !== undefined ? { required } : {})}
+      {...rest}
     />
   );
 };

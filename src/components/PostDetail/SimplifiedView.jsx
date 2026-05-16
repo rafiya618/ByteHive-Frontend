@@ -1,4 +1,5 @@
 import { SIMPLIFICATION_LEVELS } from './ContentModeToggle';
+import { PrimaryButton, SecondaryButton } from '../../components/UI';
 
 /**
  * SimplifiedView Component
@@ -22,19 +23,13 @@ const SimplifiedView = ({
                     <p className="text-red-300 text-lg mb-2">{simplifiedContent.message}</p>
                     <p className="text-gray-400 text-sm mb-6">{simplifiedContent.details}</p>
                     <div className="flex items-center justify-center space-x-4">
-                        <button
-                            onClick={onRetry}
-                            className="bg-periwinkle text-rich-black px-6 py-3 rounded-lg hover:bg-periwinkle-light transition-colors font-semibold flex items-center space-x-2"
-                        >
+                        <PrimaryButton onClick={onRetry} className="px-6 py-3 flex items-center space-x-2">
                             <span className="material-icons">refresh</span>
                             <span>Try Again</span>
-                        </button>
-                        <button
-                            onClick={onBackToOriginal}
-                            className="bg-rich-black-light border border-navbar-border text-periwinkle px-6 py-3 rounded-lg hover:bg-rich-black transition-colors font-semibold"
-                        >
+                        </PrimaryButton>
+                        <SecondaryButton onClick={onBackToOriginal} className="px-6 py-3">
                             Back to Original
-                        </button>
+                        </SecondaryButton>
                     </div>
                 </div>
             </div>

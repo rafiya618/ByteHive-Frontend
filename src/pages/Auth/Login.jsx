@@ -3,6 +3,7 @@ import { useAuth } from "../../context/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import InputField from "../../shared/InputField";
+import { PrimaryButton } from "../../components/UI";
 import { jwtDecode } from "jwt-decode";
 import { validateEmail, validatePassword } from "../../helpers/validators";
 import { Eye, EyeOff } from "lucide-react";
@@ -122,7 +123,7 @@ const Login = () => {
 
   return (
     <div className='min-h-screen bg-rich-black  flex flex-col relative text-white'>
-       <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
+      {/* Removed glow effect div */}
       <div className="bg-navbar-bg text-white w-full flex items-center justify-center min-h-screen px-4">
         {step === 1 && (
           <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border transition-shadow hover:shadow-xl">
@@ -160,30 +161,30 @@ const Login = () => {
               </div>
               {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
 
-              <button
+              <PrimaryButton
                 type="submit"
                 className="mt-3 w-full bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 py-2 rounded-md font-semibold transition duration-200 cursor-pointer"
               >
                 Login
-              </button>
+              </PrimaryButton>
             </form>
 
             <div className="mt-2 text-start">
-              <button
+              <PrimaryButton
                 onClick={() => navigate("/forgot-password")}
                 className="text-sm text-gray-400 hover:text-white transition cursor-pointer"
               >
                 Forgot Password?
-              </button>
+              </PrimaryButton>
             </div>
 
             <div className="mt-3 text-center">
-              <button
+              <PrimaryButton
                 onClick={() => navigate("/register")}
                 className="text-sm text-gray-400 hover:text-white transition cursor-pointer"
               >
                 Don't have an account? <span className="underline">Create one</span>
-              </button>
+              </PrimaryButton>
             </div>
 
             <div className="flex items-center my-3">
@@ -192,7 +193,7 @@ const Login = () => {
               <div className="flex-grow border-t border-gray-600"></div>
             </div>
 
-            <button
+            <PrimaryButton
               onClick={() =>
                 (window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/google?mode=login`)
               }
@@ -209,7 +210,7 @@ const Login = () => {
                 className="w-5 h-5"
               />
               Continue with Google
-            </button>
+            </PrimaryButton>
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { postsApi } from "../../api/postsApi";
 import { getCommentsByPost } from "../../api/commentApi";
 import { savePost, unsavePost, checkSavedStatus } from "../../api/curationApi";
 import { ReportPostModal } from "../posts/ReportPostModal";
+import { PrimaryButton } from "../../components/UI";
 import toast from "react-hot-toast";
 
 const BlogCard = ({
@@ -48,7 +49,7 @@ const BlogCard = ({
     };
     loadAuthor();
     return () => { mounted = false; };
-  }, [user_id]);
+  }, [user_id, authorInfo?.name]);
   // State for toggles
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
   const [showBookmarkMenu, setShowBookmarkMenu] = useState(false);
@@ -142,7 +143,7 @@ const BlogCard = ({
     // Always attempt to fetch comments count regardless of vote-status outcome
     commentFetch();
     return () => { mounted = false; };
-  }, [auth?.token, id, auth.user]);
+  }, [auth?.token, id, auth.user, comments]);
 
   // Check if post is saved
   React.useEffect(() => {
@@ -251,7 +252,9 @@ const BlogCard = ({
           try {
             const { reTrackEvent } = await import('../../api/reApi');
             await reTrackEvent({ userId: String(normalizedUserId), action: 'upvote', entityType: 'post', entityId: id });
-          } catch {}
+          } catch (error) {
+            void error;
+          }
         } catch (error) {
           console.error('❌ [BLOG-CARD] Failed to log upvote activity:', error);
           console.error('❌ [BLOG-CARD] Error details:', error.message, error.response?.data);
@@ -357,32 +360,32 @@ const BlogCard = ({
     <div className="relative">
       {/* Bookmark Button - Outside Link */}
       <div className="absolute top-4 right-4 z-20">
-        <button
+        <PrimaryButton
           onClick={toggleBookmark}
           className={`p-2 transition-colors bg-navbar-bg hover:bg-gray-800 ${isBookmarked
-            ? "text-periwinkle-deeper"
-            : "text-periwinkle-deeper hover:text-white"
+            ? "text-desc"
+            : "text-desc hover:text-white"
             }`}
         >
           <span className="material-icons">
             {isBookmarked ? "bookmark" : "bookmark_border"}
           </span>
-        </button>
+        </PrimaryButton>
 
         {/* Bookmark Dropdown Menu */}
         {showBookmarkMenu && (
           <div className="absolute top-full right-0 mt-2 bg-dark-navy-purple border border-navbar-border rounded-lg shadow-lg z-50 min-w-[200px] py-2">
             {isBookmarked ? (
               <>
-                <button
+                <PrimaryButton
                   onClick={() => handleSavePost("Saved")}
                   className={`w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center gap-2 ${savedCategory === "Saved" ? "text-periwinkle" : "text-white"
                     }`}
                 >
                   <span className="material-icons text-sm">check</span>
                   Saved
-                </button>
-                <button
+                </PrimaryButton>
+                <PrimaryButton
                   onClick={() => handleSavePost("Watch Later")}
                   className={`w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors flex items-center gap-2 ${savedCategory === "Watch Later" ? "text-periwinkle" : "text-white"
                     }`}
@@ -391,34 +394,34 @@ const BlogCard = ({
                     {savedCategory === "Watch Later" ? "check" : ""}
                   </span>
                   Watch Later
-                </button>
+                </PrimaryButton>
                 <hr className="my-2 border-gray-600" />
-                <button
+                <PrimaryButton
                   onClick={handleUnsavePost}
                   className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-red-400 flex items-center gap-2"
                 >
                   <span className="material-icons text-sm">close</span>
                   Remove
-                </button>
+                </PrimaryButton>
               </>
             ) : (
               <>
-                <button
+                <PrimaryButton
                   onClick={() => handleSavePost("Saved")}
                   className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-white flex items-center gap-2"
                 >
                   <span className="material-icons text-sm">bookmark</span>
                   Saved
-                </button>
-                <button
+                </PrimaryButton>
+                <PrimaryButton
                   onClick={() => handleSavePost("Watch Later")}
                   className="w-full text-left px-4 py-2 hover:bg-gray-700 transition-colors text-white flex items-center gap-2"
                 >
                   <span className="material-icons text-sm">schedule</span>
                   Watch Later
-                </button>
+                </PrimaryButton>
                 <hr className="my-2 border-gray-600" />
-                <button
+                <PrimaryButton
                   onClick={() => {
                     setShowBookmarkMenu(false);
                     setShowReportModal(true);
@@ -427,7 +430,7 @@ const BlogCard = ({
                 >
                   <span className="material-icons text-sm">flag</span>
                   Report Post
-                </button>
+                </PrimaryButton>
               </>
             )}
           </div>
@@ -447,9 +450,11 @@ const BlogCard = ({
             if (!userId) return;
             const { reTrackEvent } = await import('../../api/reApi');
             await reTrackEvent({ userId: String(userId), action: 'read', entityType: 'post', entityId: id, metadata: { source: 'listing' } });
-          } catch {}
+          } catch (error) {
+            void error;
+          }
         }}
-        className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 transition cursor-pointer blog-card"
+        className="block bg-navbar-bg rounded-xl overflow-hidden border z-0 hover:bg-white/5 hover:translate-y-0.5 transform-gpu transition-all cursor-pointer blog-card"
         style={{ border: "1px solid var(--navbar-border)" }}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 relative">
@@ -465,12 +470,12 @@ const BlogCard = ({
           {/* Blog Content */}
           <div className="md:col-span-2 flex flex-col">
             {/* Community, date, readTime */}
-            <div className="flex items-center text-sm mb-2 font-lato">
-              <span className="text-periwinkle-deeper px-3 py-1 rounded-xl font-semibold community-badge border border-navbar-border">
+            <div className="flex items-center text-sm mb-2 font-lato text-desc">
+              <span className="px-3 py-1 rounded-xl font-semibold community-badge border border-navbar-border text-desc">
                 {community}
               </span>
-              <span className="mx-2 text-periwinkle-deeper">·</span>
-              <span className="text-periwinkle-deeper">
+              <span className="mx-2 text-desc">·</span>
+              <span className="text-desc">
                 {date} • {readTime} read
               </span>
             </div>
@@ -512,48 +517,42 @@ const BlogCard = ({
                   className="w-8 h-8 rounded-full"
                   src={authorInfo?.avatar || 'https://via.placeholder.com/40'}
                 />
-                <span className="font-lato text-periwinkle-deeper text-sm">
+                <span className="font-lato text-desc text-sm">
                   {authorInfo?.name || 'Unknown'}
                 </span>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center space-x-4 text-periwinkle-deeper">
+              <div className="flex items-center space-x-4 text-desc">
                 {/* Upvote */}
                 <button
+                  title={isUpvoted ? 'Remove Upvote' : 'Upvote'}
                   onClick={toggleUpvote}
-                  className={`flex items-center text-sm transition-colors ${isUpvoted ? "text-green-500" : "hover:text-white"
-                    }`}
+                  className={`flex items-center text-sm hover:text-white transition-colors cursor-pointer ${isUpvoted ? "text-green-500" : ""}`}
                 >
-                  <span className="material-icons text-base mr-1">
-                    arrow_upward
-                  </span>
+                  <span className="material-icons text-base mr-1 text-desc">arrow_upward</span>
                   {localUpvotes}
                 </button>
 
                 {/* Downvote */}
                 <button
+                  title={isDownvoted ? 'Remove Downvote' : 'Downvote'}
                   onClick={toggleDownvote}
-                  className={`flex items-center text-sm transition-colors ${isDownvoted ? "text-red-400" : "hover:text-white"
-                    }`}
+                  className={`flex items-center text-sm hover:text-white transition-colors cursor-pointer ${isDownvoted ? "text-red-400" : ""}`}
                 >
-                  <span className="material-icons text-base mr-1">
-                    arrow_downward
-                  </span>
+                  <span className="material-icons text-base mr-1 text-desc">arrow_downward</span>
                   {localDownvotes}
                 </button>
 
                 {/* Comments */}
-                <button className="flex items-center text-sm hover:text-white transition-colors">
-                  <span className="material-icons text-base mr-1">
-                    chat_bubble_outline
-                  </span>
+                <button title="Comments" className="flex items-center text-sm hover:text-white transition-colors cursor-pointer">
+                  <span className="material-icons text-base mr-1 text-desc">chat_bubble_outline</span>
                   {localCommentsCount}
                 </button>
 
                 {/* Views */}
                 <span className="flex items-center text-sm hover:text-white transition-colors">
-                  <span className="material-icons text-base mr-1">visibility</span>
+                  <span className="material-icons text-base mr-1 text-desc">visibility</span>
                   {views}
                 </span>
               </div>

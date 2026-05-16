@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import React, { forwardRef } from "react";
 import InputField from "../../../shared/InputField";
+import { PrimaryButton, SecondaryButton } from '../../../components/UI';
 
 dayjs.extend(relativeTime);
 
@@ -57,21 +58,12 @@ const CommentBlock = forwardRef(
                 rows="1"
               />
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleUpdateComment(c._id)}
-                  className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30 cursor-pointer"
-                >
+                <PrimaryButton onClick={() => handleUpdateComment(c._id)} className="min-w-[44px] px-4 py-2.5 flex items-center justify-center">
                   <span className="material-icons text-base">send</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingComment((prev) => ({ ...prev, [c._id]: "" }));
-                    setEditingText((prev) => ({ ...prev, [c._id]: "" }));
-                  }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition font-lato text-sm cursor-pointer"
-                >
+                </PrimaryButton>
+                <SecondaryButton onClick={() => { setEditingComment((prev) => ({ ...prev, [c._id]: '' })); setEditingText((prev) => ({ ...prev, [c._id]: '' })); }} className="px-4 py-2 text-sm">
                   Cancel
-                </button>
+                </SecondaryButton>
               </div>
             </div>
           ) : (
@@ -84,53 +76,28 @@ const CommentBlock = forwardRef(
               
               {/* Comment Actions */}
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => handleLike(c._id, auth?.user?._id)}
-                  className={`flex items-center space-x-1 text-xs transition-colors font-lato cursor-pointer ${
-                    c.likes?.includes(auth?.user?._id) ? "text-white" : "text-periwinkle hover:text-white"
-                  }`}
-                >
+                <SecondaryButton onClick={() => handleLike(c._id, auth?.user?._id)} className={`flex items-center space-x-1 text-xs transition-colors ${c.likes?.includes(auth?.user?._id) ? 'text-white' : 'text-periwinkle hover:text-white'}`}>
                   <span className="material-icons text-sm">thumb_up</span>
                   <span>{c.likes?.length || 0}</span>
-                </button>
-                <button
-                  onClick={() => handleDislike(c._id, auth?.user?._id)}
-                  className={`flex items-center space-x-1 text-xs transition-colors font-lato cursor-pointer ${
-                    c.dislikes?.includes(auth?.user?._id) ? "text-white" : "text-periwinkle hover:text-white"
-                  }`}
-                >
+                </SecondaryButton>
+                <SecondaryButton onClick={() => handleDislike(c._id, auth?.user?._id)} className={`flex items-center space-x-1 text-xs transition-colors ${c.dislikes?.includes(auth?.user?._id) ? 'text-white' : 'text-periwinkle hover:text-white'}`}>
                   <span className="material-icons text-sm">thumb_down</span>
                   <span>{c.dislikes?.length || 0}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setReplyingTo((prev) => ({ ...prev, [c._id]: c._id }));
-                    setReply((prev) => ({ ...prev, [c._id]: `@${c.user?.username || "Unknown"} ` }));
-                  }}
-                  className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato cursor-pointer"
-                >
+                </SecondaryButton>
+                <SecondaryButton onClick={() => { setReplyingTo((prev) => ({ ...prev, [c._id]: c._id })); setReply((prev) => ({ ...prev, [c._id]: `@${c.user?.username || 'Unknown'} ` })); }} className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors">
                   <span className="material-icons text-sm">chat_bubble_outline</span>
                   <span>Reply</span>
-                </button>
+                </SecondaryButton>
                 {c.userId === auth?.user?._id && (
                   <>
-                    <button
-                      onClick={() => {
-                        setEditingText((prev) => ({ ...prev, [c._id]: c.text }));
-                        setEditingComment((prev) => ({ ...prev, [c._id]: c._id }));
-                      }}
-                      className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors font-lato cursor-pointer"
-                    >
+                    <SecondaryButton onClick={() => { setEditingText((prev) => ({ ...prev, [c._id]: c.text })); setEditingComment((prev) => ({ ...prev, [c._id]: c._id })); }} className="flex items-center space-x-1 text-xs text-periwinkle hover:text-white transition-colors">
                       <span className="material-icons text-sm">edit</span>
                       <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c._id, c.userId)}
-                      className="flex items-center space-x-1 text-xs text-periwinkle transition-colors font-lato cursor-pointer hover:text-red-400"
-                    >
+                    </SecondaryButton>
+                    <SecondaryButton onClick={() => handleDelete(c._id, c.userId)} className="flex items-center space-x-1 text-xs text-periwinkle transition-colors hover:text-red-400">
                       <span className="material-icons text-sm">delete</span>
                       <span>Delete</span>
-                    </button>
+                    </SecondaryButton>
                   </>
                 )}
               </div>
@@ -152,21 +119,12 @@ const CommentBlock = forwardRef(
                 rows="1"
               />
               <div className="flex gap-2">
-                <button
-                  onClick={(e) => handleAddComment(e, c)}
-                  className="bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30 cursor-pointer"
-                >
+                <PrimaryButton onClick={(e) => handleAddComment(e, c)} className="min-w-[44px] px-4 py-2.5 flex items-center justify-center">
                   <span className="material-icons text-base">send</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setReply((prev) => ({ ...prev, [c._id]: "" }));
-                    setReplyingTo((prev) => ({ ...prev, [c._id]: null }));
-                  }}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md text-white transition font-lato text-sm cursor-pointer"
-                >
+                </PrimaryButton>
+                <SecondaryButton onClick={() => { setReply((prev) => ({ ...prev, [c._id]: '' })); setReplyingTo((prev) => ({ ...prev, [c._id]: null })); }} className="px-4 py-2 text-sm">
                   Cancel
-                </button>
+                </SecondaryButton>
               </div>
             </div>
           </div>
@@ -175,16 +133,9 @@ const CommentBlock = forwardRef(
         {/* View/Hide Replies */}
         {!isReply && c.replyCount > 0 && (
           <div className="px-4 pb-2">
-            <button
-              onClick={() =>
-                expandReplies[c._id]
-                  ? setExpandReplies((prev) => ({ ...prev, [c._id]: false }))
-                  : handleReplies(c._id)
-              }
-              className="text-sm text-periwinkle hover:text-white transition-colors font-lato cursor-pointer"
-            >
-              {expandReplies[c._id] ? "Hide Replies" : `View Replies (${c.replyCount})`}
-            </button>
+            <SecondaryButton onClick={() => expandReplies[c._id] ? setExpandReplies((prev) => ({ ...prev, [c._id]: false })) : handleReplies(c._id)} className="text-sm text-periwinkle hover:text-white transition-colors font-lato">
+              {expandReplies[c._id] ? 'Hide Replies' : `View Replies (${c.replyCount})`}
+            </SecondaryButton>
           </div>
         )}
 

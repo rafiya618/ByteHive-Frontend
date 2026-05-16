@@ -5,14 +5,69 @@ import ProfileEdit from "../components/Profile/ProfileEdit";
 import Layout from "../components/Layout/Layout";
 import { useAuth } from "../context/auth";
 import { useProfile } from "../context/profileContext";
+import { getUserStreak, getUserStats } from "../api/retentionApi";
 import { postsApi } from "../api/postsApi";
 import { getSavedPosts } from "../api/curationApi";
 import { communityApi } from "../api/communityApi";
 import { getPreferences, updatePreferences } from "../api/notificationApi";
 import BlogCard from "../components/BlogListing/BlogCard";
+import BlogFilterBar from "../components/BlogListing/BlogFilterBar";
 import toast from "react-hot-toast";
 import { registerPush } from "../helpers/registerPush";
 import Modal from "../components/Modal/Modal";
+
+const createDefaultPreferences = () => ({
+  global: { inApp: true, push: false, email: false },
+  perType: {
+    activities: {
+      likePost: { inApp: true, push: false, email: false },
+      likeComment: { inApp: true, push: false, email: false },
+      comment: { inApp: true, push: false, email: false },
+      reply: { inApp: true, push: false, email: false },
+    },
+    network: {
+      follow: { inApp: true, push: false, email: false },
+    },
+    updates: {
+      newPost: { inApp: true, push: false, email: false },
+      streakReminder: { enabled: true, inApp: true, push: false, email: false },
+    },
+  },
+});
+
+const normalizePreferences = (rawPrefs) => {
+  const defaults = createDefaultPreferences();
+  if (!rawPrefs) return defaults;
+
+  const streakReminderRaw = rawPrefs?.perType?.updates?.streakReminder;
+
+  return {
+    ...defaults,
+    ...rawPrefs,
+    global: {
+      ...defaults.global,
+      ...(rawPrefs.global || {}),
+    },
+    perType: {
+      activities: {
+        ...defaults.perType.activities,
+        ...(rawPrefs?.perType?.activities || {}),
+      },
+      network: {
+        ...defaults.perType.network,
+        ...(rawPrefs?.perType?.network || {}),
+      },
+      updates: {
+        ...defaults.perType.updates,
+        ...(rawPrefs?.perType?.updates || {}),
+        streakReminder:
+          typeof streakReminderRaw === "boolean"
+            ? { ...defaults.perType.updates.streakReminder, enabled: streakReminderRaw }
+            : { ...defaults.perType.updates.streakReminder, ...(streakReminderRaw || {}) },
+      },
+    },
+  };
+};
 
 const ProfilePage = () => {
   const { id: paramId } = useParams();
@@ -24,12 +79,14 @@ const ProfilePage = () => {
   const [savedPosts, setSavedPosts] = useState([]);
   const [contentLoading, setContentLoading] = useState(false);
   const [communities, setCommunities] = useState({ owned: [], followed: [] });
-  const [prefs, setPrefs] = useState(null);
+  const [prefs, setPrefs] = useState(() => createDefaultPreferences());
   const [activeChannel, setActiveChannel] = useState("push");
-  const [pendingPrefs, setPendingPrefs] = useState(null);
+  const [pendingPrefs, setPendingPrefs] = useState(() => createDefaultPreferences());
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [viewedProfile, setViewedProfile] = useState(null);
+  const [retentionStreak, setRetentionStreak] = useState(null);
+  const [retentionStats, setRetentionStats] = useState(null);
   const { auth } = useAuth();
   const { profile: globalProfile, fetchProfile, loading: globalLoading } = useProfile();
   const navigate = useNavigate();
@@ -199,19 +256,9 @@ const ProfilePage = () => {
         });
 
         if (isMyProfile) {
-          const prefData = prefsRes?.data || null;
+          const prefData = normalizePreferences(prefsRes?.data || null);
           setPrefs(prefData);
-          setPendingPrefs(prefData ? JSON.parse(JSON.stringify(prefData)) : null);
-
-          setSettingsForm((prev) => ({
-            ...prev,
-            email: safeProfile?.user?.email || auth?.user?.email || "",
-            comment: !!prefData?.perType?.activities?.comment?.push,
-            reply: !!prefData?.perType?.activities?.reply?.push,
-            community: !!prefData?.perType?.updates?.newPost?.push,
-            likePost: !!prefData?.perType?.activities?.likePost?.push,
-            likeComment: !!prefData?.perType?.activities?.likeComment?.push,
-          }));
+          setPendingPrefs(JSON.parse(JSON.stringify(prefData)));
         }
       } catch (err) {
         console.error("Failed to load profile dashboard data:", err);
@@ -222,7 +269,39 @@ const ProfilePage = () => {
     };
 
     loadDashboardData();
-  }, [userId, auth?.user?.email, auth?.user?.name, safeProfile?.name, safeProfile?.profileImage, safeProfile?.user?.email]);
+  }, [userId, auth?.user?.email, auth?.user?.name, safeProfile?.name, safeProfile?.profileImage, safeProfile?.user?.email, isMyProfile]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let cancelled = false;
+
+    const loadRetentionData = async () => {
+      try {
+        const [streakRes, statsRes] = await Promise.all([
+          getUserStreak(userId),
+          getUserStats(userId),
+        ]);
+
+        if (cancelled) return;
+
+        setRetentionStreak(streakRes?.streak || streakRes || null);
+        setRetentionStats(statsRes?.stats || statsRes || null);
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load retention data:", err);
+          setRetentionStreak(null);
+          setRetentionStats(null);
+        }
+      }
+    };
+
+    loadRetentionData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const handleSave = async (formData) => {
     try {
@@ -295,20 +374,6 @@ const ProfilePage = () => {
   };
 
   const currentPrefs = pendingPrefs || prefs;
-
-  const tabClass = (tab) => {
-    const isSelected = activeTab === tab;
-    return {
-      className: "font-lato text-sm md:text-base px-4 py-2 rounded-full border transition-all whitespace-nowrap",
-      style: {
-        fontWeight: isSelected ? 700 : 500,
-        color: isSelected ? "var(--periwinkle)" : "var(--columbia-blue)",
-        borderColor: isSelected ? "var(--periwinkle)" : "var(--navbar-border)",
-        background: isSelected ? "rgba(105, 114, 255, 0.16)" : "rgba(255,255,255,0.02)",
-        opacity: isSelected ? 1 : 0.85,
-      },
-    };
-  };
 
   const renderPostList = (items, emptyMessage) => {
     if (contentLoading) {
@@ -407,7 +472,7 @@ const ProfilePage = () => {
                 </p>
                 <p className="flex items-center gap-2">
                   <span className="material-icons text-base">local_fire_department</span>
-                  {safeProfile?.streakDays || 0} days streak
+                  {retentionStreak?.current_streak ?? safeProfile?.streakDays ?? 0} days streak
                 </p>
               </div>
 
@@ -430,7 +495,7 @@ const ProfilePage = () => {
             </div>
 
               <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4">
-              <h3 className="font-fenix text-[22px] text-periwinkle mb-2.5">Stats</h3>
+                <h3 className="font-fenix text-[22px] text-periwinkle mb-2.5">Profile Stats</h3>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{postsCount}</p>
@@ -443,6 +508,57 @@ const ProfilePage = () => {
                 <div>
                   <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{followersCount}</p>
                   <p className="text-columbia-blue text-xs sm:text-sm">Followers</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4 space-y-3">
+              <h3 className="font-fenix text-[22px] text-periwinkle">Streak & Badges</h3>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStreak?.current_streak ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Current</p>
+                </div>
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStreak?.longest_streak ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Longest</p>
+                </div>
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStreak?.badge_details?.length ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Badges</p>
+                </div>
+              </div>
+              {retentionStreak?.badge_details?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {retentionStreak.badge_details.slice(0, 4).map((badge, index) => (
+                    <span key={`${badge.badge_name}-${index}`} className="px-3 py-1 rounded-full border border-navbar-border text-xs text-columbia-blue bg-rich-black-light/70">
+                      {badge.badge_name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-desc text-sm">Keep building your streak to earn badges.</p>
+              )}
+            </div>
+
+            <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4 space-y-3">
+              <h3 className="font-fenix text-[22px] text-periwinkle">User Stats</h3>
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStats?.total_posts ?? retentionStreak?.total_posts ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Posts</p>
+                </div>
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStats?.total_reads ?? retentionStreak?.total_reads ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Reads</p>
+                </div>
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStats?.total_comments ?? retentionStreak?.total_comments ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Comments</p>
+                </div>
+                <div>
+                  <p className="text-[22px] sm:text-[24px] font-bold text-periwinkle">{retentionStats?.total_likes ?? retentionStreak?.total_likes ?? 0}</p>
+                  <p className="text-columbia-blue text-xs sm:text-sm">Likes</p>
                 </div>
               </div>
             </div>
@@ -491,46 +607,11 @@ const ProfilePage = () => {
 
           <section className="bg-rich-black/70 border border-navbar-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center gap-2 flex-wrap mb-4 overflow-x-auto pb-1">
-              {(() => {
-                const props = tabClass("posts");
-                return (
-                  <button
-                    className={props.className}
-                    style={props.style}
-                    onClick={() => setActiveTab("posts")}
-                  >
-                    Posts
-                  </button>
-                );
-              })()}
-              {isMyProfile && (
-                <>
-                  {(() => {
-                    const props = tabClass("saved");
-                    return (
-                      <button
-                        className={props.className}
-                        style={props.style}
-                        onClick={() => setActiveTab("saved")}
-                      >
-                        Saved
-                      </button>
-                    );
-                  })()}
-                  {(() => {
-                    const props = tabClass("settings");
-                    return (
-                      <button
-                        className={props.className}
-                        style={props.style}
-                        onClick={() => setActiveTab("settings")}
-                      >
-                        Settings
-                      </button>
-                    );
-                  })()}
-                </>
-              )}
+              <BlogFilterBar
+                filters={isMyProfile ? ["Posts", "Saved", "Settings"] : ["Posts"]}
+                selected={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                onSelect={(val) => setActiveTab(val.toLowerCase())}
+              />
             </div>
 
             {editing ? (
@@ -562,8 +643,7 @@ const ProfilePage = () => {
                   <div className="space-y-2">
                     <h2 className="font-fenix text-[28px] leading-none text-white">Notification Preferences</h2>
 
-                    {prefs ? (
-                      <div className="border border-navbar-border rounded-2xl p-4 sm:p-6 bg-navbar-bg/70">
+                    <div className="border border-navbar-border rounded-2xl p-4 sm:p-6 bg-navbar-bg/70">
                         {/* Tabs for Push / Email */}
                         <div className="flex gap-4 mb-6 border-b border-navbar-border pb-4">
                           {["push", "email"].map((ch) => {
@@ -617,7 +697,9 @@ const ProfilePage = () => {
                                 {group === "activities" ? "Social Interactions" : group === "network" ? "Connections" : "Content Updates"}
                               </h3>
                               <div className="space-y-2">
-                                {Object.keys(currentPrefs?.perType?.[group] || {}).map((type) => {
+                                {Object.keys(currentPrefs?.perType?.[group] || {})
+                                  .filter((type) => !(group === "updates" && type === "streakReminder"))
+                                  .map((type) => {
                                   const typeDescriptions = {
                                     likePost: "Likes on your post",
                                     likeComment: "Likes on your comment",
@@ -675,6 +757,47 @@ const ProfilePage = () => {
                                     </div>
                                   );
                                 })}
+
+                                {group === "updates" && currentPrefs?.perType?.updates?.streakReminder && (
+                                  <div
+                                    className={`p-4 rounded-xl border border-navbar-border transition-all ${
+                                      currentPrefs?.global?.[activeChannel]
+                                        ? "bg-dark-indigo/30 hover:bg-dark-indigo/50"
+                                        : "bg-dark-indigo/10 opacity-50 cursor-not-allowed"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm sm:text-base text-columbia-blue">
+                                        Streak Reminders
+                                      </span>
+                                      <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={Boolean(currentPrefs?.perType?.updates?.streakReminder?.enabled)}
+                                          disabled={!currentPrefs?.global?.[activeChannel]}
+                                          onChange={(e) =>
+                                            updatePendingPrefs({
+                                              ...currentPrefs,
+                                              perType: {
+                                                ...(currentPrefs?.perType || {}),
+                                                updates: {
+                                                  ...(currentPrefs?.perType?.updates || {}),
+                                                  streakReminder: {
+                                                    ...(currentPrefs?.perType?.updates?.streakReminder || {}),
+                                                    enabled: e.target.checked,
+                                                  },
+                                                },
+                                              },
+                                            })
+                                          }
+                                          className="sr-only peer"
+                                        />
+                                        <div className="w-12 h-6 bg-gray-600 rounded-full transition-colors shadow-inner peer-checked:bg-medium-slate-blue peer-disabled:bg-gray-700"></div>
+                                        <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-6 peer-checked:shadow-[0_0_10px_2px_rgba(168,85,247,0.7)] peer-disabled:cursor-not-allowed"></div>
+                                      </label>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -699,10 +822,7 @@ const ProfilePage = () => {
                           </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="text-center text-columbia-blue py-8">Loading preferences...</div>
-                    )}
-                  </div>
+                    </div>
                 )}
               </>
             )}

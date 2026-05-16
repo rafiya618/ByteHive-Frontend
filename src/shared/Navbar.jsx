@@ -6,6 +6,7 @@ import { useNotifications } from "../context/NotificationContext";
 import { useAuth } from "../context/auth";
 import { useTheme } from "../context/ThemeContext";
 import StreakDropdown from "../components/Retention/StreakDropdown";
+import { PrimaryButton, SecondaryButton } from "../components/UI";
 import { getUserStreak } from "../api/retentionApi";
 
 export default function Navbar() {
@@ -63,71 +64,47 @@ export default function Navbar() {
           {/* DESKTOP NAV */}
           <div className="hidden md:flex items-center space-x-3">
             <nav className="flex items-center space-x-3 text-xl">
-              <a className="flex flex-col items-center text-columbia-blue hover:text-white transition-colors group" href="/events">
-                <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
-                  <span className="material-icons text-4xl">grid_view</span>
-                </div>
-              </a>
-              <button onClick={() => navigate("/saved")} className="flex flex-col items-center text-columbia-blue hover:text-white transition-colors group cursor-pointer">
-                <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
-                  <span className="material-icons text-4xl">bookmark</span>
-                </div>
-              </button>
-              <a className="flex flex-col items-center text-columbia-blue hover:text-white transition-colors group" href="/communities">
-                <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center">
-                  <span className="material-icons text-4xl">groups</span>
-                </div>
-              </a>
+              <SecondaryButton title="Explore" onClick={() => navigate('/events')} className="text-columbia-blue hover:text-white p-0 rounded-md">
+                <span className="material-icons text-4xl hover:text-white transition-transform hover:scale-105">grid_view</span>
+              </SecondaryButton>
+              <SecondaryButton title="Saved" onClick={() => navigate('/saved')} className="text-columbia-blue hover:text-white p-0">
+                <span className="material-icons text-4xl hover:text-white transition-transform hover:scale-105">bookmark</span>
+              </SecondaryButton>
+              <SecondaryButton title="Communities" onClick={() => navigate('/communities')} className="text-columbia-blue hover:text-white p-0 rounded-md">
+                <span className="material-icons text-4xl hover:text-white transition-transform hover:scale-105">groups</span>
+              </SecondaryButton>
             </nav>
 
             {/* Right side (desktop) */}
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <button onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center text-pinkish hover:text-pinkish-dark transition-colors group relative cursor-pointer">
-                  <div className="p-3 rounded-md bg-rich-black-light group-hover:bg-periwinkle-light transition-colors flex items-center justify-center space-x-1">
-                    <span className="material-icons text-4xl text-pinkish-important">
-                      local_fire_department
-                    </span>
-                    <span className="text-columbia-blue text-sm font-bold">{currentStreak}</span>
-                  </div>
+                <SecondaryButton title="Streak" onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center text-pinkish hover:text-pinkish-dark transition-colors group relative p-0">
+                  <span className="material-icons text-4xl text-pinkish-important hover:scale-105 transition-transform">local_fire_department</span>
+                  <span className="text-columbia-blue text-sm font-bold ml-1">{currentStreak}</span>
                   {/* Tooltip on hover */}
                   <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-rich-black-light text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-navbar-border">
                     View Streak
                   </div>
-                </button>
+                </SecondaryButton>
                 {streakDropdownOpen && <StreakDropdown isOpen={true} onClose={() => setStreakDropdownOpen(false)} />}
               </div>
 
-              <button
-                onClick={async () => {
-                  // Clear unread badge immediately
-                  try { await markAllAsRead(); } catch { /* non-blocking */ }
-                  navigate("/notifications");
-                }}
-                className="text-columbia-blue hover:text-white p-3 rounded-md bg-rich-black-light hover:bg-periwinkle-light transition-colors relative flex items-center justify-center cursor-pointer"
-              >
-                <span className="material-icons text-4xl">notifications</span>
+              <SecondaryButton title="Notifications" onClick={async () => { try { await markAllAsRead(); } catch (e) { console.warn('markAllAsRead failed', e); } navigate('/notifications'); }} className="text-columbia-blue hover:text-white p-0 rounded-md relative flex items-center justify-center">
+                <span className="material-icons text-4xl hover:scale-105 transition-transform">notifications</span>
                 {notifications && notifications.some(n => n.status === 'unread') && (
                   <span className="absolute top-0 right-0 min-w-5 h-5 flex items-center justify-center rounded-full bg-medium-slate-blue text-white text-xs font-bold px-1" style={{ transform: 'translate(25%, -25%)' }}>
-                    {/* Show count of unread instead of total */}
                     {(() => {
                       const count = notifications.filter(n => n.status === 'unread').length;
                       return count > 99 ? '99+' : count;
                     })()}
                   </span>
                 )}
-              </button>
+              </SecondaryButton>
 
               {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                className="text-columbia-blue hover:text-white p-3 rounded-md bg-rich-black-light hover:bg-periwinkle-light transition-colors flex items-center justify-center cursor-pointer"
-              >
-                <span className="material-icons text-4xl">
-                  {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-                </span>
-              </button>
+              <SecondaryButton title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'} onClick={toggleTheme} className="text-columbia-blue hover:text-white p-0 rounded-md flex items-center justify-center">
+                <span className="material-icons text-4xl hover:scale-105 transition-transform">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+              </SecondaryButton>
 
               <div className="flex items-center justify-center relative cursor-pointer" onClick={() => setProfileDropdown(!profileDropdown)}>
                 <img
@@ -139,7 +116,7 @@ export default function Navbar() {
                 {/* Profile Dropdown */}
                 {profileDropdown && (
                   <div className="absolute top-full right-0 mt-2 bg-rich-black-light border border-navbar-border rounded-md shadow-lg z-50 min-w-48">
-                    <button
+                    <PrimaryButton
                       onClick={() => {
                         navigate("/history");
                         setProfileDropdown(false);
@@ -148,8 +125,8 @@ export default function Navbar() {
                     >
                       <span className="material-icons text-2xl">history</span>
                       <span>History</span>
-                    </button>
-                    <button
+                    </PrimaryButton>
+                    <PrimaryButton
                       onClick={() => {
                         navigate("/profile");
                         setProfileDropdown(false);
@@ -158,9 +135,9 @@ export default function Navbar() {
                     >
                       <span className="material-icons text-2xl">account_circle</span>
                       <span>Profile</span>
-                    </button>
+                    </PrimaryButton>
                     {isAdmin && (
-                      <button
+                        <PrimaryButton
                         onClick={() => {
                           navigate("/admin/dashboard");
                           setProfileDropdown(false);
@@ -169,9 +146,9 @@ export default function Navbar() {
                       >
                         <span className="material-icons text-2xl">admin_panel_settings</span>
                         <span>Admin Panel</span>
-                      </button>
+                      </PrimaryButton>
                     )}
-                    <button
+                    <PrimaryButton
                       onClick={() => {
                         logout();
                         setProfileDropdown(false);
@@ -181,7 +158,7 @@ export default function Navbar() {
                     >
                       <span className="material-icons text-2xl">logout</span>
                       <span>Logout</span>
-                    </button>
+                    </PrimaryButton>
                   </div>
                 )}
               </div>
@@ -190,59 +167,54 @@ export default function Navbar() {
 
           {/* MOBILE MENU BUTTON */}
           <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-columbia-blue hover:text-white p-3 rounded-md hover:bg-periwinkle-light transition-colors"
-            >
-              <span className="material-icons text-4xl">
-                {mobileMenuOpen ? "close" : "menu"}
-              </span>
-            </button>
+            <SecondaryButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-columbia-blue hover:text-white p-0 rounded-md">
+              <span className="material-icons text-4xl">{mobileMenuOpen ? 'close' : 'menu'}</span>
+            </SecondaryButton>
           </div>
         </div>
       </div>
 
       {/* MOBILE DROPDOWN */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-navbar-bg border-t border-navbar-border px-7 py-5 space-y-5 text-lg">
-          <button onClick={() => navigate("/communities")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+        <div className="md:hidden bg-navbar-bg border-t border-navbar-border px-4 py-4 space-y-2 text-lg">
+          <SecondaryButton onClick={() => navigate("/communities")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl">groups</span>
             <span>Communities</span>
-          </button>
-          <button onClick={() => navigate("/events")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+          </SecondaryButton>
+          <SecondaryButton onClick={() => navigate("/events")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl">event</span>
             <span>Events</span>
-          </button>
-          <button onClick={() => navigate("/saved")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+          </SecondaryButton>
+          <SecondaryButton onClick={() => navigate("/saved")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl">bookmark</span>
             <span>Saved</span>
-          </button>
-          <button onClick={() => navigate("/history")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+          </SecondaryButton>
+          <SecondaryButton onClick={() => navigate("/history")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl">history</span>
             <span>History</span>
-          </button>
-          <button onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="flex items-center space-x-4 text-pinkish hover:text-pinkish-dark transition-colors w-full cursor-pointer">
+          </SecondaryButton>
+          <SecondaryButton onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl text-pinkish-important">local_fire_department</span>
             <span>Streak ({currentStreak})</span>
-          </button>
-          <button onClick={() => navigate("/profile")} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+          </SecondaryButton>
+          <SecondaryButton onClick={() => navigate("/profile")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl">account_circle</span>
             <span>Profile</span>
-          </button>
+          </SecondaryButton>
           {/* Mobile Theme Toggle */}
-          <button onClick={toggleTheme} className="flex items-center space-x-4 text-columbia-blue hover:text-white transition-colors w-full cursor-pointer">
+          <SecondaryButton onClick={toggleTheme} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
             <span className="material-icons text-2xl">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-          </button>
-          <button onClick={() => {
+          </SecondaryButton>
+          <SecondaryButton onClick={() => {
             logout();
             navigate("/");
-          }} className="flex items-center space-x-4 text-red-400 hover:text-red-300 transition-colors w-full cursor-pointer">
+          }} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left text-red-300 hover:bg-red-900/20 hover:text-red-200">
             <span className="material-icons text-2xl">logout</span>
             <span>Logout</span>
-          </button>
+          </SecondaryButton>
         </div>
       )}
 

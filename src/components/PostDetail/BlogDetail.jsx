@@ -150,23 +150,6 @@ export default function BlogDetail() {
 
   return (
     <div className="min-h-screen bg-rich-black relative">
-      {/* Glow background */}
-      <div
-        className="absolute z-0"
-        style={{
-          width: 637,
-          height: 300,
-          top: -38,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: '#1A1842B3',
-          filter: 'blur(100px)',
-          boxShadow: '0px 4px 100px 500px #00000066',
-          borderRadius: 30,
-          pointerEvents: 'none',
-        }}
-      />
-
       <div className="relative z-10 container mx-auto px-5 sm:px-7 lg:px-10 py-6">
         <div className="max-w-4xl mx-auto">
           {/* Header Section with Controls and Search */}

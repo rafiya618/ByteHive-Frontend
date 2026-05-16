@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
+import { PrimaryButton } from "../../../components/UI";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/auth";
 import InputField from "../../../shared/InputField";
@@ -121,7 +122,6 @@ const Register = () => {
   // ==============================
   return (
     <div className='min-h-screen bg-rich-black  flex flex-col relative text-white'>
-      <div className="absolute z-0" style={{ width: 637, height: 300, top: -38, left: "50%", transform: "translateX(-50%)", background: "#1A1842B3", filter: "blur(100px)", boxShadow: "0px 4px 100px 500px #00000066", borderRadius: 30, pointerEvents: "none" }} />
       <div className="bg-navbar-bg text-white w-full flex items-center justify-center min-h-screen px-4">
         {step === 1 && (
           <div className="bg-dark-navy-purple w-[90%] sm:w-full max-w-md mx-auto p-6 sm:p-8 rounded-xl shadow-lg border border-navbar-border transition-shadow hover:shadow-xl">
@@ -157,20 +157,20 @@ const Register = () => {
               </div>
               {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
 
-              <button
+              <PrimaryButton
                 type="submit"
                 className="mt-3 w-full bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 py-2 rounded-md font-semibold transition duration-200 cursor-pointer"
               >
                 Register
-              </button>
+              </PrimaryButton>
             </form>
 
-            <p
+            <PrimaryButton
               onClick={() => navigate("/login")}
               className="text-sm text-gray-400 hover:text-white cursor-pointer text-center mt-5"
             >
               Already have an account? Log in
-            </p>
+            </PrimaryButton>
 
             <div className="flex items-center my-3">
               <div className="flex-grow border-t border-gray-600"></div>
@@ -178,7 +178,7 @@ const Register = () => {
               <div className="flex-grow border-t border-gray-600"></div>
             </div>
 
-            <button
+            <PrimaryButton
               onClick={() =>
                 (window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/google?mode=register`)
               }
@@ -190,7 +190,7 @@ const Register = () => {
                 className="w-5 h-5"
               />
               Continue with Google
-            </button>
+            </PrimaryButton>
           </div>
         )}
 
@@ -210,7 +210,7 @@ const Register = () => {
               />
               {errors.otp && <p className="text-red-500 text-sm">{errors.otp}</p>}
 
-              <button
+              <PrimaryButton
                 type="submit"
                 disabled={verifyDisabled}
                 className={`mt-3 w-full py-2 rounded-md font-semibold transition duration-200 cursor-pointer ${verifyDisabled
@@ -219,21 +219,21 @@ const Register = () => {
                   }`}
               >
                 {verifyDisabled ? "OTP Expired" : "Verify OTP & Register"}
-              </button>
+              </PrimaryButton>
             </form>
 
             <p className="text-sm text-gray-400 mt-3 text-center">
               OTP will expire in <span className="text-white font-semibold">{timer}</span> second(s)
             </p>
 
-            <button
+            <PrimaryButton
               type="button"
               onClick={handleResendOTP}
               disabled={isResending}
               className="mt-4 w-full bg-dark-indigo text-gray-200 border border-faint-greyish-overlay py-2 px-3 rounded-md font-medium hover:bg-[#2f2f4a] active:bg-[#181628] transition-all duration-200 cursor-pointer hover:scale-[1.02]"
             >
               {isResending ? "Resending..." : "Resend OTP"}
-            </button>
+            </PrimaryButton>
           </div>
         )}
       </div>

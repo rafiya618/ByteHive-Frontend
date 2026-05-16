@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SecondaryButton } from "../../components/UI";
 
 /**
  * Upvote / Downvote buttons (simple counters)
@@ -33,25 +34,15 @@ export default function VoteButtons({ initialUp = 142, initialDown = 12 }) {
 
   return (
     <div className="flex items-center space-x-4 mt-6">
-      <button
-        onClick={handleUp}
-        aria-label="Upvote"
-        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors border border-periwinkle-light
-          ${userVote === "up" ? "bg-medium-slate-blue text-white" : "bg-rich-black-light text-columbia-blue hover:bg-card-button-hover-bg"}`}
-      >
+      <SecondaryButton onClick={handleUp} aria-label="Upvote" className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors border border-periwinkle-light ${userVote === 'up' ? 'bg-medium-slate-blue text-white' : 'bg-rich-black-light text-columbia-blue hover:bg-card-button-hover-bg'}`}>
         <span className="material-icons leading-none align-middle text-lg">arrow_upward</span>
         <span className="font-semibold">{up}</span>
-      </button>
+      </SecondaryButton>
 
-      <button
-        onClick={handleDown}
-        aria-label="Downvote"
-        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors border border-periwinkle-light
-          ${userVote === "down" ? "bg-pinkish text-white" : "bg-rich-black-light text-columbia-blue hover:bg-card-button-hover-bg"}`}
-      >
+      <SecondaryButton onClick={handleDown} aria-label="Downvote" className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors border border-periwinkle-light ${userVote === 'down' ? 'bg-pinkish text-white' : 'bg-rich-black-light text-columbia-blue hover:bg-card-button-hover-bg'}`}>
         <span className="material-icons leading-none align-middle text-lg">arrow_downward</span>
         <span className="font-semibold">{down}</span>
-      </button>
+      </SecondaryButton>
     </div>
   );
 }

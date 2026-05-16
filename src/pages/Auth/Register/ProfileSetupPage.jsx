@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { createProfile } from "../../../api/ProfileApi";
 import { jwtDecode } from "jwt-decode";
 import InputField from "../../../shared/InputField";
+import { PrimaryButton } from "../../../components/UI";
 import { validateName, validateUsername } from "../../../helpers/validators"; // ✅ Reuse validators
 import { handleFormError } from "../../../helpers/handleFormError";
 import { registerPush } from "../../../helpers/registerPush";
@@ -116,12 +117,12 @@ const ProfileSetupPage = () => {
             <p className="text-red-500 text-sm">{errors.username}</p>
           )}
 
-          <button
+          <PrimaryButton
             type="submit"
             className="mt-3 cursor-pointer w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-md hover:shadow-lg"
           >
             Save & Continue
-          </button>
+          </PrimaryButton>
         </form>
       </div>
     </div>

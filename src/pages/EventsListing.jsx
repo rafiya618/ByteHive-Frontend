@@ -10,6 +10,7 @@ import EventCalendarPanel from "../components/EventListing/EventCalendarPanel";
 import EventFormCard from "../components/CreateEvent/EventFormCard";
 import { getEvents, deleteEvent } from "../api/eventApi";
 import { useAuth } from "../context/auth";
+import { Card, Dropdown, PageContainer, PrimaryButton, SecondaryButton } from "../components/UI";
 import {
   downloadEventICS,
   downloadInterestedEventsICS,
@@ -24,14 +25,68 @@ import {
 
 const FILTERS = ["All", "Recommended", "Upcoming"];
 
+const TYPE_OPTIONS = [
+  { value: "all", label: "All types" },
+  { value: "online", label: "Online" },
+  { value: "offline", label: "Offline" },
+];
+
+const DropdownFilter = ({ label, value, options, onChange, minWidth = 170 }) => {
+  const selectedLabel = options.find((option) => option.value === value)?.label || label;
+  const triggerLabel = value === "all" ? label : selectedLabel;
+
+  return (
+    <Dropdown
+      align="left"
+      trigger={
+        <SecondaryButton
+          type="button"
+          className="events-filter-control h-[42px] justify-between gap-3 px-4 rounded-xl text-sm whitespace-nowrap"
+          style={{ minWidth }}
+        >
+          <span>{triggerLabel}</span>
+          <span className="flex min-w-0 items-center gap-2 text-left text-columbia-blue/90">
+            <span className="material-icons text-[18px] leading-none">expand_more</span>
+          </span>
+        </SecondaryButton>
+      }
+    >
+      {({ close }) => (
+        <div className="min-w-[220px] p-2">
+          {options.map((option) => {
+            const selected = option.value === value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  close();
+                }}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  selected
+                    ? "bg-white/10 text-white"
+                    : "text-columbia-blue hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <span>{option.label}</span>
+                {selected && <span className="material-icons text-[16px]">check</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </Dropdown>
+  );
+};
+
 const EventsListing = () => {
   const [events, setEvents] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [onlyInterested, setOnlyInterested] = useState(false);
+  const [eventDateFilter, setEventDateFilter] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [interestedMap, setInterestedMap] = useState(() => loadInterestedMap());
@@ -121,13 +176,8 @@ const EventsListing = () => {
 
       const eventDate = event.event_date ? parseISO(event.event_date) : null;
 
-      const fromDate = dateFrom ? parseISO(`${dateFrom}T00:00:00`) : null;
-      const toDate = dateTo ? parseISO(`${dateTo}T23:59:59`) : null;
-
-      const matchesDateFrom = !fromDate || (eventDate && isAfter(eventDate, fromDate));
-      const matchesDateTo = !toDate || (eventDate && isBefore(eventDate, toDate));
-
-      const matchesInterested = !onlyInterested || Boolean(interestedMap[event._id]);
+      const selectedDate = eventDateFilter ? parseISO(`${eventDateFilter}T00:00:00`) : null;
+      const matchesDate = !selectedDate || (eventDate && eventDate.toDateString() === selectedDate.toDateString());
 
       const quickFilterMatches =
         selectedFilter === "All" ||
@@ -140,9 +190,7 @@ const EventsListing = () => {
         matchesSearch &&
         matchesCategory &&
         matchesType &&
-        matchesDateFrom &&
-        matchesDateTo &&
-        matchesInterested &&
+        matchesDate &&
         quickFilterMatches
       );
     });
@@ -151,9 +199,7 @@ const EventsListing = () => {
     searchText,
     categoryFilter,
     typeFilter,
-    dateFrom,
-    dateTo,
-    onlyInterested,
+    eventDateFilter,
     interestedMap,
     selectedFilter,
   ]);
@@ -208,162 +254,146 @@ const EventsListing = () => {
     setSearchText("");
     setCategoryFilter("all");
     setTypeFilter("all");
-    setDateFrom("");
-    setDateTo("");
-    setOnlyInterested(false);
+    setEventDateFilter("");
   };
 
   return (
     <div className="events-page min-h-screen bg-rich-black flex flex-col relative overflow-x-hidden">
       <Navbar />
-      <div className="absolute z-0 events-neon-orb events-neon-orb-left" />
-      <div className="absolute z-0 events-neon-orb events-neon-orb-right" />
-
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="events-hero relative z-10 mb-8 rounded-3xl p-6 md:p-8 border border-navbar-border">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-            <div>
-              <p className="events-hero-kicker text-xs uppercase tracking-[0.22em] mb-2">Discover and Track</p>
-              <h2 className="font-fenix text-[34px] md:text-[42px] leading-tight text-white font-normal text-left">Events Hub</h2>
-              <p className="text-desc font-lato mt-2">
+      <PageContainer className="relative z-10 py-10">
+        <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div>
+            <h2 className="font-fenix text-[28px] text-white font-normal text-center md:text-left">
+              Events Hub
+            </h2>
+            <p className="text-desc font-lato text-center md:text-left mt-1">
               Discover, filter, and track events with in-app calendar integration and reminders.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="events-pill">{filteredEvents.length} visible</span>
-              <span className="events-pill">{interestedEvents.length} interested</span>
-              <span className="events-pill">{eventCategories.length - 1} categories</span>
-            </div>
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-6 z-10 relative">
-          <div className="flex items-center gap-2 w-full xl:max-w-[700px]">
-            <SearchBar
-              className="events-search flex-1"
-              placeholder="Search events"
-              value={searchText}
-              onSearch={setSearchText}
-            />
-            <NewEventButton />
-          </div>
-
-          <button
-            onClick={() => downloadInterestedEventsICS(interestedEvents)}
-            disabled={!interestedEvents.length}
-            className="events-export-btn px-4 py-3 rounded-xl disabled:opacity-50 text-white text-sm"
-          >
-            Export Interested (.ics)
-          </button>
-        </div>
-
-        <BlogFilterBar filters={FILTERS} selected={selectedFilter} onSelect={(v) => { setSelectedFilter(v); fetchEvents(1); }} />
-
-        <div className="events-filter-wrap mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 p-3 rounded-2xl border border-navbar-border">
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="events-control"
-          >
-            {eventCategories.map((category) => (
-              <option key={category} value={category}>
-                {category === "all" ? "All categories" : category}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="events-control"
-          >
-            <option value="all">All types</option>
-            <option value="online">Online</option>
-            <option value="offline">Offline</option>
-          </select>
-
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="events-control"
-          />
-
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="events-control"
-          />
-
-          <label className="events-control flex items-center gap-2 text-white text-sm">
-            <input
-              type="checkbox"
-              checked={onlyInterested}
-              onChange={(e) => setOnlyInterested(e.target.checked)}
-            />
-            Interested only
-          </label>
-
-          <button
-            onClick={clearFilters}
-            className="events-reset-btn px-3 py-2 rounded-lg text-white"
-          >
-            Reset filters
-          </button>
-        </div>
-      </div>
-
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 z-10">
-        <EventCalendarPanel
-          events={filteredEvents}
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-        />
-
-        {loading ? <div className="text-center text-white">Loading...</div> : filteredEvents.length === 0 ? <div className="text-center text-desc">No events found.</div> : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((ev) => (
-              <EventCard
-                key={ev._id}
-                event={ev}
-                onView={() => {}}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onToggleInterest={handleToggleInterested}
-                onSetReminder={handleSetReminder}
-                onAddToCalendar={handleAddToCalendar}
-                isInterested={Boolean(interestedMap[ev._id])}
-                reminderMinutes={Number(interestedMap[ev._id]?.reminderMinutes || 30)}
-                isNear={isNearEvent(ev.event_date ? parseISO(ev.event_date) : null, 7)}
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
+          <div className="min-w-0 space-y-5">
+            <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
+              <SearchBar
+                className="flex-1"
+                placeholder="Search events"
+                value={searchText}
+                onSearch={setSearchText}
               />
-            ))}
-          </div>
-        )}
+              <NewEventButton />
+            </div>
 
-        {pages > 1 && (
-          <div className="flex justify-center mt-8 gap-3">
-            {page > 1 && (
-              <button
-                onClick={() => fetchEvents(page - 1)}
-                className="px-4 py-2 rounded bg-navbar-bg border border-navbar-border text-white"
-              >
-                Prev
-              </button>
-            )}
-            <div className="px-4 py-2 rounded text-white">{page} / {pages}</div>
-            {page < pages && (
-              <button
-                onClick={() => fetchEvents(page + 1)}
-                className="px-4 py-2 rounded bg-navbar-bg border border-navbar-border text-white"
-              >
-                Next
-              </button>
+            <BlogFilterBar filters={FILTERS} selected={selectedFilter} onSelect={(v) => { setSelectedFilter(v); fetchEvents(1); }} />
+
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-3 items-start">
+                <DropdownFilter
+                  label="Category"
+                  value={categoryFilter}
+                  options={eventCategories.map((category) => ({
+                    value: category,
+                    label: category === "all" ? "All categories" : category,
+                  }))}
+                  onChange={setCategoryFilter}
+                    minWidth={160}
+                />
+
+                <DropdownFilter
+                  label="Type"
+                  value={typeFilter}
+                  options={TYPE_OPTIONS}
+                  onChange={setTypeFilter}
+                    minWidth={145}
+                />
+
+                <input
+                  type="date"
+                  value={eventDateFilter}
+                  onChange={(e) => setEventDateFilter(e.target.value)}
+                  className="events-control events-filter-control flex-[1_1_180px] min-w-[170px] max-w-[210px]"
+                  />
+                <PrimaryButton
+                  onClick={clearFilters}
+                  className="events-reset-btn h-[42px] px-4 rounded-xl text-sm whitespace-nowrap !bg-transparent !text-columbia-blue hover:!bg-white/5"
+                >
+                  Reset filters
+                </PrimaryButton>
+                </div>
+            </div>
+
+            <div className="space-y-4">
+              {loading ? <div className="text-center text-white py-8">Loading...</div> : filteredEvents.length === 0 ? <div className="text-center text-desc py-8">No events found.</div> : (
+                filteredEvents.map((ev) => (
+                  <EventCard
+                    key={ev._id}
+                    event={ev}
+                    onView={() => {}}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onToggleInterest={handleToggleInterested}
+                    onSetReminder={handleSetReminder}
+                    onAddToCalendar={handleAddToCalendar}
+                    isInterested={Boolean(interestedMap[ev._id])}
+                    reminderMinutes={Number(interestedMap[ev._id]?.reminderMinutes || 30)}
+                    isNear={isNearEvent(ev.event_date ? parseISO(ev.event_date) : null, 7)}
+                  />
+                ))
+              )}
+            </div>
+
+            {pages > 1 && (
+              <div className="flex justify-center mt-8 gap-3">
+                {page > 1 && (
+                  <PrimaryButton
+                    onClick={() => fetchEvents(page - 1)}
+                    className="h-10 px-4 rounded-xl text-sm !bg-transparent !text-columbia-blue !border !border-navbar-border hover:!bg-white/5"
+                  >
+                    Prev
+                  </PrimaryButton>
+                )}
+                <div className="px-4 py-2 rounded text-desc flex items-center">{page} / {pages}</div>
+                {page < pages && (
+                  <PrimaryButton
+                    onClick={() => fetchEvents(page + 1)}
+                    className="h-10 px-4 rounded-xl text-sm !bg-transparent !text-columbia-blue !border !border-navbar-border hover:!bg-white/5"
+                  >
+                    Next
+                  </PrimaryButton>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
+
+          <aside className="space-y-6 xl:sticky xl:top-24">
+            <EventCalendarPanel
+              events={filteredEvents}
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+              onExportCalendar={() => downloadInterestedEventsICS(interestedEvents)}
+              exportDisabled={!interestedEvents.length}
+            />
+
+            <Card className="p-4 md:p-5 space-y-3">
+              <h3 className="ds-heading-md">Event Snapshot</h3>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-xl border border-navbar-border bg-rich-black-light/70 p-3">
+                  <div className="text-xl font-semibold text-white">{filteredEvents.length}</div>
+                  <div className="text-desc text-xs uppercase tracking-wide">Visible</div>
+                </div>
+                <div className="rounded-xl border border-navbar-border bg-rich-black-light/70 p-3">
+                  <div className="text-xl font-semibold text-white">{interestedEvents.length}</div>
+                  <div className="text-desc text-xs uppercase tracking-wide">Interested</div>
+                </div>
+                <div className="rounded-xl border border-navbar-border bg-rich-black-light/70 p-3">
+                  <div className="text-xl font-semibold text-white">{eventCategories.length - 1}</div>
+                  <div className="text-desc text-xs uppercase tracking-wide">Categories</div>
+                </div>
+              </div>
+            </Card>
+          </aside>
+        </div>
+      </PageContainer>
 
       {showFormModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">

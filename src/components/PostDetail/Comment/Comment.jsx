@@ -17,6 +17,7 @@ import { useProfile } from '../../../context/profileContext';
 import CommentBlock from './CommentBlock';
 import { useLocation } from 'react-router-dom';
 import "./comment.css";
+import { PrimaryButton } from '../../UI';
 
 dayjs.extend(relativeTime);
 
@@ -425,13 +426,9 @@ const Comment = ({ postId }) => {
               className="flex-1 bg-rich-black-light border border-navbar-border rounded-lg px-4 py-3 text-white placeholder-periwinkle focus:outline-none focus:border-periwinkle resize-none font-lato text-sm min-h-[44px] max-h-32"
               rows="1"
             />
-            <button
-              type="submit"
-              disabled={!msg.trim()}
-              className="cursor-pointer bg-medium-slate-blue text-white px-4 py-2.5 rounded-md hover:bg-medium-slate-blue-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-lato font-medium flex items-center justify-center min-w-[44px] shadow-lg shadow-medium-slate-blue/30"
-            >
+            <PrimaryButton type="submit" disabled={!msg.trim()} className="min-w-[44px] px-4 py-2.5 flex items-center justify-center">
               <span className="material-icons text-base">send</span>
-            </button>
+            </PrimaryButton>
           </form>
         </div>
       </div>

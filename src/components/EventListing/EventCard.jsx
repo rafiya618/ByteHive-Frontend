@@ -2,6 +2,7 @@ import React from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useAuth } from "../../context/auth";
 import { parseEventDate } from "../../utils/eventCalendar";
+import { PrimaryButton } from "../../components/UI";
 
 const EventCard = ({
   event,
@@ -43,11 +44,11 @@ const EventCard = ({
 
   return (
     <div
-      className={`event-neon-card bg-navbar-bg border rounded-2xl overflow-hidden flex flex-col ${
+      className={`event-neon-card bg-navbar-bg border rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] ${
         isNear ? "border-[#f59e0b]" : "border-navbar-border"
       }`}
     >
-      <div className="h-48 w-full relative">
+      <div className="relative min-h-[180px] md:min-h-full">
         <img
           src={thumbnail || "https://via.placeholder.com/600x300?text=No+image"}
           alt={event_name}
@@ -60,68 +61,72 @@ const EventCard = ({
         )}
       </div>
 
-      <div className="flex flex-col flex-1 p-5 gap-3">
-        <span className="bg-chip text-white/80 text-xs px-3 py-1 rounded-xl w-fit">{category}</span>
-        <h3 className="font-fenix text-xl text-white leading-tight">{event_name}</h3>
-        <p className="text-desc text-sm flex-1">{small_event_description}</p>
+      <div className="flex flex-col flex-1 p-5 md:p-6 gap-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <span className="bg-chip text-white/80 text-xs px-3 py-1 rounded-xl w-fit inline-flex">{category}</span>
+            <h3 className="ds-heading-md mt-3 leading-tight">{event_name}</h3>
+          </div>
+          <span className="text-desc text-xs md:text-sm text-right whitespace-nowrap">{countdown}</span>
+        </div>
 
-        <div className="text-sm text-periwinkle space-y-2">
-          <div className="flex items-center gap-2">
+        <p className="text-desc text-sm md:text-[15px] flex-1 leading-relaxed line-clamp-3">
+          {small_event_description}
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-desc">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="material-icons text-base">event</span>
-            {date}
+            <span className="truncate">{date}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="material-icons text-base">schedule</span>
-            {time}
+            <span className="truncate">{time}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="material-icons text-base">timer</span>
-            {countdown}
-          </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 sm:col-span-2">
             <span className="material-icons text-base">place</span>
-            {location || "Online"}
+            <span className="truncate">{location || "Online"}</span>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <PrimaryButton
             onClick={handleView}
-            className="event-btn-primary px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
+            className="h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center gap-2 text-sm font-semibold leading-none"
           >
             View Event <span className="material-icons text-sm">open_in_new</span>
-          </button>
+          </PrimaryButton>
 
-          <button
+          <PrimaryButton
             onClick={() => onToggleInterest?.(event)}
-            className={`px-4 py-3 rounded-xl transition-colors font-semibold ${
+            className={`h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center text-sm font-semibold leading-none ${
               isInterested
-                ? "event-btn-interested"
-                : "event-btn-secondary"
+                ? "!bg-transparent !text-periwinkle !border !border-periwinkle/30 hover:!bg-periwinkle/10"
+                : "!bg-transparent !text-columbia-blue !border !border-navbar-border hover:!bg-white/5"
             }`}
           >
             {isInterested ? "Interested" : "Mark Interested"}
-          </button>
+          </PrimaryButton>
 
-          <button
+          <PrimaryButton
             onClick={() => onAddToCalendar?.(event)}
-            className="sm:col-span-2 event-btn-accent px-4 py-3 rounded-xl transition-colors"
+            className="h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center text-sm font-semibold leading-none !bg-transparent !text-columbia-blue !border !border-navbar-border hover:!bg-white/5"
           >
             Add to Calendar
-          </button>
+          </PrimaryButton>
         </div>
 
         {isOwner && (
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
             <button
               onClick={() => onEdit && onEdit(event)}
-              className="event-btn-ghost text-white px-3 py-2 rounded-lg text-xs uppercase tracking-wide"
+              className="h-9 px-3 rounded-lg border border-navbar-border text-xs font-semibold uppercase tracking-wide text-columbia-blue hover:bg-white/5 transition-colors"
             >
               Edit
             </button>
             <button
               onClick={() => onDelete && onDelete(event)}
-              className="event-btn-ghost danger text-white px-3 py-2 rounded-lg text-xs uppercase tracking-wide"
+              className="h-9 px-3 rounded-lg border border-red-400/40 text-xs font-semibold uppercase tracking-wide text-red-300 hover:bg-red-500/10 transition-colors"
             >
               Delete
             </button>

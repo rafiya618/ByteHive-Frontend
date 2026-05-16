@@ -293,22 +293,6 @@ const BlogListing = () => {
     <div className="min-h-screen bg-rich-black flex flex-col relative">
       <Navbar />
 
-      <div
-        className="absolute z-0"
-        style={{
-          width: 637,
-          height: 300,
-          top: -38,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "#1A1842B3",
-          filter: "blur(100px)",
-          boxShadow: "0px 4px 100px 500px #00000066",
-          borderRadius: 30,
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Header */}
       <div className="relative z-10 pt-6 sm:pt-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

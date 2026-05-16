@@ -3,8 +3,9 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
 import { isNearEvent, isTodayEvent, parseEventDate } from "../../utils/eventCalendar";
+import { Card, PrimaryButton } from "../../components/UI";
 
-const EventCalendarPanel = ({ events = [], selectedDate, onDateChange }) => {
+const EventCalendarPanel = ({ events = [], selectedDate, onDateChange, onExportCalendar, exportDisabled = false }) => {
   const normalizedEvents = useMemo(
     () =>
       events
@@ -28,10 +29,11 @@ const EventCalendarPanel = ({ events = [], selectedDate, onDateChange }) => {
   const selectedEvents = selectedKey ? eventsByDate.get(selectedKey) || [] : [];
 
   return (
-    <div className="event-calendar-panel bg-navbar-bg border border-navbar-border rounded-2xl p-4 mb-6 relative overflow-hidden">
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="w-full lg:w-[360px]">
-          <h3 className="text-white font-fenix text-lg mb-3">Event Calendar</h3>
+    <Card className="event-calendar-panel p-4 relative overflow-hidden">
+      <div className="flex flex-col gap-4">
+        <h3 className="font-fenix text-[22px] text-white font-normal">Event Calendar</h3>
+
+        <div>
           <Calendar
             value={selectedDate}
             onChange={onDateChange}
@@ -51,10 +53,19 @@ const EventCalendarPanel = ({ events = [], selectedDate, onDateChange }) => {
           />
         </div>
 
-        <div className="flex-1">
-          <h4 className="text-white font-fenix text-lg mb-3">
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h4 className="font-fenix text-lg text-white font-normal">
             {selectedDate ? `Events on ${format(selectedDate, "PPP")}` : "Pick a day"}
-          </h4>
+            </h4>
+            <PrimaryButton
+              onClick={onExportCalendar}
+              disabled={exportDisabled}
+              className="h-10 px-4 rounded-xl text-sm whitespace-nowrap disabled:opacity-50"
+            >
+              Export Calendar (.ics)
+            </PrimaryButton>
+          </div>
           {!selectedDate ? (
             <p className="text-desc">Choose a date in the calendar to preview events.</p>
           ) : selectedEvents.length === 0 ? (
@@ -79,7 +90,7 @@ const EventCalendarPanel = ({ events = [], selectedDate, onDateChange }) => {
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

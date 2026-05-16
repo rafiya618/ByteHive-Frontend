@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import * as mediasoupClient from "mediasoup-client";
 import Navbar from "../../shared/Navbar";
+import InputField from "../../shared/InputField";
+import { PrimaryButton } from "../../components/UI";
 
 const VIDEOCALL_SERVER_URL = import.meta.env.VITE_VIDEOCALL_SERVER_URL || "http://localhost:8000";
 const socket = io(VIDEOCALL_SERVER_URL);
@@ -718,21 +720,18 @@ useEffect(() => {
               )}
             </div>
             <div className="flex gap-2">
-              <input
+              <InputField
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                className="flex-1 bg-rich-black-light border border-navbar-border rounded-xl px-4 py-2.5 text-white font-lato"
+                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                 placeholder="Type a message..."
+                className="flex-1"
               />
-              <button
-                onClick={sendMessage}
-                className="bh-action-btn bg-periwinkle hover:bg-medium-slate-blue text-white px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1"
-              >
+              <PrimaryButton onClick={sendMessage} className="flex items-center gap-1">
                 <span className="material-icons text-base">send</span>
                 Send
-              </button>
+              </PrimaryButton>
             </div>
           </div>
           <div className="mb-8">
@@ -763,46 +762,46 @@ useEffect(() => {
             </div>
           </div>
           <div className="flex flex-wrap gap-3 mb-6">
-            <button
+            <PrimaryButton
               onClick={isScreenSharing ? stopScreenShare : startScreenShare}
               disabled={!isJoined || !videoProducerRef.current}
               className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : isScreenSharing ? 'bg-yellow-500 text-white' : 'bg-periwinkle text-white hover:bg-medium-slate-blue'}`}
             >
               <span className="material-icons">{isScreenSharing ? 'stop_screen_share' : 'screen_share'}</span>
               {isScreenSharing ? 'Stop Screen Share' : 'Share Screen'}
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               onClick={joinRoom}
               disabled={isJoined || !communityId}
               className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${isJoined || !communityId ? 'bg-gray-600 text-white' : 'bg-green-600 text-white hover:bg-green-500'}`}
             >
               <span className="material-icons">meeting_room</span>
               {isJoined ? 'Joined' : 'Join Room'}
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               onClick={leaveRoom}
               disabled={!isJoined}
               className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : 'bg-red-600 text-white hover:bg-red-500'}`}
             >
               <span className="material-icons">logout</span>
               Leave Room
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               onClick={toggleMic}
               disabled={!isJoined}
               className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : micEnabled ? 'bg-periwinkle text-white hover:bg-medium-slate-blue' : 'bg-yellow-500 text-white'}`}
             >
               <span className="material-icons">{micEnabled ? "mic" : "mic_off"}</span>
               {micEnabled ? "Mute Mic" : "Unmute Mic"}
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               onClick={toggleCam}
               disabled={!isJoined}
               className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : camEnabled ? 'bg-periwinkle text-white hover:bg-medium-slate-blue' : 'bg-yellow-500 text-white'}`}
             >
               <span className="material-icons">{camEnabled ? "videocam" : "videocam_off"}</span>
               {camEnabled ? "Turn Off Camera" : "Turn On Camera"}
-            </button>
+            </PrimaryButton>
           </div>
           <div className="bg-rich-black-light border border-navbar-border rounded-lg p-4 text-xs text-desc">
             <strong className="text-periwinkle">Debug Info:</strong>

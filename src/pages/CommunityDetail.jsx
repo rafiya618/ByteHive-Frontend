@@ -9,6 +9,7 @@ import FollowingButton from "../components/CommunityDetail/FollowingButton";
 import JoinChatButton from "../components/CommunityDetail/JoinChatButton";
 import VideoRoomButton from "../components/CommunityDetail/VideoRoomButton";
 import NewPostButton from "../shared/NewPostButton";
+import { PrimaryButton, SecondaryButton } from "../components/UI";
 import { communityApi } from "../api/communityApi";
 import { postsApi } from "../api/postsApi";
 import { getProfile } from "../api/ProfileApi";
@@ -422,14 +423,11 @@ const CommunityDetail = () => {
   if (error && !community) {
     return (
       <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
-        <div className="text-center">
+          <div className="text-center">
           <div className="text-red-400 text-lg mb-4">{error}</div>
-          <button
-            onClick={fetchCommunityData}
-            className="bh-action-btn px-4 py-2.5 bg-periwinkle text-white rounded-xl hover:bg-periwinkle/80 transition-all"
-          >
-            Try Again
-          </button>
+          <div className="flex justify-center">
+            <PrimaryButton onClick={fetchCommunityData} className="px-4 py-2.5">Try Again</PrimaryButton>
+          </div>
         </div>
       </div>
     );
@@ -646,25 +644,16 @@ const CommunityDetail = () => {
                     <div className="flex flex-wrap gap-3 flex-shrink-0">
                       {isOwner && (
                         <>
-                          <button
-                            onClick={handleEditCommunity}
-                            className="bh-action-btn px-4 py-2.5 rounded-full font-lato font-semibold text-sm border border-navbar-border bg-white/5 text-columbia-blue hover:bg-white/10 transition-all"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={handleDeleteCommunity}
-                            className="bh-action-btn px-4 py-2.5 rounded-full font-lato font-semibold text-sm border border-red-400 bg-transparent text-red-300 hover:bg-red-500/10 transition-all disabled:opacity-60"
-                            disabled={deleting}
-                          >
+                          <SecondaryButton onClick={handleEditCommunity} className="px-4 py-2.5 rounded-full text-sm">Edit</SecondaryButton>
+                          <SecondaryButton onClick={handleDeleteCommunity} className="px-4 py-2.5 rounded-full text-sm text-red-300 border-red-400" disabled={deleting}>
                             {deleting ? 'Deleting...' : 'Delete'}
-                          </button>
+                          </SecondaryButton>
                         </>
                       )}
                       <button
                         onClick={handleFollowToggle}
                         disabled={loading}
-                        className={`bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border transition-all ${isFollowing
+                        className={`ds-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border transition-all ${isFollowing
                           ? isOwner
                             ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
                             : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
@@ -736,13 +725,9 @@ const CommunityDetail = () => {
                     </option>
                   ))}
                 </select>
-                <button
-                  onClick={handleAddModeratorAdmin}
-                  disabled={modActionLoading || !moderatorInput.trim()}
-                  className="bh-action-btn px-4 py-2.5 bg-[#6866FF] hover:bg-[#5755D6] text-white rounded-xl disabled:opacity-50"
-                >
+                <PrimaryButton onClick={handleAddModeratorAdmin} disabled={modActionLoading || !moderatorInput.trim()} className="px-4 py-2.5">
                   {modActionLoading ? 'Adding...' : 'Add Moderator'}
-                </button>
+                </PrimaryButton>
               </div>
               {community?.moderators?.length > 0 && (
                 <div className="mt-4">

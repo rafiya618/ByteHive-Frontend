@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { PrimaryButton } from "../../components/UI";
 
 const ChatInput = ({ onSendMessage, placeholder = "Type your message here...", disabled = false }) => {
   const [message, setMessage] = useState("");
@@ -81,17 +82,13 @@ const ChatInput = ({ onSendMessage, placeholder = "Type your message here...", d
         />
 
         {/* Send Button */}
-        <button
-          onClick={handleSendMessage}
-          disabled={!message.trim() || isSending || disabled}
-          className="bh-action-btn bg-periwinkle hover:bg-periwinkle-dark text-white p-2 sm:p-3 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-        >
+        <PrimaryButton onClick={handleSendMessage} disabled={!message.trim() || isSending || disabled} className="p-2 sm:p-3 rounded-full flex-shrink-0">
           {isSending ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
           ) : (
             <span className="material-icons text-xl">send</span>
           )}
-        </button>
+        </PrimaryButton>
       </div>
     </div>
   );

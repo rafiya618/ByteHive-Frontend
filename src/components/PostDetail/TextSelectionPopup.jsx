@@ -4,6 +4,7 @@ import { getMeaning, searchBlogs, chatAboutWord, simplifyPost } from "../../api/
 import toast from "react-hot-toast";
 import { TEXT_SELECTION } from "../../utils/constants";
 import { validateTextSelection, validateSearchQuery, stripHTML } from "../../utils/validation";
+import { PrimaryButton, SecondaryButton } from '../UI';
 
 
 const TextSelectionPopup = ({ selectedText, onClose }) => {
@@ -255,17 +256,14 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
       >
 
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-navbar-border">
+          <div className="flex items-center justify-between p-4 border-b border-navbar-border">
           <div className="flex items-center space-x-2">
             <span className="material-icons text-periwinkle">auto_fix_high</span>
             <h3 className="font-semibold text-white">Smart Lookup</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="text-periwinkle hover:text-white p-1 rounded-lg hover:bg-periwinkle-light transition-colors"
-          >
+          <SecondaryButton onClick={onClose} className="text-periwinkle hover:text-white p-1 rounded-lg hover:bg-periwinkle-light transition-colors">
             <span className="material-icons">close</span>
-          </button>
+          </SecondaryButton>
         </div>
 
         {/* Validation Error Display */}
@@ -311,38 +309,20 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                 )}
               </div>
             </div>
-            <button
-              onClick={handleSimplify}
-              disabled={loadingSimplify || validationError}
-              className="bg-celadon text-rich-black px-3 py-2 rounded-lg hover:bg-celadon-dark transition-colors font-semibold text-sm disabled:opacity-50"
-            >
-              {loadingSimplify ? "Simplifying..." : "Simplify"}
-            </button>
+            <PrimaryButton onClick={handleSimplify} disabled={loadingSimplify || validationError} className="px-3 py-2 text-sm">
+              {loadingSimplify ? 'Simplifying...' : 'Simplify'}
+            </PrimaryButton>
           </div>
 
           {/* View Toggle Buttons */}
           {simplifiedContent && !loadingSimplify && (
             <div className="flex space-x-2">
-              <button
-                onClick={() => setSimplifyView("original")}
-                className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
-                  simplifyView === "original"
-                    ? "bg-periwinkle text-rich-black"
-                    : "bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light"
-                }`}
-              >
+              <SecondaryButton onClick={() => setSimplifyView('original')} className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${simplifyView === 'original' ? 'bg-periwinkle text-rich-black' : 'bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light'}`}>
                 Original
-              </button>
-              <button
-                onClick={() => setSimplifyView("simplified")}
-                className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
-                  simplifyView === "simplified"
-                    ? "bg-periwinkle text-rich-black"
-                    : "bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light"
-                }`}
-              >
+              </SecondaryButton>
+              <SecondaryButton onClick={() => setSimplifyView('simplified')} className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${simplifyView === 'simplified' ? 'bg-periwinkle text-rich-black' : 'bg-rich-black text-periwinkle border border-periwinkle hover:bg-periwinkle-light'}`}>
                 Simplified
-              </button>
+              </SecondaryButton>
             </div>
           )}
         </div>
@@ -360,47 +340,29 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
             <>
               {/* Meaning Tab - ONLY for single word selection */}
               {validateTextSelection(selectedText).wordCount === 1 && (
-                <button
-                  onClick={() => setActiveTab("meaning")}
-                  className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "meaning"
-                    ? "text-white bg-medium-slate-blue"
-                    : "text-periwinkle hover:bg-periwinkle-light"
-                    }`}
-                >
+                <SecondaryButton onClick={() => setActiveTab('meaning')} className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'meaning' ? 'text-white bg-medium-slate-blue' : 'text-periwinkle hover:bg-periwinkle-light'}`}>
                   <div className="flex items-center justify-center space-x-2">
                     <span className="material-icons text-lg">book</span>
                     <span>Meaning</span>
                   </div>
-                </button>
+                </SecondaryButton>
               )}
 
               {/* Search Tab - Always visible when no error */}
-              <button
-                onClick={() => setActiveTab("search")}
-                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "search"
-                  ? "text-white bg-medium-slate-blue"
-                  : "text-periwinkle hover:bg-periwinkle-light"
-                  }`}
-              >
+              <SecondaryButton onClick={() => setActiveTab('search')} className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'search' ? 'text-white bg-medium-slate-blue' : 'text-periwinkle hover:bg-periwinkle-light'}`}>
                 <div className="flex items-center justify-center space-x-2">
                   <span className="material-icons text-lg">search</span>
                   <span>Search</span>
                 </div>
-              </button>
+              </SecondaryButton>
 
               {/* Blogs Tab - Always visible when no error */}
-              <button
-                onClick={() => setActiveTab("blogs")}
-                className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === "blogs"
-                  ? "text-white bg-medium-slate-blue"
-                  : "text-periwinkle hover:bg-periwinkle-light"
-                  }`}
-              >
+              <SecondaryButton onClick={() => setActiveTab('blogs')} className={`flex-1 px-4 py-3 text-sm font-semibold transition-colors ${activeTab === 'blogs' ? 'text-white bg-medium-slate-blue' : 'text-periwinkle hover:bg-periwinkle-light'}`}>
                 <div className="flex items-center justify-center space-x-2">
                   <span className="material-icons text-lg">article</span>
                   <span>Blogs</span>
                 </div>
-              </button>
+              </SecondaryButton>
             </>
           )}
         </div>
@@ -424,12 +386,9 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                       <span className="material-icons text-5xl text-red-400 mb-3 block">error_outline</span>
                       <p className="text-red-400 font-semibold mb-2">AI Service Error</p>
                       <p className="text-periwinkle/80 text-sm">{meaningData.message}</p>
-                      <button
-                        onClick={fetchMeaning}
-                        className="mt-4 px-4 py-2 bg-periwinkle text-rich-black rounded-lg hover:bg-periwinkle-dark transition-colors text-sm font-semibold"
-                      >
+                      <PrimaryButton onClick={fetchMeaning} className="mt-4 px-4 py-2 text-sm">
                         Retry
-                      </button>
+                      </PrimaryButton>
                     </div>
                   ) : (
                     // Success State - AI data loaded
@@ -495,13 +454,9 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                   onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                   className="w-full bg-rich-black-light border border-navbar-border rounded-lg px-4 py-3 pr-12 text-white focus:outline-none focus:border-periwinkle"
                 />
-                <button
-                  onClick={handleSearch}
-                  disabled={loadingBlogs}
-                  className="absolute right-3 top-3 text-periwinkle hover:text-white disabled:opacity-50"
-                >
+                <SecondaryButton onClick={handleSearch} disabled={loadingBlogs} className="absolute right-3 top-3 text-periwinkle hover:text-white disabled:opacity-50 p-1">
                   <span className="material-icons">send</span>
-                </button>
+                </SecondaryButton>
               </div>
 
 
@@ -669,9 +624,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
                     </Link>
                   ))}
 
-                  <button className="w-full bg-periwinkle text-rich-black py-2 px-4 rounded-lg hover:bg-periwinkle-dark transition-colors font-semibold">
-                    View All Related
-                  </button>
+                  <PrimaryButton className="w-full py-2 px-4">View All Related</PrimaryButton>
                 </>
               ) : (
                 <div className="text-center py-8">
@@ -691,12 +644,9 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
           <div className="bg-navbar-bg border border-navbar-border rounded-xl shadow-2xl w-96 max-w-sm mx-4">
             <div className="flex items-center justify-between p-4 border-b border-navbar-border">
               <h3 className="font-semibold text-white">Simplified Content</h3>
-              <button
-                onClick={() => setShowSimplifyDialog(false)}
-                className="text-periwinkle hover:text-white p-1 rounded-lg hover:bg-periwinkle-light transition-colors"
-              >
+              <SecondaryButton onClick={() => setShowSimplifyDialog(false)} className="text-periwinkle hover:text-white p-1 rounded-lg hover:bg-periwinkle-light transition-colors">
                 <span className="material-icons">close</span>
-              </button>
+              </SecondaryButton>
             </div>
             <div className="p-4 max-h-80 overflow-y-auto">
               <div className="space-y-4">

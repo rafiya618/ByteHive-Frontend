@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/auth";
 import { chatApi } from "../../api/chatApi"; // Changed from named import to default import
+import { PrimaryButton } from "../../components/UI";
 
 const JoinChatButton = () => {
   const navigate = useNavigate();
@@ -43,19 +44,10 @@ const JoinChatButton = () => {
   };
 
   return (
-    <button
-      onClick={handleJoinChat}
-      className="bh-action-btn h-[49px] px-6 bg-navbar-bg text-white text-base font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border hover:border-periwinkle"
-      style={{
-        minWidth: 148,
-        borderColor: "var(--periwinkle)",
-      }}
-    >
-      <span className="material-icons text-base">
-        chat_bubble_outline
-      </span>
+    <PrimaryButton onClick={handleJoinChat} className="h-[49px] px-6" style={{ minWidth: 148, borderColor: 'var(--periwinkle)' }}>
+      <span className="material-icons text-base">chat_bubble_outline</span>
       Join Chat
-    </button>
+    </PrimaryButton>
   );
 };
 

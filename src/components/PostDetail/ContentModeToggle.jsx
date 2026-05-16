@@ -1,4 +1,5 @@
 import ToggleButton from '../UI/ToggleButton';
+import { SecondaryButton } from '../UI';
 
 // Simplification level options
 const SIMPLIFICATION_LEVELS = {
@@ -85,23 +86,13 @@ const ContentModeToggle = ({
                                 Select Simplification Level
                             </p>
                             {Object.values(SIMPLIFICATION_LEVELS).map((level) => (
-                                <button
-                                    key={level.value}
-                                    onClick={async () => {
-                                        setShowSimplifyDropdown(false);
-                                        setSimplificationLevel(level.value); // Update state for badge display
-                                        await handleSimplifyClick(level.value); // Pass level directly to avoid race condition
-                                    }}
-                                    className="w-full flex items-start space-x-3 px-3 py-2.5 hover:bg-rich-black-light rounded-md transition-colors text-left"
-                                >
-                                    <span className="material-icons text-celadon text-xl mt-0.5">
-                                        {level.icon}
-                                    </span>
+                                <SecondaryButton key={level.value} onClick={async () => { setShowSimplifyDropdown(false); setSimplificationLevel(level.value); await handleSimplifyClick(level.value); }} className="w-full flex items-start space-x-3 px-3 py-2.5 hover:bg-rich-black-light rounded-md transition-colors text-left">
+                                    <span className="material-icons text-celadon text-xl mt-0.5">{level.icon}</span>
                                     <div className="flex-1">
                                         <p className="text-white font-semibold text-sm">{level.label}</p>
                                         <p className="text-periwinkle text-xs mt-0.5">{level.description}</p>
                                     </div>
-                                </button>
+                                </SecondaryButton>
                             ))}
                         </div>
                     </div>

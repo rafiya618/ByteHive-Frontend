@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { PrimaryButton, SecondaryButton } from "../../components/UI";
 
 const FollowingButton = ({ isFollowing: initialFollowing = false, onToggle }) => {
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
@@ -18,39 +19,31 @@ const FollowingButton = ({ isFollowing: initialFollowing = false, onToggle }) =>
         await onToggle();
         setIsFollowing(!isFollowing);
       } else {
-        // Fallback for local state only
         setIsFollowing(!isFollowing);
       }
     } catch (error) {
       console.error('Error toggling follow status:', error);
-      // Revert optimistic update on error
     } finally {
       setLoading(false);
     }
   };
 
+  const commonStyle = { minWidth: 148 };
+
+  if (isFollowing) {
+    return (
+      <SecondaryButton onClick={toggleFollow} disabled={loading} className="h-[49px] px-6" style={commonStyle}>
+        {loading ? <span className="material-icons text-base animate-spin">hourglass_empty</span> : <span className="material-icons text-base text-periwinkle">check</span>}
+        {loading ? '...' : 'Following'}
+      </SecondaryButton>
+    );
+  }
+
   return (
-    <button 
-      onClick={toggleFollow}
-      disabled={loading}
-      className={`bh-action-btn h-[49px] px-6 text-white text-base font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border ${
-        loading ? 'opacity-50 cursor-not-allowed' : ''
-      }`}
-      style={{
-        minWidth: 148,
-        backgroundColor: isFollowing ? "transparent" : "var(--medium-slate-blue)",
-        borderColor: isFollowing ? "var(--periwinkle)" : "var(--medium-slate-blue)",
-      }}
-    >
-      {loading ? (
-        <span className="material-icons text-base animate-spin">hourglass_empty</span>
-      ) : (
-        isFollowing && (
-          <span className="material-icons text-base text-periwinkle">check</span>
-        )
-      )}
-      {loading ? "..." : isFollowing ? "Following" : "Follow"}
-    </button>
+    <PrimaryButton onClick={toggleFollow} disabled={loading} className="h-[49px] px-6" style={commonStyle}>
+      {loading ? <span className="material-icons text-base animate-spin">hourglass_empty</span> : null}
+      {loading ? '...' : 'Follow'}
+    </PrimaryButton>
   );
 };
 

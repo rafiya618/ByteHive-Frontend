@@ -39,6 +39,35 @@ html,
 body {
   transition: background-color 0.35s ease, color 0.35s ease;
   overflow-x: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  width: 637px;
+  height: 300px;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1A1842B3;
+  filter: blur(100px);
+  box-shadow: 0px 4px 100px 500px #00000066;
+  border-radius: 30px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] body::before {
+  background: #1A1842A8;
+  box-shadow: 0px 4px 100px 500px rgba(96, 104, 219, 0.18);
+  opacity: 0.62;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 [data-theme="dark"] body {
@@ -161,11 +190,23 @@ button:disabled,
 
 
 .bg-rich-black {
-  background: #0C0C16;
+  background-color: #0C0C16;
+  background-image:
+    radial-gradient(circle at 12% 14%, rgba(99, 102, 241, 0.16), transparent 30%),
+    radial-gradient(circle at 86% 6%, rgba(6, 182, 212, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 84%, rgba(168, 85, 247, 0.13), transparent 30%);
+  background-attachment: fixed;
 }
 
 .font-fenix {
-  font-family: 'Fenix', serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.font-lato {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  letter-spacing: -0.01em;
 }
 
 .border-periwinkle-light {
@@ -193,7 +234,7 @@ button:disabled,
 
 /* force Material Icons color */
 .text-desc {
-  color: #FFFFFFB2;
+  color: var(--ds-text-secondary, #FFFFFFB2);
 }
 
 /* description color */
@@ -232,10 +273,14 @@ button:disabled,
 
 .bg-rich-black-light {
   background-color: var(--rich-black-light);
+  background-image:
+    radial-gradient(circle at 20% 18%, rgba(76, 82, 222, 0.08), transparent 32%),
+    radial-gradient(circle at 82% 84%, rgba(217, 70, 124, 0.06), transparent 30%);
+  background-attachment: fixed;
 }
 
 .text-columbia-blue {
-  color: var(--columbia-blue);
+  color: var(--ds-text-secondary, var(--columbia-blue));
 }
 
 .text-pinkish {
@@ -703,8 +748,8 @@ button:disabled,
 }
 
 .events-hero {
-  background: linear-gradient(145deg, rgba(19, 24, 54, 0.88), rgba(12, 16, 37, 0.9));
-  box-shadow: 0 24px 70px rgba(8, 11, 35, 0.55);
+  background: linear-gradient(145deg, rgba(19, 24, 54, 0.72), rgba(12, 16, 37, 0.78));
+  box-shadow: 0 14px 34px rgba(8, 11, 35, 0.34);
 }
 
 .events-hero-kicker {
@@ -746,12 +791,46 @@ button:disabled,
 }
 
 .events-control {
+  background: rgba(17, 23, 51, 0.78);
+  border: 1px solid rgba(131, 144, 255, 0.24);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #dbe2ff;
+  font-size: 0.84rem;
+  min-height: 42px;
+  width: 100%;
+}
+
+.events-filter-control {
+  background: rgba(17, 23, 51, 0.78);
+  border: 1px solid rgba(131, 144, 255, 0.24);
+  color: #dbe2ff;
+}
+
+.events-filter-control:hover {
   background: rgba(17, 23, 51, 0.9);
-  border: 1px solid rgba(131, 144, 255, 0.35);
-  border-radius: 12px;
-  padding: 10px 12px;
-  color: #ecf0ff;
-  font-size: 0.9rem;
+  border-color: rgba(131, 144, 255, 0.34);
+}
+
+.events-filter-control:focus {
+  outline: none;
+  border-color: #7f8dff;
+}
+
+.events-control::placeholder {
+  color: #aab6ff;
+}
+
+.events-control select,
+select.events-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 16px) calc(50% - 1px), calc(100% - 11px) calc(50% - 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2.25rem;
 }
 
 .events-control:focus {
@@ -759,13 +838,66 @@ button:disabled,
   border-color: #7f8dff;
 }
 
+.events-toggle {
+  appearance: none;
+  padding: 8px 10px;
+}
+
+.events-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #8e98ff;
+}
+
+input.events-control[type="date"] {
+  color-scheme: dark;
+}
+
+input.events-control[type="date"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
 .events-reset-btn {
   background: rgba(92, 107, 255, 0.16);
-  border: 1px solid rgba(132, 146, 255, 0.35);
+  border: 1px solid rgba(132, 146, 255, 0.22);
+  color: #e8ecff;
 }
 
 .events-reset-btn:hover {
   background: rgba(92, 107, 255, 0.26);
+}
+
+.events-page {
+  font-family: var(--font-sans);
+}
+
+.events-page .ds-heading-xl,
+.events-page .ds-heading-md,
+.events-page .events-hero-kicker,
+.events-page .events-pill,
+.events-page .events-control,
+.events-page .bytehive-calendar,
+.events-page .event-calendar-panel,
+.events-page .event-neon-card,
+.events-page .text-desc,
+.events-page .text-white {
+  font-family: var(--font-sans);
+}
+
+[data-theme="light"] .events-page .ds-btn-primary,
+[data-theme="light"] .events-page .ds-btn-secondary {
+  color: #232746 !important;
+}
+
+[data-theme="light"] .events-page .ds-btn-primary {
+  background: rgba(76, 82, 222, 0.12) !important;
+  border: 1px solid rgba(76, 82, 222, 0.24) !important;
+}
+
+[data-theme="light"] .events-page .ds-btn-secondary {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid #d0d0e8 !important;
 }
 
 [data-theme="light"] .bytehive-calendar {
@@ -777,6 +909,7 @@ button:disabled,
 
 [data-theme="light"] .bytehive-calendar .react-calendar__tile {
   color: #303252 !important;
+  background: #ffffff;
 }
 
 [data-theme="light"] .bytehive-calendar .react-calendar__navigation button {
@@ -812,8 +945,48 @@ button:disabled,
   border-color: #d0d0e8;
 }
 
+[data-theme="light"] .events-filter-control {
+  background: #ffffff;
+  color: #232746;
+  border-color: #d0d0e8;
+}
+
+[data-theme="light"] .events-filter-control:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(76, 82, 222, 0.24);
+}
+
+[data-theme="light"] input.events-control[type="date"] {
+  color-scheme: light;
+}
+
+[data-theme="light"] input.events-control[type="date"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(0.2);
+  opacity: 0.8;
+}
+
+[data-theme="light"] .events-control::placeholder {
+  color: #6c7598;
+}
+
+[data-theme="light"] .events-reset-btn {
+  color: #4c52de !important;
+  background: rgba(76, 82, 222, 0.08) !important;
+  border-color: rgba(76, 82, 222, 0.14) !important;
+}
+
 [data-theme="light"] .events-export-btn {
   color: #ffffff !important;
+}
+
+[data-theme="light"] .events-toggle {
+  color: #232746 !important;
+  background: #ffffff;
+  border-color: #d0d0e8;
+}
+
+[data-theme="light"] .events-toggle input {
+  accent-color: #4c52de;
 }
 
 [data-theme="light"] .border-gray-800,

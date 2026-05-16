@@ -1,13 +1,21 @@
-// src/components/Button.jsx
-const Button = ({ onClick, type = "button", children, className = "" }) => {
+import React from 'react';
+import PrimaryButton from '../components/UI/PrimaryButton';
+import SecondaryButton from '../components/UI/SecondaryButton';
+
+// Backwards-compatible Button wrapper used across the app.
+const Button = ({ onClick, type = 'button', children, className = '', variant = 'primary', disabled = false, ...rest }) => {
+  if (variant === 'secondary') {
+    return (
+      <SecondaryButton type={type} onClick={onClick} className={className} disabled={disabled} {...rest}>
+        {children}
+      </SecondaryButton>
+    );
+  }
+
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      className={`bh-button w-full py-2.5 rounded-xl font-semibold transition-all duration-200 cursor-pointer inline-flex items-center justify-center ${className}`}
-    >
+    <PrimaryButton type={type} onClick={onClick} className={className} disabled={disabled} {...rest}>
       {children}
-    </button>
+    </PrimaryButton>
   );
 };
 

@@ -215,6 +215,7 @@ const CommunityCard = ({
                 </div>
                 {community_tags.length > 3 && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -222,9 +223,7 @@ const CommunityCard = ({
                     }}
                     className="text-xs text-periwinkle hover:text-white mt-2 underline hover:no-underline focus:outline-none"
                   >
-                    {showAllTags
-                      ? "Show less"
-                      : `+${community_tags.length - 3} more`}
+                    {showAllTags ? 'Show less' : `+${community_tags.length - 3} more`}
                   </button>
                 )}
               </div>

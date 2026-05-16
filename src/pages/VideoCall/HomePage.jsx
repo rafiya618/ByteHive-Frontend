@@ -1,5 +1,7 @@
 import React from "react";
 import Navbar from "../../shared/Navbar";
+import { PrimaryButton } from "../../components/UI";
+import InputField from "../../shared/InputField";
 
 function HomePage() {
   const [roomLink, setRoomLink] = React.useState("");
@@ -30,30 +32,19 @@ function HomePage() {
             <span className="material-icons text-periwinkle text-4xl">videocam</span>
             <h1 className="font-fenix text-3xl text-white">ByteHive Video Rooms</h1>
           </div>
-          <button
-            onClick={createRoom}
-            className="bh-action-btn bg-periwinkle hover:bg-medium-slate-blue text-white font-semibold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 mb-6"
-          >
+          <PrimaryButton onClick={createRoom} className="mb-6 flex items-center gap-2">
             <span className="material-icons text-lg">add_circle</span>
             Create Room
-          </button>
+          </PrimaryButton>
           {roomLink && (
             <div className="w-full mt-4 flex flex-col items-center">
               <div className="text-columbia-blue mb-2 font-lato">Sharable Room Link:</div>
               <div className="flex w-full gap-2">
-                <input
-                  value={roomLink}
-                  readOnly
-                  className="flex-1 bg-rich-black-light border border-navbar-border rounded-xl px-4 py-2.5 text-white font-lato"
-                  style={{ minWidth: 0 }}
-                />
-                <button
-                  onClick={copyLink}
-                  className="bh-action-btn bg-periwinkle hover:bg-medium-slate-blue text-white px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1"
-                >
+                <InputField value={roomLink} readOnly className="flex-1" />
+                <PrimaryButton onClick={copyLink} className="flex items-center gap-1">
                   <span className="material-icons text-base">content_copy</span>
                   Copy
-                </button>
+                </PrimaryButton>
                 {copied && (
                   <span className="text-green-400 flex items-center gap-1 ml-2">
                     <span className="material-icons text-base">check_circle</span>
