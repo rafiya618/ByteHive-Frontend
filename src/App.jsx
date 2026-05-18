@@ -1,4 +1,7 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { jwtDecode } from "jwt-decode";
 import BlogListing from "./pages/BlogListing";
 import CreatePost from "./pages/CreatePost";
 import EventsListing from "./pages/EventsListing";
@@ -43,6 +46,42 @@ function RoomWrapper() {
 }
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { setAuth } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    const error = params.get("error");
+    const message = params.get("message");
+
+    if (!token && !error) return;
+
+    if (error) {
+      toast.error(message || error);
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        localStorage.setItem("Auth", JSON.stringify({ token }));
+        setAuth({ token, user: decoded });
+
+        if (message) toast.success(message);
+        else toast.success("Authentication successful!");
+
+        const nextRoute = Number(decoded?.onboardingStep) === 2 ? "/setup-profile" : "/";
+        navigate(nextRoute, { replace: true });
+      } catch {
+        toast.error("Invalid authentication token.");
+        navigate("/login", { replace: true });
+      }
+    }
+  }, [location.search, navigate, setAuth]);
+
   return (
     <>
       <Toaster />
