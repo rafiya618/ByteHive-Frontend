@@ -24,7 +24,6 @@ const EventCard = ({
     category,
     event_name,
     small_event_description,
-    event_date,
     location,
     registration_link,
   } = event;
@@ -33,6 +32,12 @@ const EventCard = ({
   const date = dt ? dt.toLocaleDateString() : "TBD";
   const time = dt ? dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "TBD";
   const countdown = dt ? formatDistanceToNowStrict(dt, { addSuffix: true }) : "No date";
+  const now = new Date();
+  const eventStatus = !dt ? "Scheduled" : dt < now ? "Held" : "Upcoming";
+  const statusClass =
+    eventStatus === "Held"
+      ? "bg-white/10 text-white/80 border-white/10"
+      : "bg-emerald-500/15 text-emerald-300 border-emerald-400/20";
 
   const handleView = () => {
     if (registration_link) {
@@ -64,7 +69,12 @@ const EventCard = ({
       <div className="flex flex-col flex-1 p-5 md:p-6 gap-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <span className="bg-chip text-white/80 text-xs px-3 py-1 rounded-xl w-fit inline-flex">{category}</span>
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="bg-chip text-white/80 text-xs px-3 py-1 rounded-xl w-fit inline-flex">{category}</span>
+              <span className={`inline-flex items-center rounded-xl border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusClass}`}>
+                {eventStatus}
+              </span>
+            </div>
             <h3 className="font-fenix text-[22px] text-white mt-3 leading-tight">{event_name}</h3>
           </div>
           <span className="text-desc text-xs md:text-sm text-right whitespace-nowrap">{countdown}</span>

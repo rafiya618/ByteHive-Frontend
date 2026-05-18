@@ -204,6 +204,27 @@ const EventsListing = () => {
     selectedFilter,
   ]);
 
+  const displayedEvents = useMemo(() => {
+    const now = new Date();
+
+    return [...filteredEvents].sort((firstEvent, secondEvent) => {
+      const firstDate = firstEvent.event_date ? parseISO(firstEvent.event_date) : null;
+      const secondDate = secondEvent.event_date ? parseISO(secondEvent.event_date) : null;
+      const firstIsUpcoming = firstDate ? isAfter(firstDate, now) : false;
+      const secondIsUpcoming = secondDate ? isAfter(secondDate, now) : false;
+
+      if (firstIsUpcoming !== secondIsUpcoming) {
+        return firstIsUpcoming ? -1 : 1;
+      }
+
+      if (firstDate && secondDate) {
+        return firstDate.getTime() - secondDate.getTime();
+      }
+
+      return 0;
+    });
+  }, [filteredEvents]);
+
   const interestedEvents = useMemo(
     () => events.filter((event) => Boolean(interestedMap[event._id])),
     [events, interestedMap]
@@ -324,7 +345,7 @@ const EventsListing = () => {
 
             <div className="space-y-4">
               {loading ? <div className="text-center text-white py-8">Loading...</div> : filteredEvents.length === 0 ? <div className="text-center text-desc py-8">No events found.</div> : (
-                filteredEvents.map((ev) => (
+                displayedEvents.map((ev) => (
                   <EventCard
                     key={ev._id}
                     event={ev}

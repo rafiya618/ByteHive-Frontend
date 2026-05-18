@@ -14,7 +14,8 @@ export const NotificationProvider = ({ children }) => {
 
   // Join personal room + load existing notifications
   useEffect(() => {
-    if (!auth?.user?._id || auth?.user?.onboardingStep !== 4) return;
+    // Require a logged-in user ID; don't block notifications on onboarding step
+    if (!auth?.user?._id) return;
 
     const fetchNotifications = async () => {
       try {

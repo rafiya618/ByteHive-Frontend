@@ -6,6 +6,7 @@ import InputField from "../../shared/InputField";
 function HomePage() {
   const [roomLink, setRoomLink] = React.useState("");
   const [copied, setCopied] = React.useState(false);
+  const frontendBaseUrl = (import.meta.env.VITE_FRONTEND_URL || window.location.origin).replace(/\/$/, "");
 
   function generateRoomId() {
     return Math.random().toString(36).substring(2, 10);
@@ -13,7 +14,7 @@ function HomePage() {
 
   const createRoom = () => {
     const roomId = generateRoomId();
-    const link = `${import.meta.env.VITE_FRONTEND_URL}/room/${roomId}`;
+    const link = `${frontendBaseUrl}/#/room/${roomId}`;
     setRoomLink(link);
     setCopied(false);
   };
