@@ -1,6 +1,7 @@
 import { getAuthHeader } from './authHeader';
+import { getRequiredUrl } from "../utils/env";
 
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+const API_BASE_URL = `${getRequiredUrl("VITE_POSTS_SERVICE_URL")}/api`;
 
 // Base API request handler for posts
 const apiRequest = async (url, options = {}) => {

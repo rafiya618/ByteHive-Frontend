@@ -258,10 +258,10 @@ const EventsListing = () => {
   };
 
   return (
-    <div className="events-page min-h-screen bg-rich-black flex flex-col relative overflow-x-hidden">
+    <div className="events-page min-h-screen bg-rich-black flex flex-col relative">
       <Navbar />
-      <PageContainer className="relative z-10 py-10">
-        <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+      <PageContainer className="relative z-10 flex flex-col flex-1 px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-8 flex shrink-0 flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div>
             <h2 className="font-fenix text-[28px] text-white font-normal text-center md:text-left">
               Events Hub
@@ -365,7 +365,7 @@ const EventsListing = () => {
             )}
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-24">
+          <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
             <EventCalendarPanel
               events={filteredEvents}
               selectedDate={selectedDate}
@@ -375,7 +375,7 @@ const EventsListing = () => {
             />
 
             <Card className="p-4 md:p-5 space-y-3">
-              <h3 className="ds-heading-md">Event Snapshot</h3>
+              <h3 className="font-fenix text-[22px] text-white font-normal">Event Snapshot</h3>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-xl border border-navbar-border bg-rich-black-light/70 p-3">
                   <div className="text-xl font-semibold text-white">{filteredEvents.length}</div>

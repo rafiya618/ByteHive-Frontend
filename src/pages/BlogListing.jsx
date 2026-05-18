@@ -11,6 +11,7 @@ import Loader from "../components/shared/Loader";
 import axios from "axios";
 import { useAuth } from "../context/auth";
 import { reGetTrendingPosts, reGetFeed } from "../api/reApi";
+import { getRequiredUrl } from "../utils/env";
 
 const FILTERS = ["All", "Popular", "Newest"];
 
@@ -32,8 +33,8 @@ const BlogListing = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const { auth } = useAuth();
 
-  const basePosts = (import.meta.env.VITE_POSTS_SERVICE_URL || "http://localhost:5000").replace(/\/$/, "");
-  const baseRE = (import.meta.env.VITE_RE_SERVICE_URL || "http://localhost:3005").replace(/\/$/, "");
+  const basePosts = getRequiredUrl("VITE_POSTS_SERVICE_URL");
+  const baseRE = getRequiredUrl("VITE_RE_SERVICE_URL");
 
   // Normalize posts for rendering
   const normalizePosts = (posts = []) =>
@@ -366,7 +367,7 @@ const BlogListing = () => {
           </div>
 
           {/* Right Column - Sidebar */}
-          <aside className="w-full lg:w-[320px] xl:w-[380px] shrink-0 flex flex-col gap-6">
+          <aside className="w-full lg:w-[320px] xl:w-[380px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
             <PopularTags posts={blogs} />
             <PopularCommunities />
             <UpcomingEvents />

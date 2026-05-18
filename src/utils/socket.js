@@ -1,6 +1,7 @@
 import io from "socket.io-client";
+import { getRequiredUrl } from "./env";
 
 // Singleton socket for the app
-const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000");
+const socket = io(getRequiredUrl("VITE_GATEWAY_URL"));
 
 export default socket;

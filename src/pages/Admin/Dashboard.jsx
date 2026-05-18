@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminSidebar from "../../components/admin/AdminSidebar";
+import { getRequiredUrl } from "../../utils/env";
 
-const ADMIN_BASE = (import.meta.env.VITE_ADMIN_SERVICE_URL || "http://localhost:3003").replace(/\/$/, "");
+const ADMIN_BASE = getRequiredUrl("VITE_ADMIN_SERVICE_URL");
 
 const MetricCard = ({ title, value, icon, bgColor }) => (
   <div className="bg-dark-indigo border border-navbar-border rounded-lg p-6 hover:bg-dark-indigo/80 transition">

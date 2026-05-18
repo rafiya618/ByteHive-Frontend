@@ -5,11 +5,10 @@ import Navbar from "../shared/Navbar";
 import CommunityFilterBar from "../components/CommunityDetail/CommunityFilterBar";
 import BlogCard from "../components/BlogListing/BlogCard";
 import MemberCard from "../components/CommunityDetail/MemberCard";
-import FollowingButton from "../components/CommunityDetail/FollowingButton";
 import JoinChatButton from "../components/CommunityDetail/JoinChatButton";
 import VideoRoomButton from "../components/CommunityDetail/VideoRoomButton";
 import NewPostButton from "../shared/NewPostButton";
-import { PrimaryButton, SecondaryButton } from "../components/UI";
+import { Card, PrimaryButton, SecondaryButton } from "../components/UI";
 import { communityApi } from "../api/communityApi";
 import { postsApi } from "../api/postsApi";
 import { getProfile } from "../api/ProfileApi";
@@ -399,7 +398,7 @@ const CommunityDetail = () => {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center">
         <div className="text-white text-lg">Loading...</div>
       </div>
     );
@@ -413,7 +412,7 @@ const CommunityDetail = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center">
         <div className="text-white text-lg">Loading community...</div>
       </div>
     );
@@ -422,7 +421,7 @@ const CommunityDetail = () => {
   // Error state
   if (error && !community) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center">
           <div className="text-center">
           <div className="text-red-400 text-lg mb-4">{error}</div>
           <div className="flex justify-center">
@@ -436,7 +435,7 @@ const CommunityDetail = () => {
   // No community found
   if (!community) {
     return (
-      <div className="min-h-screen bg-rich-black flex items-center justify-center events-page">
+      <div className="min-h-screen bg-rich-black flex items-center justify-center">
         <div className="text-center">
           <div className="text-desc text-lg mb-4">Community not found</div>
         </div>
@@ -446,6 +445,14 @@ const CommunityDetail = () => {
 
   const currentUserId = getUserId();
   const isOwner = String(community?.user_id?._id || community?.user_id) === String(currentUserId);
+  const memberPreview = (community?.members || []).slice(0, 5);
+  const joinedAtLabel = community?.createdAt
+    ? new Date(community.createdAt).toLocaleDateString()
+    : "Recently";
+  const ownerName = community?.user_id?.name || community?.user_id?.username || "Bot";
+  const topicPreview = Array.isArray(community?.community_tags)
+    ? community.community_tags.slice(0, 6)
+    : [];
 
   const canPost = () => {
     if (!community || !auth?.user) return false;
@@ -584,7 +591,7 @@ const CommunityDetail = () => {
                 <div>
                   <h4 className="font-lato font-semibold text-white text-lg mb-3">Community Admin</h4>
                   <p className="font-lato leading-relaxed">
-                    Created by {community.user_id?.username || 'Unknown'}
+                    Created by {ownerName}
                     {community.createdAt && ` on ${new Date(community.createdAt).toLocaleDateString()}`}
                   </p>
                 </div>
@@ -598,12 +605,8 @@ const CommunityDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-rich-black flex flex-col relative events-page">
+    <div className="min-h-screen bg-rich-black flex flex-col relative">
       <Navbar />
-
-      {/* Background Glow */}
-      <div className="absolute z-0 events-neon-orb events-neon-orb-left" />
-      <div className="absolute z-0 events-neon-orb events-neon-orb-right" />
 
       {/* Error Message */}
       {error && (
@@ -618,7 +621,7 @@ const CommunityDetail = () => {
       <div className="w-full flex justify-center pt-8 pb-6 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="w-full max-w-7xl">
           {/* Community Info */}
-          <div className="events-hero mb-8 rounded-3xl border border-navbar-border p-6 md:p-8">
+          <div className="mb-6 rounded-3xl border border-navbar-border bg-navbar-bg/70 p-6 md:p-7">
             <div className="flex flex-col lg:flex-row lg:items-start gap-6">
               {/* Left: Avatar + Info */}
               <div className="flex items-start gap-8 flex-1">
@@ -635,7 +638,7 @@ const CommunityDetail = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
                     <h1 className="font-fenix text-3xl md:text-4xl text-white font-normal mb-0">
                       {community?.community_name}
                     </h1>
@@ -675,24 +678,20 @@ const CommunityDetail = () => {
                   </div>
 
                   {/* Description spans full width under buttons */}
-                  <p className="font-lato text-columbia-blue text-base md:text-lg leading-relaxed mb-6 pr-4 max-w-4xl">
+                  <p className="font-lato text-columbia-blue text-base md:text-lg leading-relaxed mb-4 pr-4 max-w-4xl">
                     {community?.description}
                   </p>
 
-                  {/* Stats */}
-                  <div className="flex items-center gap-6 text-periwinkle font-lato text-sm flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <span className="material-icons text-base">people</span>
-                      <span>{community?.no_of_followers?.toLocaleString() || 0} members</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="material-icons text-base">article</span>
-                      <span>{community?.no_of_posts?.toLocaleString() || 0} posts</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="material-icons text-base">visibility</span>
-                      <span>{community?.no_of_views?.toLocaleString() || 0} views</span>
-                    </div>
+                  <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
+                    <span className="px-3 py-1 rounded-full border border-navbar-border bg-rich-black-light/70 text-columbia-blue">
+                      Started {joinedAtLabel}
+                    </span>
+                    <span className="px-3 py-1 rounded-full border border-navbar-border bg-rich-black-light/70 text-columbia-blue">
+                      Curated by @{ownerName}
+                    </span>
+                    <span className="px-3 py-1 rounded-full border border-navbar-border bg-rich-black-light/70 text-columbia-blue">
+                      {community?.visible === 'public' ? 'Open Community' : 'Private Circle'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -701,79 +700,154 @@ const CommunityDetail = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full flex justify-center px-4 lg:px-8 pb-12">
-        <div className="w-full max-w-7xl">
-          {/* Community owner or global admin: moderator management panel */}
-          {(isOwner || auth?.user?.role === 'admin') && String(community?.moderation || "").toLowerCase() === "allow moderators" && (
-            <div className="mb-6 p-4 border border-navbar-border rounded-2xl bg-navbar-bg">
-              <h4 className="text-white font-fenix text-lg mb-3">Moderator Management</h4>
-              <div className="flex flex-col md:flex-row gap-3 md:items-center">
-                <select
-                  value={moderatorInput}
-                  onChange={(e) => setModeratorInput(e.target.value)}
-                  className="flex-1 bg-navbar-bg border border-navbar-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-periwinkle"
-                >
-                  <option value="">Select a member to add as moderator</option>
-                  {community?.members?.filter(mId => {
-                    const ownerId = community.user_id?._id || community.user_id;
-                    const moderators = community.moderators || [];
-                    return !moderators.map(String).includes(String(mId)) && String(mId) !== String(ownerId);
-                  }).map(mId => (
-                    <option key={mId} value={mId}>
-                      {memberProfiles[mId]?.name || memberProfiles[mId]?.username || `User ${mId.substring(0, 5)}...`}
-                    </option>
-                  ))}
-                </select>
-                <PrimaryButton onClick={handleAddModeratorAdmin} disabled={modActionLoading || !moderatorInput.trim()} className="px-4 py-2.5">
-                  {modActionLoading ? 'Adding...' : 'Add Moderator'}
-                </PrimaryButton>
-              </div>
-              {community?.moderators?.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-desc mb-2">Current Moderators:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {community.moderators.map((mId) => {
-                      const profile = memberProfiles[mId];
-                      return (
-                        <div key={mId} className="flex items-center gap-2 bg-chip/50 border border-periwinkle/30 text-periwinkle px-3 py-1.5 rounded-xl hover:bg-chip transition-colors group">
-                          <span className="text-sm font-medium">{profile?.name || profile?.username || `User ${mId.substring(0, 5)}...`}</span>
-                          <button
-                            onClick={() => handleRemoveModeratorAdmin(mId)}
-                            disabled={modActionLoading}
-                            title="Remove Moderator"
-                            className="text-pinkish/70 hover:text-pinkish transition-colors flex items-center justify-center"
-                          >
-                            <span className="material-icons text-[18px]">cancel</span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+      <div className="w-full flex justify-center px-4 lg:px-8 pb-10">
+        <div className="w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 items-start">
+          <main className="min-w-0 space-y-4">
+            {/* Community owner or global admin: moderator management panel */}
+            {(isOwner || auth?.user?.role === 'admin') && String(community?.moderation || "").toLowerCase() === "allow moderators" && (
+              <Card className="p-5 md:p-6">
+                <h4 className="text-white font-fenix text-lg mb-3">Moderator Management</h4>
+                <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                  <select
+                    value={moderatorInput}
+                    onChange={(e) => setModeratorInput(e.target.value)}
+                    className="flex-1 bg-navbar-bg border border-navbar-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-periwinkle"
+                  >
+                    <option value="">Select a member to add as moderator</option>
+                    {community?.members?.filter(mId => {
+                      const ownerId = community.user_id?._id || community.user_id;
+                      const moderators = community.moderators || [];
+                      return !moderators.map(String).includes(String(mId)) && String(mId) !== String(ownerId);
+                    }).map(mId => (
+                      <option key={mId} value={mId}>
+                        {memberProfiles[mId]?.name || memberProfiles[mId]?.username || `User ${mId.substring(0, 5)}...`}
+                      </option>
+                    ))}
+                  </select>
+                  <PrimaryButton onClick={handleAddModeratorAdmin} disabled={modActionLoading || !moderatorInput.trim()} className="px-4 py-2.5">
+                    {modActionLoading ? 'Adding...' : 'Add Moderator'}
+                  </PrimaryButton>
                 </div>
-              )}
-            </div>
-          )}
-          {/* Filter Bar */}
-          <div className="mb-8">
+                {community?.moderators?.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-desc mb-2">Current Moderators:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {community.moderators.map((mId) => {
+                        const profile = memberProfiles[mId];
+                        return (
+                          <div key={mId} className="flex items-center gap-2 bg-chip/50 border border-periwinkle/30 text-periwinkle px-3 py-1.5 rounded-xl hover:bg-chip transition-colors group">
+                            <span className="text-sm font-medium">{profile?.name || profile?.username || `User ${mId.substring(0, 5)}...`}</span>
+                            <button
+                              onClick={() => handleRemoveModeratorAdmin(mId)}
+                              disabled={modActionLoading}
+                              title="Remove Moderator"
+                              className="text-pinkish/70 hover:text-pinkish transition-colors flex items-center justify-center"
+                            >
+                              <span className="material-icons text-[18px]">cancel</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )}
+
             <CommunityFilterBar
               filters={FILTERS}
               selected={selectedFilter}
               onSelect={setSelectedFilter}
             />
-          </div>
 
-          {/* Dynamic Content */}
-          {community.isPrivateAndNotJoined ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-navbar-bg/50 rounded-2xl border border-white/5">
-              <span className="material-icons text-6xl text-gray-500 mb-4">lock</span>
-              <h3 className="text-2xl font-bold text-white mb-2">Private Community</h3>
-              <p className="text-gray-400 mb-8">Follow this community to request access.</p>
-              {/* Follow button is already in header, but maybe duplicate here? No, header is enough. */}
-            </div>
-          ) : (
-            renderContent()
-          )}
+            {community.isPrivateAndNotJoined ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-navbar-bg/50 rounded-2xl border border-white/5">
+                <span className="material-icons text-6xl text-gray-500 mb-4">lock</span>
+                <h3 className="text-2xl font-bold text-white mb-2">Private Community</h3>
+                <p className="text-gray-400 mb-8">Follow this community to request access.</p>
+              </div>
+            ) : (
+              renderContent()
+            )}
+          </main>
+
+          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+            <Card className="p-5 md:p-6 space-y-4">
+              <div className="flex items-start gap-4">
+                <img
+                  src={community?.image || DEFAULT_IMAGE}
+                  alt={community?.community_name}
+                  className="w-16 h-16 rounded-2xl object-cover border border-navbar-border shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="text-desc text-xs uppercase tracking-[0.18em] mb-1">Community</p>
+                  <h3 className="font-fenix text-[22px] text-white leading-tight break-words">{community?.community_name}</h3>
+                  <p className="text-desc text-sm mt-2 line-clamp-3">{community?.description}</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-navbar-border bg-rich-black-light/70 p-4 space-y-3">
+                <p className="text-xs uppercase tracking-wide text-desc">What to expect here</p>
+                <ul className="space-y-2 text-sm text-columbia-blue">
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-base text-periwinkle">forum</span>
+                    Member-driven discussions and knowledge sharing
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-base text-periwinkle">tips_and_updates</span>
+                    Practical posts and real-world experiences
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="material-icons text-base text-periwinkle">groups</span>
+                    A focused space around shared interests
+                  </li>
+                </ul>
+              </div>
+            </Card>
+
+            <Card className="p-5 md:p-6 space-y-3">
+              <h4 className="font-fenix text-[20px] text-white">Community Notes</h4>
+              <div className="space-y-2 text-sm text-desc">
+                <p><span className="text-white">Created by:</span> @{ownerName}</p>
+                <p><span className="text-white">Started:</span> {joinedAtLabel}</p>
+                <p><span className="text-white">Space type:</span> {community?.visible === 'public' ? 'Open to discover' : 'Private by request'}</p>
+              </div>
+              {topicPreview.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {topicPreview.map((tag) => (
+                    <span key={tag} className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl">#{tag}</span>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-5 md:p-6 space-y-3">
+              <h4 className="font-fenix text-[20px] text-white">Top Members</h4>
+              {memberPreview.length > 0 ? (
+                <div className="space-y-3">
+                  {memberPreview.map((memberId) => {
+                    const profile = memberProfiles[memberId];
+                    return (
+                      <div key={memberId} className="flex items-center gap-3 rounded-xl border border-navbar-border bg-rich-black-light/60 px-3 py-2">
+                        <img
+                          src={profile?.avatar || `https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff`}
+                          alt={profile?.name || 'Member'}
+                          className="w-10 h-10 rounded-full object-cover border border-navbar-border"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white text-sm truncate">{profile?.name || profile?.username || `User ${String(memberId).slice(0, 6)}...`}</p>
+                          <p className="text-desc text-xs truncate">{profile?.bio || 'Community member'}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-desc text-sm">No members to preview yet.</p>
+              )}
+            </Card>
+
+          </aside>
         </div>
       </div>
     </div>

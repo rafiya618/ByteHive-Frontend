@@ -1,5 +1,6 @@
 // Robust import for jwt-decode to support different bundler/interop behaviors
 import * as jwtDecodeModule from 'jwt-decode';
+import { getRequiredUrl } from "../utils/env";
 
 const _decodeJwt = (token) => {
   if (!token) return null;
@@ -23,7 +24,7 @@ const _decodeJwt = (token) => {
   throw new Error('jwt-decode: unable to find decode function on module');
 };
 
-const API_BASE_URL = `${import.meta.env.VITE_COMMUNITY_SERVICE_URL || 'http://localhost:5001'}/api`;
+const API_BASE_URL = `${getRequiredUrl("VITE_COMMUNITY_SERVICE_URL")}/api`;
 
 // Helper function to get authorization headers
 const getAuthHeaders = () => {

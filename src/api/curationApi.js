@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { getRequiredUrl } from "../utils/env";
 
-const API_URL = `${import.meta.env.VITE_CURATION_SERVICE_URL || 'http://localhost:5004'}/api`;
+const API_URL = `${getRequiredUrl("VITE_CURATION_SERVICE_URL")}/api`;
 
 // Create axios instance
 const api = axios.create({

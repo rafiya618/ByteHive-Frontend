@@ -1,7 +1,8 @@
 import axios from "axios";
+import { getRequiredUrl } from "../utils/env";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:3000",
+  baseURL: getRequiredUrl("VITE_AUTH_SERVICE_URL"),
   // withCredentials: true, // uncomment if using cookies/auth
 });
 

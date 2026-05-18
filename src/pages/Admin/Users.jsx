@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import AdminSidebar from "../../components/admin/AdminSidebar";
 import axios from "axios";
 import debounce from "lodash/debounce";
 import { getAuthHeaders } from "../../utils/authUtils";
+import { getRequiredUrl } from "../../utils/env";
 
 // Auth service hosts admin user management
-const BASE_URL = (import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:3000").replace(/\/$/, "");
+const BASE_URL = getRequiredUrl("VITE_AUTH_SERVICE_URL");
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -17,7 +18,7 @@ const Users = () => {
   const limit = 5;
 
   // Fetch users from backend
-  const fetchUsers = async (search = "", newCursor = null) => {
+  const fetchUsers = useCallback(async (search = "", newCursor = null) => {
     try {
       setLoading(true);
       const res = await axios.get(`${BASE_URL}/admin/users`, {
@@ -45,16 +46,18 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   // Debounced search
-  const debouncedSearch = useCallback(
-    debounce((query) => {
+  const debouncedSearch = useMemo(
+    () => debounce((query) => {
       setCursor(null);
       fetchUsers(query, null);
     }, 500),
-    []
+    [fetchUsers]
   );
+
+  useEffect(() => () => debouncedSearch.cancel(), [debouncedSearch]);
 
   // Handle search input
   const handleSearch = (e) => {
@@ -65,7 +68,7 @@ const Users = () => {
   // Initial load
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   // Load more (for infinite scroll or "Load More" button)
   const loadMore = () => {

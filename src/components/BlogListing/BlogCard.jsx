@@ -7,6 +7,7 @@ import { savePost, unsavePost, checkSavedStatus } from "../../api/curationApi";
 import { ReportPostModal } from "../posts/ReportPostModal";
 import { PrimaryButton } from "../../components/UI";
 import toast from "react-hot-toast";
+import { getRequiredUrl } from "../../utils/env";
 
 const BlogCard = ({
   id,
@@ -96,8 +97,7 @@ const BlogCard = ({
 
         // Fallback: direct fetch with large limit
         try {
-          const base = import.meta.env.VITE_COMMENT_SERVICE_URL || 'http://localhost:5002';
-          const url = `${base.replace(/\/$/, '')}/comment/all/${id}?limit=1000&sort=latest`;
+          const url = `${getRequiredUrl("VITE_COMMENT_SERVICE_URL")}/comment/all/${id}?limit=1000&sort=latest`;
           const headers = {};
           if (auth?.token) {
             headers['Authorization'] = `Bearer ${auth.token}`;

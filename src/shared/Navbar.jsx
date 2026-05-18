@@ -64,13 +64,13 @@ export default function Navbar() {
           {/* DESKTOP NAV */}
           <div className="hidden md:flex items-center space-x-3">
             <nav className="flex items-center space-x-3 text-xl">
-              <SecondaryButton title="Explore" onClick={() => navigate('/events')} className="text-columbia-blue hover:text-white p-0 rounded-md">
+              <SecondaryButton title="Explore" onClick={() => navigate('/events')} className="text-columbia-blue hover:text-white p-0 rounded-md font-fenix">
                 <span className="material-icons text-4xl hover:text-white transition-transform hover:scale-105">grid_view</span>
               </SecondaryButton>
-              <SecondaryButton title="Saved" onClick={() => navigate('/saved')} className="text-columbia-blue hover:text-white p-0">
+              <SecondaryButton title="Saved" onClick={() => navigate('/saved')} className="text-columbia-blue hover:text-white p-0 font-fenix">
                 <span className="material-icons text-4xl hover:text-white transition-transform hover:scale-105">bookmark</span>
               </SecondaryButton>
-              <SecondaryButton title="Communities" onClick={() => navigate('/communities')} className="text-columbia-blue hover:text-white p-0 rounded-md">
+              <SecondaryButton title="Communities" onClick={() => navigate('/communities')} className="text-columbia-blue hover:text-white p-0 rounded-md font-fenix">
                 <span className="material-icons text-4xl hover:text-white transition-transform hover:scale-105">groups</span>
               </SecondaryButton>
             </nav>
@@ -177,32 +177,32 @@ export default function Navbar() {
       {/* MOBILE DROPDOWN */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-navbar-bg border-t border-navbar-border px-4 py-4 space-y-2 text-lg">
-          <SecondaryButton onClick={() => navigate("/communities")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+            <SecondaryButton onClick={() => navigate("/communities")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl">groups</span>
             <span>Communities</span>
           </SecondaryButton>
-          <SecondaryButton onClick={() => navigate("/events")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+          <SecondaryButton onClick={() => navigate("/events")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl">event</span>
             <span>Events</span>
           </SecondaryButton>
-          <SecondaryButton onClick={() => navigate("/saved")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+          <SecondaryButton onClick={() => navigate("/saved")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl">bookmark</span>
             <span>Saved</span>
           </SecondaryButton>
-          <SecondaryButton onClick={() => navigate("/history")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+          <SecondaryButton onClick={() => navigate("/history")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl">history</span>
             <span>History</span>
           </SecondaryButton>
-          <SecondaryButton onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+          <SecondaryButton onClick={() => setStreakDropdownOpen(!streakDropdownOpen)} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl text-pinkish-important">local_fire_department</span>
             <span>Streak ({currentStreak})</span>
           </SecondaryButton>
-          <SecondaryButton onClick={() => navigate("/profile")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+          <SecondaryButton onClick={() => navigate("/profile")} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl">account_circle</span>
             <span>Profile</span>
           </SecondaryButton>
           {/* Mobile Theme Toggle */}
-          <SecondaryButton onClick={toggleTheme} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5">
+          <SecondaryButton onClick={toggleTheme} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left hover:bg-white/5 font-fenix">
             <span className="material-icons text-2xl">
               {theme === 'dark' ? 'light_mode' : 'dark_mode'}
             </span>
@@ -211,7 +211,7 @@ export default function Navbar() {
           <SecondaryButton onClick={() => {
             logout();
             navigate("/");
-          }} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left text-red-300 hover:bg-red-900/20 hover:text-red-200">
+          }} className="w-full justify-start gap-4 px-4 py-3 rounded-xl text-left text-red-300 hover:bg-red-900/20 hover:text-red-200 font-fenix">
             <span className="material-icons text-2xl">logout</span>
             <span>Logout</span>
           </SecondaryButton>

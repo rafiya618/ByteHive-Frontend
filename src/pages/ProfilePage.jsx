@@ -69,6 +69,41 @@ const normalizePreferences = (rawPrefs) => {
   };
 };
 
+const normalizeCommunityItem = (community) => ({
+  id: community?._id || community?.id,
+  name: community?.community_name || community?.name || "Community",
+});
+
+const normalizeSavedPostItem = (savedItem, fallbackUserId) => {
+  const post = savedItem?.postDetails || savedItem || {};
+
+  return {
+    id: post._id || post.postId || savedItem?._id || savedItem?.postId,
+    image:
+      post.thumbnail ||
+      post.image ||
+      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80",
+    community: post.community?.name || post.community || "General",
+    date: new Date(savedItem?.savedAt || post.createdAt || Date.now()).toLocaleDateString(),
+    readTime: post.readTime || "6 min read",
+    title: post.post_title || post.title || "Untitled Post",
+    description:
+      post.small_description ||
+      (post.post_description || "").replace(/<[^>]*>/g, "") ||
+      "",
+    tags: Array.isArray(post.tags) ? post.tags : [],
+    author: post.author || {
+      name: "Unknown",
+      avatar: "",
+    },
+    user_id: post.user_id || post.userId || fallbackUserId,
+    upvotes: Array.isArray(post.upvotes) ? post.upvotes.length : post.upvotes || 0,
+    downvotes: Array.isArray(post.downvotes) ? post.downvotes.length : post.downvotes || 0,
+    comments: Array.isArray(post.comments) ? post.comments.length : post.comments || 0,
+    views: post.views || 0,
+  };
+};
+
 const ProfilePage = () => {
   const { id: paramId } = useParams();
   const [editing, setEditing] = useState(false);
@@ -111,19 +146,15 @@ const ProfilePage = () => {
   const followingCount = communities.followed.length;
   const followersCount = safeProfile?.followersCount || safeProfile?.followers || 0;
 
-  const allCommunities = useMemo(() => {
-    const owned = (communities.owned || []).map((c) => ({
-      id: c._id || c.id,
-      name: c.community_name || c.name || "Community",
-      type: "owned",
-    }));
-    const followed = (communities.followed || []).map((c) => ({
-      id: c._id || c.id,
-      name: c.community_name || c.name || "Community",
-      type: "followed",
-    }));
-    return [...owned, ...followed];
-  }, [communities]);
+  const ownedCommunities = useMemo(
+    () => (communities.owned || []).map(normalizeCommunityItem),
+    [communities.owned]
+  );
+
+  const followedCommunities = useMemo(
+    () => (communities.followed || []).map(normalizeCommunityItem),
+    [communities.followed]
+  );
 
   const handleCommunityClick = (communityId) => {
     if (!communityId) return;
@@ -161,23 +192,41 @@ const ProfilePage = () => {
       setContentLoading(true);
 
       try {
-        const promises = [
-          isMyProfile
-            ? postsApi.getMyPosts({ limit: 20 })
-            : postsApi.getPosts({ user_id: userId, limit: 20 }),
-          communityApi.getUserCommunities("", false, userId) // Pass userId to get that user's communities
-        ];
+        const postsPromise = isMyProfile
+          ? postsApi.getMyPosts({ limit: 20 })
+          : postsApi.getPosts({ user_id: userId, limit: 20 });
 
-        if (isMyProfile) {
-          promises.push(getSavedPosts());
-          promises.push(getPreferences(userId).catch(() => null));
+        const communitiesPromise = communityApi.getUserCommunities("", false, userId);
+        const savedPromise = isMyProfile ? getSavedPosts() : Promise.resolve(null);
+        const prefsPromise = isMyProfile ? getPreferences(userId) : Promise.resolve(null);
+
+        const [postsResult, communitiesResult, savedResult, prefsResult] = await Promise.allSettled([
+          postsPromise,
+          communitiesPromise,
+          savedPromise,
+          prefsPromise,
+        ]);
+
+        const postsRes = postsResult.status === "fulfilled" ? postsResult.value : null;
+        const communitiesRes = communitiesResult.status === "fulfilled" ? communitiesResult.value : null;
+        const savedRes = savedResult.status === "fulfilled" ? savedResult.value : null;
+        const prefsRes = prefsResult.status === "fulfilled" ? prefsResult.value : null;
+
+        if (postsResult.status === "rejected") {
+          console.error("Failed to load profile posts:", postsResult.reason);
         }
 
-        const results = await Promise.all(promises);
-        const postsRes = results[0];
-        const communitiesRes = results[1];
-        const savedRes = isMyProfile ? results[2] : null;
-        const prefsRes = isMyProfile ? results[3] : null;
+        if (communitiesResult.status === "rejected") {
+          console.error("Failed to load profile communities:", communitiesResult.reason);
+        }
+
+        if (savedResult.status === "rejected") {
+          console.error("Failed to load saved posts:", savedResult.reason);
+        }
+
+        if (prefsResult.status === "rejected") {
+          console.error("Failed to load preferences:", prefsResult.reason);
+        }
 
         const postItems = postsRes?.posts || postsRes?.data?.posts || [];
         const normalizedPosts = Array.isArray(postItems)
@@ -212,40 +261,7 @@ const ProfilePage = () => {
 
         const savedItems = savedRes?.data || savedRes || [];
         const normalizedSaved = Array.isArray(savedItems)
-          ? savedItems.map((savedItem) => {
-              const post = savedItem.postDetails || savedItem;
-              return {
-                id: post._id || post.postId,
-                image:
-                  post.thumbnail ||
-                  post.image ||
-                  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80",
-                community: post.community?.name || post.community || "General",
-                date: new Date(
-                  savedItem.savedAt || post.createdAt || Date.now()
-                ).toLocaleDateString(),
-                readTime: post.readTime || "6 min read",
-                title: post.post_title || post.title || "Untitled Post",
-                description:
-                  post.small_description ||
-                  (post.post_description || "").replace(/<[^>]*>/g, "") ||
-                  "",
-                tags: Array.isArray(post.tags) ? post.tags : [],
-                author: post.author || {
-                  name: "Unknown",
-                  avatar: "",
-                },
-                user_id: post.user_id || post.userId,
-                upvotes: Array.isArray(post.upvotes) ? post.upvotes.length : post.upvotes || 0,
-                downvotes: Array.isArray(post.downvotes)
-                  ? post.downvotes.length
-                  : post.downvotes || 0,
-                comments: Array.isArray(post.comments)
-                  ? post.comments.length
-                  : post.comments || 0,
-                views: post.views || 0,
-              };
-            })
+          ? savedItems.map((savedItem) => normalizeSavedPostItem(savedItem, userId))
           : [];
 
         setUserPosts(normalizedPosts);
@@ -565,42 +581,64 @@ const ProfilePage = () => {
 
             <div className="bg-navbar-bg border border-navbar-border rounded-xl p-4">
               <h3 className="font-fenix text-[22px] text-periwinkle mb-2.5">Communities</h3>
-              <p className="text-white text-base sm:text-lg mb-2">{isMyProfile ? 'Your' : 'Member'} Communities</p>
-              <div className="space-y-2 mb-4">
-                {allCommunities
-                  .filter((community) => community.type === "owned")
-                  .map((community) => (
-                    <button
-                      key={community.id}
-                      type="button"
-                      onClick={() => handleCommunityClick(community.id)}
-                      className="w-full flex items-center gap-3 text-columbia-blue text-sm sm:text-base text-left hover:text-white transition cursor-pointer"
-                    >
-                      <span className="w-7 h-7 bg-rich-black-light border border-navbar-border flex items-center justify-center text-xs">
-                        {(community.name || "C").charAt(0).toUpperCase()}
-                      </span>
-                      <span className="truncate">{community.name}</span>
-                    </button>
-                  ))}
-              </div>
+              <p className="text-white text-base sm:text-lg mb-3">{isMyProfile ? 'Your' : 'Member'} Communities</p>
 
-              <p className="text-white text-base sm:text-lg mb-2">Following</p>
-              <div className="space-y-2">
-                {allCommunities
-                  .filter((community) => community.type === "followed")
-                  .map((community) => (
-                    <button
-                      key={community.id}
-                      type="button"
-                      onClick={() => handleCommunityClick(community.id)}
-                      className="w-full flex items-center gap-3 text-columbia-blue text-sm sm:text-base text-left hover:text-white transition cursor-pointer"
-                    >
-                      <span className="w-7 h-7 bg-rich-black-light border border-navbar-border flex items-center justify-center text-xs">
-                        {(community.name || "C").charAt(0).toUpperCase()}
-                      </span>
-                      <span className="truncate">{community.name}</span>
-                    </button>
-                  ))}
+              <div className="space-y-4">
+                <div>
+                  <p className="text-columbia-blue text-xs uppercase tracking-[0.18em] mb-2">Owned</p>
+                  <div className="space-y-2">
+                    {ownedCommunities.length > 0 ? (
+                      ownedCommunities.map((community) => (
+                        <button
+                          key={community.id}
+                          type="button"
+                          onClick={() => handleCommunityClick(community.id)}
+                          className="w-full text-left rounded-xl border border-navbar-border bg-rich-black-light/60 px-3 py-3 hover:border-periwinkle hover:bg-white/5 transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="w-9 h-9 rounded-full bg-medium-slate-blue/25 border border-navbar-border flex items-center justify-center text-sm font-semibold text-periwinkle flex-shrink-0">
+                            {(community.name || "C").charAt(0).toUpperCase()}
+                          </span>
+                          <span className="min-w-0 flex-1 text-columbia-blue text-sm sm:text-base truncate">
+                            {community.name}
+                          </span>
+                          <span className="material-icons text-base text-periwinkle/70 flex-shrink-0">chevron_right</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-navbar-border px-3 py-4 text-sm text-desc">
+                        No owned communities yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-columbia-blue text-xs uppercase tracking-[0.18em] mb-2">Following</p>
+                  <div className="space-y-2">
+                    {followedCommunities.length > 0 ? (
+                      followedCommunities.map((community) => (
+                        <button
+                          key={community.id}
+                          type="button"
+                          onClick={() => handleCommunityClick(community.id)}
+                          className="w-full text-left rounded-xl border border-navbar-border bg-rich-black-light/60 px-3 py-3 hover:border-periwinkle hover:bg-white/5 transition flex items-center gap-3 cursor-pointer"
+                        >
+                          <span className="w-9 h-9 rounded-full bg-medium-slate-blue/25 border border-navbar-border flex items-center justify-center text-sm font-semibold text-periwinkle flex-shrink-0">
+                            {(community.name || "C").charAt(0).toUpperCase()}
+                          </span>
+                          <span className="min-w-0 flex-1 text-columbia-blue text-sm sm:text-base truncate">
+                            {community.name}
+                          </span>
+                          <span className="material-icons text-base text-periwinkle/70 flex-shrink-0">chevron_right</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-navbar-border px-3 py-4 text-sm text-desc">
+                        No followed communities yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </aside>

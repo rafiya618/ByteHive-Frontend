@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getRequiredUrl } from "../utils/env";
 
-const baseRE = (import.meta.env.VITE_RE_SERVICE_URL || 'http://localhost:3005').replace(/\/$/, '');
+const baseRE = getRequiredUrl("VITE_RE_SERVICE_URL");
 
 export async function reTrackEvent({ userId, action, entityType, entityId, metadata }) {
   try {

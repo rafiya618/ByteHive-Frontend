@@ -2,10 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import * as mediasoupClient from "mediasoup-client";
 import Navbar from "../../shared/Navbar";
-import InputField from "../../shared/InputField";
-import { PrimaryButton } from "../../components/UI";
+import { useAuth } from "../../context/auth";
+import CallControls from "../../components/VideoCall/CallControls";
+import VideoGrid from "../../components/VideoCall/VideoGrid";
+import ChatPanel from "../../components/VideoCall/ChatPanel";
+import { getRequiredUrl } from "../../utils/env";
 
-const VIDEOCALL_SERVER_URL = import.meta.env.VITE_VIDEOCALL_SERVER_URL || "http://localhost:8000";
+const VIDEOCALL_SERVER_URL = getRequiredUrl("VITE_VIDEOCALL_SERVER_URL");
 const socket = io(VIDEOCALL_SERVER_URL);
 
 export default function Room({ communityId: propCommunityId }) {
@@ -26,6 +29,7 @@ export default function Room({ communityId: propCommunityId }) {
   const sendTransportRef = useRef(null);
   const recvTransportRef = useRef(null);
   const localStreamRef = useRef(null);
+  const [localPreviewStream, setLocalPreviewStream] = useState(null);
   const [remoteStreams, setRemoteStreams] = useState(new Map());
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(true);
@@ -33,7 +37,9 @@ export default function Room({ communityId: propCommunityId }) {
   const [participants, setParticipants] = useState(new Set());
 
   const [chatMessages, setChatMessages] = useState([]);
-const [chatInput, setChatInput] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [showChat, setShowChat] = useState(false);
+  const { auth } = useAuth();
 
   // Keep track of consumed producers and consumers
   const consumedProducersRef = useRef(new Set());
@@ -42,29 +48,45 @@ const [chatInput, setChatInput] = useState("");
   const videoProducerRef = useRef(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const screenStreamRef = useRef(null);
+  const isStoppingScreenShareRef = useRef(false);
+
+  const roomId = communityId;
+
+  const getDisplayName = () => {
+    const user = auth?.user || {};
+    const joinedName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+    const name = user.displayName || user.name || user.username || user.userName || user.fullName || joinedName;
+    if (name) return String(name).trim();
+    if (user.email) return String(user.email).split("@")[0];
+    return user.sub || user.id || user._id || socket.id || "Guest";
+  };
   // Screen sharing logic
   const startScreenShare = async () => {
-    if (!isJoined || !videoProducerRef.current) return;
+    if (!isJoined || !videoProducerRef.current || isScreenSharing) return;
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       screenStreamRef.current = screenStream;
       const screenTrack = screenStream.getVideoTracks()[0];
+      screenTrack.onended = () => {
+        if (!isStoppingScreenShareRef.current) stopScreenShare();
+      };
       // Replace video track in producer
       await videoProducerRef.current.replaceTrack({ track: screenTrack });
       setIsScreenSharing(true);
-      // Show screen in local video
-      const localVideo = document.getElementById("localVideo");
-      if (localVideo) localVideo.srcObject = screenStream;
-      // Listen for stop
-      screenTrack.onended = () => stopScreenShare();
+      setLocalPreviewStream(screenStream);
     } catch (err) {
       alert("Failed to share screen: " + err.message);
     }
   };
 
   const stopScreenShare = async () => {
-    if (!isJoined || !videoProducerRef.current) return;
+    if (!isJoined || !videoProducerRef.current || isStoppingScreenShareRef.current) return;
     try {
+      isStoppingScreenShareRef.current = true;
+      const activeScreenStream = screenStreamRef.current;
+      const screenTrack = activeScreenStream?.getVideoTracks?.()[0];
+      if (screenTrack) screenTrack.onended = null;
+
       // Stop screen stream
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach(t => t.stop());
@@ -93,21 +115,14 @@ const [chatInput, setChatInput] = useState("");
         if (sendTransportRef.current) {
           const newProducer = await sendTransportRef.current.produce({ track: camTrack });
           videoProducerRef.current = newProducer;
-          // Notify backend and other clients
-          socket.emit("produce", {
-            roomId: communityId,
-            transportId: sendTransportRef.current.id,
-            kind: "video",
-            rtpParameters: newProducer.rtpParameters
-          }, () => {});
         }
       }
       setIsScreenSharing(false);
-      // Show camera in local video
-      const localVideo = document.getElementById("localVideo");
-      if (localVideo) localVideo.srcObject = camStream;
+      setLocalPreviewStream(camStream);
     } catch (err) {
       alert("Failed to stop screen share: " + err.message);
+    } finally {
+      isStoppingScreenShareRef.current = false;
     }
   };
 
@@ -217,7 +232,7 @@ useEffect(() => {
     
     console.log("Joining room:", communityId);
     
-    socket.emit("join-room", { communityId }, async (res) => {
+    socket.emit("join-room", { roomId, displayName: getDisplayName() }, async (res) => {
       if (res?.error) {
         console.error("join-room error", res.error);
         alert("Failed to join room: " + res.error);
@@ -225,7 +240,7 @@ useEffect(() => {
       }
 
       console.log("Joined room successfully", res);
-      const { routerRtpCapabilities, existingProducers, _allProducersByRoom, chatHistory } = res;
+      const { routerRtpCapabilities, existingProducers, chatHistory } = res;
       setChatMessages(chatHistory || []);
 
       try {
@@ -273,14 +288,18 @@ useEffect(() => {
   };
 
   const sendMessage = () => {
-  if (!chatInput.trim()) return;
-  socket.emit("call:chat-message", { communityId, message: chatInput });
-  setChatInput("");
-};
+    if (!chatInput.trim()) return;
+    socket.emit("call:chat-message", {
+      roomId,
+      message: chatInput,
+      senderName: getDisplayName(),
+    });
+    setChatInput("");
+  };
 
   const createSendTransport = (dev) =>
     new Promise((resolve, reject) => {
-      socket.emit("create-transport", { communityId }, (params) => {
+      socket.emit("create-transport", { roomId }, (params) => {
         if (params?.error) {
           console.error("create-transport error", params.error);
           return reject(new Error(params.error));
@@ -291,7 +310,7 @@ useEffect(() => {
 
         transport.on("connect", ({ dtlsParameters }, callback, errback) => {
           console.log("Send transport connecting...");
-          socket.emit("connect-transport", { communityId, transportId: params.id, dtlsParameters }, (res) => {
+          socket.emit("connect-transport", { roomId, transportId: params.id, dtlsParameters }, (res) => {
             if (res?.error) {
               console.error("Send transport connect error:", res.error);
               errback(new Error(res.error));
@@ -304,7 +323,7 @@ useEffect(() => {
 
         transport.on("produce", ({ kind, rtpParameters }, callback, errback) => {
           console.log("Producing:", kind);
-          socket.emit("produce", { communityId, transportId: params.id, kind, rtpParameters }, (res) => {
+          socket.emit("produce", { roomId, transportId: params.id, kind, rtpParameters }, (res) => {
             if (res?.error) {
               console.error("Produce error:", res.error);
               return errback(new Error(res.error));
@@ -327,7 +346,7 @@ useEffect(() => {
 
   const createRecvTransport = (dev) =>
     new Promise((resolve, reject) => {
-      socket.emit("create-transport", { communityId }, (params) => {
+      socket.emit("create-transport", { roomId }, (params) => {
         if (params?.error) {
           console.error("create-transport error", params.error);
           return reject(new Error(params.error));
@@ -338,7 +357,7 @@ useEffect(() => {
 
         transport.on("connect", ({ dtlsParameters }, callback, errback) => {
           console.log("Recv transport connecting...");
-          socket.emit("connect-transport", { communityId, transportId: params.id, dtlsParameters }, (res) => {
+          socket.emit("connect-transport", { roomId, transportId: params.id, dtlsParameters }, (res) => {
             if (res?.error) {
               console.error("Recv transport connect error:", res.error);
               errback(new Error(res.error));
@@ -377,11 +396,7 @@ useEffect(() => {
       });
       
       localStreamRef.current = stream;
-      const localVideo = document.getElementById("localVideo");
-      if (localVideo) {
-        localVideo.srcObject = stream;
-        console.log("Local video element setup");
-      }
+      setLocalPreviewStream(stream);
 
       const videoTrack = stream.getVideoTracks()[0];
       const audioTrack = stream.getAudioTracks()[0];
@@ -454,7 +469,7 @@ useEffect(() => {
           socket.emit(
             "consume",
             { 
-              communityId, 
+              roomId, 
               transportId: recvTransportRef.current.id, 
               producerId, 
               rtpCapabilities: device.rtpCapabilities 
@@ -482,6 +497,7 @@ useEffect(() => {
 
                 // Handle remote stream creation/updating
                 const peerKey = res.ownerSocketId;
+                const ownerDisplayName = res.ownerDisplayName || res.ownerName || res.ownerUsername || peerKey;
                 
                 setRemoteStreams((prevStreams) => {
                   const newStreams = new Map(prevStreams);
@@ -511,6 +527,7 @@ useEffect(() => {
                     // Update stream data
                     const updatedStreamData = {
                       ...existingStreamData,
+                      displayName: existingStreamData.displayName || ownerDisplayName,
                       [`${consumer.kind}ProducerId`]: res.producerId,
                       [`${consumer.kind}ConsumerId`]: consumer.id
                     };
@@ -524,6 +541,7 @@ useEffect(() => {
                     const streamData = {
                       stream: newStream,
                       ownerSocketId: peerKey,
+                      displayName: ownerDisplayName,
                       [`${consumer.kind}ProducerId`]: res.producerId,
                       [`${consumer.kind}ConsumerId`]: consumer.id
                     };
@@ -571,7 +589,7 @@ useEffect(() => {
 
                 // Resume consumer to start receiving media
                 console.log("Resuming consumer:", consumer.id);
-                socket.emit("resume-consumer", { communityId, consumerId: consumer.id }, (resumeRes) => {
+                socket.emit("resume-consumer", { roomId, consumerId: consumer.id }, (resumeRes) => {
                   if (resumeRes?.error) {
                     console.error("Failed to resume consumer:", resumeRes.error);
                   } else {
@@ -596,7 +614,7 @@ useEffect(() => {
   const leaveRoom = () => {
     console.log("Leaving room");
     
-    socket.emit("leave-room", { communityId });
+    socket.emit("leave-room", { roomId });
     
     // Clean up local stream
     if (localStreamRef.current) {
@@ -619,12 +637,10 @@ useEffect(() => {
     consumersRef.current.clear();
     
     // Clear local video
-    const localVideo = document.getElementById("localVideo");
-    if (localVideo) localVideo.srcObject = null;
-    
     setRemoteStreams(new Map());
     setParticipants(new Set());
     consumedProducersRef.current.clear();
+    setShowChat(false);
 
     // Close transports
     try {
@@ -643,6 +659,8 @@ useEffect(() => {
     // Reset refs
     audioProducerRef.current = null;
     videoProducerRef.current = null;
+    setLocalPreviewStream(null);
+    setIsScreenSharing(false);
     setDevice(null);
     setIsJoined(false);
     
@@ -685,143 +703,60 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-rich-black flex flex-col events-page">
       <Navbar />
-      <div className="flex flex-col items-center justify-center py-10 px-4">
-        <div className="events-hero max-w-4xl w-full bg-navbar-bg border border-navbar-border rounded-3xl shadow-lg p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="material-icons text-periwinkle text-3xl">videocam</span>
-            <h2 className="font-fenix text-2xl text-white">Room: <span className="text-periwinkle">{communityId || 'Loading...'}</span></h2>
-          </div>
-          <div className="flex items-center gap-6 mb-4">
-            <span className="text-columbia-blue font-lato">Status: {isJoined ? <span className="text-green-400">Connected</span> : <span className="text-yellow-400">Disconnected</span>}</span>
-            <span className="text-columbia-blue font-lato">Participants: <span className="text-periwinkle">{participants.size + (isJoined ? 1 : 0)}</span></span>
-          </div>
-          <div className="mb-8">
-            <h4 className="text-white font-fenix mb-2">Local Video (You)</h4>
-            <video
-              id="localVideo"
-              autoPlay
-              playsInline
-              muted
-              className="rounded-2xl border-2 border-periwinkle bg-black"
-              style={{ width: 240, height: 180 }}
-            />
-          </div>
-          <div className="mb-8">
-            <h4 className="text-white font-fenix mb-2">In-Call Chat</h4>
-            <div className="bg-rich-black-light border border-navbar-border rounded-2xl p-4 mb-2" style={{ height: 200, overflowY: "auto" }}>
-              {chatMessages.length === 0 ? (
-                <p className="text-desc">No messages yet</p>
-              ) : (
-                chatMessages.map((msg, i) => (
-                  <div key={i} className="mb-2 text-white">
-                    <span className="font-bold text-periwinkle">{msg.socketId.slice(-4)}:</span> {msg.message}
-                  </div>
-                ))
-              )}
+      <main className="relative flex-1 px-4 pb-28 pt-6 lg:px-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
+          <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-[#101522]/85 px-5 py-4 shadow-[0_16px_40px_rgba(0,0,0,0.28)] backdrop-blur-lg lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-white/75">
+                <span className="material-icons text-[#9cabff]">videocam</span>
+                <span className="text-sm font-medium">Video room</span>
+              </div>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">{communityId || 'Loading room...'}</h2>
             </div>
-            <div className="flex gap-2">
-              <InputField
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Type a message..."
-                className="flex-1"
-              />
-              <PrimaryButton onClick={sendMessage} className="flex items-center gap-1">
-                <span className="material-icons text-base">send</span>
-                Send
-              </PrimaryButton>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-white/70">
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                Status: {isJoined ? <span className="text-emerald-400">Connected</span> : <span className="text-amber-300">Disconnected</span>}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                Participants: <span className="text-white">{participants.size + (isJoined ? 1 : 0)}</span>
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                You: <span className="text-white">{getDisplayName()}</span>
+              </span>
             </div>
           </div>
-          <div className="mb-8">
-            <h4 className="text-white font-fenix mb-2">Remote Participants ({remoteStreamArray.length})</h4>
-            <div className="flex gap-4 flex-wrap">
-              {remoteStreamArray.map((streamData, i) => (
-                <div key={`${streamData.ownerSocketId}-${i}`} className="text-center">
-                  <video
-                    ref={(el) => {
-                      if (el && el.srcObject !== streamData.stream) {
-                        el.srcObject = streamData.stream;
-                      }
-                    }}
-                    autoPlay
-                    playsInline
-                    className="rounded-2xl border-2 border-green-400 bg-black"
-                    style={{ width: 240, height: 180 }}
-                  />
-                  <div className="text-xs text-columbia-blue mt-2">
-                    Peer <span className="text-periwinkle">{streamData.ownerSocketId.slice(-4)}</span>
-                    <span className="ml-1 text-desc">({streamData.stream.getTracks().length} tracks: {streamData.stream.getTracks().map(t => t.kind).join(', ')})</span>
-                  </div>
-                </div>
-              ))}
-              {remoteStreamArray.length === 0 && isJoined && (
-                <p className="text-desc">No other participants yet</p>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 mb-6">
-            <PrimaryButton
-              onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-              disabled={!isJoined || !videoProducerRef.current}
-              className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : isScreenSharing ? 'bg-yellow-500 text-white' : 'bg-periwinkle text-white hover:bg-medium-slate-blue'}`}
-            >
-              <span className="material-icons">{isScreenSharing ? 'stop_screen_share' : 'screen_share'}</span>
-              {isScreenSharing ? 'Stop Screen Share' : 'Share Screen'}
-            </PrimaryButton>
-            <PrimaryButton
-              onClick={joinRoom}
-              disabled={isJoined || !communityId}
-              className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${isJoined || !communityId ? 'bg-gray-600 text-white' : 'bg-green-600 text-white hover:bg-green-500'}`}
-            >
-              <span className="material-icons">meeting_room</span>
-              {isJoined ? 'Joined' : 'Join Room'}
-            </PrimaryButton>
-            <PrimaryButton
-              onClick={leaveRoom}
-              disabled={!isJoined}
-              className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : 'bg-red-600 text-white hover:bg-red-500'}`}
-            >
-              <span className="material-icons">logout</span>
-              Leave Room
-            </PrimaryButton>
-            <PrimaryButton
-              onClick={toggleMic}
-              disabled={!isJoined}
-              className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : micEnabled ? 'bg-periwinkle text-white hover:bg-medium-slate-blue' : 'bg-yellow-500 text-white'}`}
-            >
-              <span className="material-icons">{micEnabled ? "mic" : "mic_off"}</span>
-              {micEnabled ? "Mute Mic" : "Unmute Mic"}
-            </PrimaryButton>
-            <PrimaryButton
-              onClick={toggleCam}
-              disabled={!isJoined}
-              className={`px-5 py-2 rounded-xl font-lato flex items-center gap-2 transition-colors ${!isJoined ? 'bg-gray-600 text-white' : camEnabled ? 'bg-periwinkle text-white hover:bg-medium-slate-blue' : 'bg-yellow-500 text-white'}`}
-            >
-              <span className="material-icons">{camEnabled ? "videocam" : "videocam_off"}</span>
-              {camEnabled ? "Turn Off Camera" : "Turn On Camera"}
-            </PrimaryButton>
-          </div>
-          <div className="bg-rich-black-light border border-navbar-border rounded-lg p-4 text-xs text-desc">
-            <strong className="text-periwinkle">Debug Info:</strong>
-            <br />
-            Device ready: {device ? 'Yes' : 'No'}
-            <br />
-            Send transport: {sendTransportRef.current ? 'Ready' : 'Not ready'}
-            <br />
-            Recv transport: {recvTransportRef.current ? 'Ready' : 'Not ready'}
-            <br />
-            Consumed producers: {consumedProducersRef.current.size}
-            <br />
-            Active consumers: {consumersRef.current.size}
-            <br />
-            Remote streams: {remoteStreamArray.length}
-            <br />
-            Participants: {Array.from(participants).join(', ')}
-          </div>
+
+          <VideoGrid
+            localStream={localPreviewStream}
+            remoteStreams={remoteStreamArray.filter((streamData) => streamData.ownerSocketId !== socket.id)}
+            localLabel={getDisplayName()}
+            isScreenSharing={isScreenSharing}
+          />
         </div>
-      </div>
+      </main>
+
+      <CallControls
+        isJoined={isJoined}
+        micEnabled={micEnabled}
+        camEnabled={camEnabled}
+        isScreenSharing={isScreenSharing}
+        onToggleMic={toggleMic}
+        onToggleCam={toggleCam}
+        onToggleScreenShare={() => (isScreenSharing ? stopScreenShare() : startScreenShare())}
+        onLeave={leaveRoom}
+        onJoin={joinRoom}
+        onToggleChat={() => setShowChat((prev) => !prev)}
+      />
+
+      {showChat && (
+        <ChatPanel
+          messages={chatMessages}
+          value={chatInput}
+          onChange={setChatInput}
+          onSend={sendMessage}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 }

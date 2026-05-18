@@ -5,8 +5,11 @@ import { useAuth } from "../context/auth";
 import SearchBar from "../shared/SearchBar";
 import NewCommunityButton from "../shared/NewCommunityButton";
 import Navbar from "../shared/Navbar";
+import { Card } from "../components/UI";
 import CommunityCard from "../components/CommunityListing/CommunityCard";
 import CommunityFilterBar from "../components/CommunityListing/CommunityFilterBar";
+import PopularCommunities from "../components/BlogListing/PopularCommunties";
+import UpcomingEvents from "../components/BlogListing/UpcomingEvents";
 import { communityApi } from "../api/communityApi";
 
 const FILTERS = ["Your Communities", "Discover Communities"];
@@ -28,23 +31,7 @@ const Communities = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching user communities with auth token...', forceRefresh ? '(force refresh)' : '');
-      console.log('Current authenticated user:', auth.user);
       const response = await communityApi.getUserCommunities(searchQuery, forceRefresh);
-      console.log('User communities response:', response);
-      console.log('Owned communities count:', (response.owned || []).length);
-      console.log('Followed communities count:', (response.followed || []).length);
-
-      // Log each owned community to see the structure
-      if (response.owned && response.owned.length > 0) {
-        console.log('Owned communities details:', response.owned.map(c => ({
-          id: c._id,
-          name: c.community_name,
-          user_id: c.user_id,
-          owner_id: c.owner_id,
-          created_by: c.created_by
-        })));
-      }
 
       setUserCommunities({
         owned: response.owned || [],
@@ -80,10 +67,7 @@ const Communities = () => {
 
   // Check authentication and initialize
   useEffect(() => {
-    console.log('Auth state check:', { authLoading, authToken: auth?.token, authUser: auth?.user });
-
     if (!authLoading && !auth?.token) {
-      console.log('No auth token, redirecting to login');
       navigate('/login', {
         state: { from: '/communities' },
         replace: true
@@ -92,7 +76,6 @@ const Communities = () => {
     }
 
     if (!authLoading && auth?.token) {
-      console.log('Auth token found, initializing communities page');
       setIsInitialized(true);
     }
   }, [auth, authLoading, navigate]);
@@ -100,7 +83,6 @@ const Communities = () => {
   // Handle refresh trigger from community creation
   useEffect(() => {
     if (location.state?.refreshCommunities && isInitialized) {
-      console.log('Refreshing communities after creation:', location.state.newCommunity);
       // Force refresh of user communities to show the newly created community
       if (selectedFilter === "Your Communities") {
         fetchUserCommunities(true); // Force refresh
@@ -228,20 +210,11 @@ const Communities = () => {
     const currentUserId = auth.user?._id || auth.user?.id;
 
     if (selectedFilter === "Your Communities") {
-      console.log('Filtering user communities:', { owned: userCommunities.owned, followed: userCommunities.followed });
-
       // Only show communities owned by the authenticated user
       const ownedWithFlags = (userCommunities.owned || [])
         .filter(community => {
           // Only check user_id field as per backend model
           const isOwner = community.user_id === currentUserId;
-          console.log('🔍 Community ownership check:', {
-            communityId: community._id,
-            communityName: community.community_name,
-            community_user_id: community.user_id,
-            auth_user_id: currentUserId,
-            isOwner
-          });
           return isOwner;
         })
         .map(community => ({
@@ -260,13 +233,6 @@ const Communities = () => {
         .filter(community => {
           // Ensure this community is actually followed by the current user
           const isFollowed = community.members?.includes(currentUserId);
-          console.log('Community follow check:', {
-            communityId: community._id,
-            communityName: community.community_name,
-            members: community.members,
-            auth_user_id: currentUserId,
-            isFollowed
-          });
           return isFollowed;
         })
         .map(community => ({
@@ -281,12 +247,6 @@ const Communities = () => {
         }));
 
       const result = [...ownedWithFlags, ...followedWithFlags];
-      console.log('Filtered user communities result:', {
-        ownedCount: ownedWithFlags.length,
-        followedCount: followedWithFlags.length,
-        totalCount: result.length,
-        communities: result.map(c => ({ id: c.id, name: c.name, isOwned: c.isOwned }))
-      });
       return result;
 
     } else {
@@ -323,6 +283,11 @@ const Communities = () => {
     }
   };
 
+  const visibleCommunities = getFilteredCommunities();
+  const ownedCount = userCommunities.owned.length;
+  const followedCount = userCommunities.followed.length;
+  const visibleCount = visibleCommunities.length;
+
   // Show loading while checking auth
   if (authLoading) {
     return (
@@ -350,102 +315,113 @@ const Communities = () => {
     <div className="min-h-screen bg-rich-black flex flex-col relative">
       <Navbar />
 
-      {/* Header */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-9">
-          {/* Title */}
-          <div className="z-10">
-            <h2 className="font-fenix text-[28px] text-white font-normal text-center md:text-left">
-              Communities
-            </h2>
-            <p className="text-desc font-lato text-center md:text-left">Connect with like-minded developers and tech enthusiasts.</p>
+      <div className="relative z-10 flex-1 px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mx-auto w-full max-w-7xl flex flex-col gap-6">
+          <div className="flex shrink-0 flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
+            <div>
+              <h2 className="font-fenix text-[28px] text-white font-normal text-center xl:text-left">
+                Communities
+              </h2>
+              <p className="text-desc font-lato text-center xl:text-left">
+                Connect with like-minded developers and tech enthusiasts.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 w-full xl:w-[620px]">
+              <SearchBar
+                className="flex-1"
+                placeholder="Search communities"
+                onSearch={handleSearch}
+              />
+              <NewCommunityButton />
+            </div>
           </div>
 
-          {/* Search + Create Community Button */}
-          <div className="flex items-center gap-1 w-full md:w-[600px] z-10">
-            <SearchBar
-              className="flex-1 max-w-xs sm:max-w-md"
-              placeholder="Search communities"
-              onSearch={handleSearch}
-            />
-            <NewCommunityButton />
-          </div>
-        </div>
-
-        {/* Filter */}
-        <div className="mb-0">
           <CommunityFilterBar
             filters={FILTERS}
             selected={selectedFilter}
             onSelect={setSelectedFilter}
           />
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 z-10 -mt-4">
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-4 mb-6 text-red-400">
-            {error}
-          </div>
-        )}
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
+            <main className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="p-5">
+                  <p className="text-desc text-xs uppercase tracking-[0.18em] mb-2">Owned</p>
+                  <div className="text-3xl font-fenix text-white">{ownedCount}</div>
+                  <p className="text-desc text-sm mt-1">Communities you manage</p>
+                </Card>
+                <Card className="p-5">
+                  <p className="text-desc text-xs uppercase tracking-[0.18em] mb-2">Following</p>
+                  <div className="text-3xl font-fenix text-white">{followedCount}</div>
+                  <p className="text-desc text-sm mt-1">Communities you follow</p>
+                </Card>
+                <Card className="p-5">
+                  <p className="text-desc text-xs uppercase tracking-[0.18em] mb-2">Visible</p>
+                  <div className="text-3xl font-fenix text-white">{visibleCount}</div>
+                  <p className="text-desc text-sm mt-1">Communities in the current view</p>
+                </Card>
+              </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-white">Loading communities...</div>
-          </div>
-        )}
+              {error && (
+                <div className="bg-red-600/20 border border-red-600/30 rounded-2xl p-4 text-red-400">
+                  {error}
+                </div>
+              )}
 
-        {/* Communities Grid */}
-        {!loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {getFilteredCommunities().map((community) => (
-              <CommunityCard
-                key={community.id || community._id}
-                {...community}
-                onFollowToggle={handleFollowToggle}
-                onDelete={handleDeleteCommunity}
-                onUpdate={handleUpdateCommunity}
-              />
-            ))}
-          </div>
-        )}
+              {loading && (
+                <div className="flex justify-center items-center py-12 text-white">
+                  Loading communities...
+                </div>
+              )}
 
-        {/* Empty State */}
-        {!loading && getFilteredCommunities().length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-desc text-lg mb-4">
-              {selectedFilter === "Your Communities"
-                ? searchQuery
-                  ? `No communities found matching "${searchQuery}"`
-                  : "You haven't joined any communities yet"
-                : searchQuery
-                  ? `No communities found matching "${searchQuery}"`
-                  : "No communities available to discover"
-              }
-            </div>
-            {selectedFilter === "Your Communities" && !searchQuery && (
-              <p className="text-desc">
-                Switch to "Discover Communities" to find and join new communities
-              </p>
-            )}
-          </div>
-        )}
+              {!loading && visibleCommunities.length > 0 && (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {visibleCommunities.map((community) => (
+                    <CommunityCard
+                      key={community.id || community._id}
+                      {...community}
+                      onFollowToggle={handleFollowToggle}
+                      onDelete={handleDeleteCommunity}
+                      onUpdate={handleUpdateCommunity}
+                    />
+                  ))}
+                </div>
+              )}
 
-        {/* Debug Panel - Remove after testing */}
-        <div className="mt-4 p-4 bg-gray-800 rounded">
-          <button
-            onClick={() => fetchUserCommunities(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded text-sm mr-2"
-          >
-            Debug: Force Refresh User Communities
-          </button>
-          <div className="text-white text-sm mt-2">
-            <div>Auth User ID: {auth.user?._id}</div>
-            <div>Owned: {userCommunities.owned.length}, Followed: {userCommunities.followed.length}</div>
-            <div>Filtered: {getFilteredCommunities().length}</div>
+              {!loading && visibleCommunities.length === 0 && (
+                <div className="text-center py-14 rounded-2xl border border-navbar-border bg-navbar-bg/70">
+                  <div className="text-desc text-lg mb-3">
+                    {selectedFilter === "Your Communities"
+                      ? searchQuery
+                        ? `No communities found matching "${searchQuery}"`
+                        : "You haven't joined any communities yet"
+                      : searchQuery
+                        ? `No communities found matching "${searchQuery}"`
+                        : "No communities available to discover"
+                    }
+                  </div>
+                  {selectedFilter === "Your Communities" && !searchQuery && (
+                    <p className="text-desc">
+                      Switch to "Discover Communities" to find and join new communities
+                    </p>
+                  )}
+                </div>
+              )}
+            </main>
+
+            <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+              <Card className="p-5">
+                <p className="text-desc text-xs uppercase tracking-[0.18em] mb-2">Community Hub</p>
+                <h3 className="font-fenix text-[22px] text-white mb-2">Trending now</h3>
+                <p className="text-desc text-sm leading-relaxed">
+                  Discover active communities and upcoming events that match your interests.
+                </p>
+              </Card>
+
+              <PopularCommunities />
+              <UpcomingEvents />
+            </aside>
           </div>
         </div>
       </div>

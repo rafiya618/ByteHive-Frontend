@@ -1,8 +1,9 @@
 import axios from "axios";
 import { getAuthHeader } from "./authHeader";
+import { getRequiredUrl } from "../utils/env";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_NOTIFICATION_SERVICE_URL || "http://localhost:3002",
+  baseURL: getRequiredUrl("VITE_NOTIFICATION_SERVICE_URL"),
 });
 
 export const getNotifications = (userId) =>
@@ -19,7 +20,7 @@ export const getPreferences = (userId) =>
   API.get(`/preferences/${userId}`, { headers: getAuthHeader() });
 
 export const updatePreferences = async (userId, newPrefs) => {
-  console.log(`📡 [API] Calling updatePreferences: ${import.meta.env.VITE_NOTIFICATION_SERVICE_URL}/preferences/${userId}`);
+  console.log(`📡 [API] Calling updatePreferences: ${getRequiredUrl("VITE_NOTIFICATION_SERVICE_URL")}/preferences/${userId}`);
   console.log('📦 [API] Payload:', newPrefs);
 
   try {

@@ -1,7 +1,8 @@
 // src/api/eventApi.js
 import axios from "axios";
+import { getRequiredUrl } from "../utils/env";
 
-const API_URL = `${import.meta.env.VITE_POSTS_SERVICE_URL || "http://localhost:5000"}/api/events`; // adjust backend URL
+const API_URL = `${getRequiredUrl("VITE_POSTS_SERVICE_URL")}/api/events`; // adjust backend URL
 
 export const createEvent = async (eventData, jwt) => {
   const { data } = await axios.post(API_URL, eventData, {

@@ -65,7 +65,7 @@ const EventCard = ({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <span className="bg-chip text-white/80 text-xs px-3 py-1 rounded-xl w-fit inline-flex">{category}</span>
-            <h3 className="ds-heading-md mt-3 leading-tight">{event_name}</h3>
+            <h3 className="font-fenix text-[22px] text-white mt-3 leading-tight">{event_name}</h3>
           </div>
           <span className="text-desc text-xs md:text-sm text-right whitespace-nowrap">{countdown}</span>
         </div>
@@ -94,23 +94,19 @@ const EventCard = ({
             onClick={handleView}
             className="h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center gap-2 text-sm font-semibold leading-none"
           >
-            View Event <span className="material-icons text-sm">open_in_new</span>
+            View <span className="material-icons text-sm">open_in_new</span>
           </PrimaryButton>
 
           <PrimaryButton
             onClick={() => onToggleInterest?.(event)}
-            className={`h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center text-sm font-semibold leading-none ${
-              isInterested
-                ? "!bg-transparent !text-periwinkle !border !border-periwinkle/30 hover:!bg-periwinkle/10"
-                : "!bg-transparent !text-columbia-blue !border !border-navbar-border hover:!bg-white/5"
-            }`}
+            className={`h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center text-sm font-semibold leading-none ${isInterested ? '!bg-transparent !text-periwinkle !border !border-periwinkle/30' : ''}`}
           >
             {isInterested ? "Interested" : "Mark Interested"}
           </PrimaryButton>
 
           <PrimaryButton
             onClick={() => onAddToCalendar?.(event)}
-            className="h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center text-sm font-semibold leading-none !bg-transparent !text-columbia-blue !border !border-navbar-border hover:!bg-white/5"
+            className="h-11 w-full min-w-0 whitespace-nowrap px-3 rounded-xl justify-center text-sm font-semibold leading-none"
           >
             Add to Calendar
           </PrimaryButton>

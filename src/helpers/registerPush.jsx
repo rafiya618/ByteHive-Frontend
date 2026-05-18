@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getRequiredUrl } from "../utils/env";
 
 // Convert VAPID public key to Uint8Array (required for subscription)
 function urlBase64ToUint8Array(base64String) {
@@ -40,9 +41,9 @@ export async function registerPush(userId) {
     console.log("✅ User subscribed:", subscription);
 
     // ✅ Send subscription to backend
-    const notificationServiceUrl = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:3002';
+    const notificationServiceUrl = getRequiredUrl("VITE_NOTIFICATION_SERVICE_URL");
     const { data } = await axios.post(
-      `${import.meta.env.VITE_NOTIFICATION_SERVICE_URL || "http://localhost:3002"}/push/save-subscription`,
+      `${notificationServiceUrl}/push/save-subscription`,
       { userId, subscription }
     );
 

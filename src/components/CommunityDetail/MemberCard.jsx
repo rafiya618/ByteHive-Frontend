@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { SecondaryButton } from "../../components/UI";
 
 const MemberCard = ({ id, name, role, avatar }) => {
   const navigate = useNavigate();
@@ -47,15 +48,15 @@ const MemberCard = ({ id, name, role, avatar }) => {
             </p>
             
             {/* View Profile Link */}
-            <button
+            <SecondaryButton
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewProfile();
               }}
-              className="px-0 py-2 bg-transparent text-white hover:text-periwinkle transition-colors font-lato font-normal text-sm"
+              className="h-9 px-3 rounded-lg text-sm font-normal"
             >
-              View Profile →
-            </button>
+              View
+            </SecondaryButton>
           </div>
         </div>
       </div>

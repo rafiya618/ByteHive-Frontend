@@ -11,6 +11,7 @@ import { chatApi } from "../api/chatApi";
 import { communityApi } from "../api/communityApi";
 import { getProfile } from "../api/ProfileApi";
 import { io } from "socket.io-client";
+import { getRequiredUrl } from "../utils/env";
 
 // Socket will be created per-component to ensure listeners attach immediately
 
@@ -144,7 +145,7 @@ const ChatPage = () => {
   useEffect(() => {
     if (socketRef.current) return; // already initialized
 
-    const s = io(import.meta.env.VITE_CHAT_SERVICE_URL || "http://localhost:5050", {
+    const s = io(getRequiredUrl("VITE_CHAT_SERVICE_URL"), {
       transports: ["websocket", "polling"],
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,

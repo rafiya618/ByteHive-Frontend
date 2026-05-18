@@ -1,8 +1,9 @@
 import { getAuthHeaders } from '../utils/authUtils';
+import { getRequiredUrl } from "../utils/env";
 
 // Posts admin routes live on the posts service; community admin lives on the community service
-const POSTS_BASE = (import.meta.env.VITE_POSTS_SERVICE_URL || 'http://localhost:5000').replace(/\/$/, '');
-const COMMUNITY_BASE = (import.meta.env.VITE_COMMUNITY_SERVICE_URL || 'http://localhost:5001').replace(/\/$/, '');
+const POSTS_BASE = getRequiredUrl("VITE_POSTS_SERVICE_URL");
+const COMMUNITY_BASE = getRequiredUrl("VITE_COMMUNITY_SERVICE_URL");
 const API_BASE_URL = `${POSTS_BASE}/api/admin/posts`;
 const COMMUNITY_API_BASE = `${COMMUNITY_BASE}/api/admin/communities`;
 

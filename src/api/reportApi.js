@@ -1,6 +1,7 @@
 import { getAuthHeader } from './authHeader';
+import { getRequiredUrl } from "../utils/env";
 
-const API_BASE_URL = 'http://127.0.0.1:3003/api'; // Admin service
+const API_BASE_URL = `${getRequiredUrl("VITE_ADMIN_SERVICE_URL")}/api`; // Admin service
 
 // Base API request handler
 const apiRequest = async (url, options = {}) => {
@@ -57,7 +58,7 @@ export const reportApi = {
       let enrichedProfileImage = profileImage;
       if ((!username || username === 'Unknown') || !profileImage) {
         try {
-          const profileRes = await fetch(`${import.meta.env.VITE_AUTH_SERVICE_URL}/profile/${userId}`, {
+          const profileRes = await fetch(`${getRequiredUrl("VITE_AUTH_SERVICE_URL")}/profile/${userId}`, {
             headers: {
               ...authHeaders,
             }

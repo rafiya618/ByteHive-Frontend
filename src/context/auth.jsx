@@ -1,8 +1,9 @@
 import { useState, createContext, useContext, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { AUTH_LOGOUT_EVENT, forceLogout } from "../utils/authUtils";
+import { getRequiredUrl } from "../utils/env";
 
-const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:5002';
+const AUTH_SERVICE_URL = getRequiredUrl("VITE_AUTH_SERVICE_URL");
 
 const AuthContext = createContext();
 

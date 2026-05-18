@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { isValidSimplificationLevel } from '../utils/validation';
 import { getAuthHeaders } from '../utils/authUtils';
+import { getRequiredUrl } from "../utils/env";
 
-const SMART_READING_BASE_URL = `${import.meta.env.VITE_SMART_READING_SERVICE_URL || 'http://localhost:5008'}/smart-reading`;
+const SMART_READING_BASE_URL = `${getRequiredUrl("VITE_SMART_READING_SERVICE_URL")}/smart-reading`;
 
 // Create axios instance with default config
 const smartReadingClient = axios.create({

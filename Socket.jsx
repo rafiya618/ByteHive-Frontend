@@ -1,7 +1,8 @@
 // This file is only to connect to the gateway
 import { io } from "socket.io-client";
+import { getRequiredUrl } from "./src/utils/env";
 
 // Connect to the gateway (not directly to comment service)
-const socket = io(import.meta.env.VITE_GATEWAY_URL || "http://localhost:4000"); 
+const socket = io(getRequiredUrl("VITE_GATEWAY_URL")); 
 
 export default socket;

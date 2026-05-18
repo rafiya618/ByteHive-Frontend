@@ -1,6 +1,7 @@
 // components/TagSelector.js
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { getRequiredUrl } from "../../utils/env";
 
 export default function TagSelector({ userId, onSave }) {
   const [tags, setTags] = useState([]);
@@ -10,10 +11,11 @@ export default function TagSelector({ userId, onSave }) {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:3000"}/tags`); // all tags
+        const authBase = getRequiredUrl("VITE_AUTH_SERVICE_URL");
+        const res = await axios.get(`${authBase}/tags`); // all tags
         setTags(res.data);
 
-        const userRes = await axios.get(`${import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:3000"}/user-tags/${userId}`); // user’s tags
+        const userRes = await axios.get(`${authBase}/user-tags/${userId}`); // user’s tags
         setSelected(userRes.data.map(t => t._id));
       } catch (err) {
         console.error("Error fetching tags", err);
@@ -35,7 +37,7 @@ export default function TagSelector({ userId, onSave }) {
     }
 
     try {
-      await axios.post(`${import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:3000"}/user-tags`, {
+      await axios.post(`${getRequiredUrl("VITE_AUTH_SERVICE_URL")}/user-tags`, {
         userId,
         tagIds: selected,
       });

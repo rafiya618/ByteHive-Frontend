@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { communityApi } from "../../api/communityApi";
+import { SecondaryButton } from "../../components/UI";
 
 const CommunityCard = ({
   id = 1,
@@ -200,34 +201,7 @@ const CommunityCard = ({
               {description}
             </p>
 
-            {/* Tags */}
-            {community_tags && community_tags.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {(showAllTags ? community_tags : community_tags.slice(0, 3)).map((tag, i) => (
-                    <span
-                      key={i}
-                      className="bg-chip text-periwinkle text-xs font-semibold px-3 py-1 rounded-xl"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-                {community_tags.length > 3 && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setShowAllTags(!showAllTags);
-                    }}
-                    className="text-xs text-periwinkle hover:text-white mt-2 underline hover:no-underline focus:outline-none"
-                  >
-                    {showAllTags ? 'Show less' : `+${community_tags.length - 3} more`}
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Tags removed per design consistency request */}
 
             {/* Stats */}
             <div className="flex flex-wrap gap-4 mb-4 text-xs sm:text-sm font-lato" style={{ color: "#8B93D1" }}>
@@ -249,25 +223,18 @@ const CommunityCard = ({
             )}
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <button
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <SecondaryButton
                 onClick={handleViewCommunity}
-                className="px-0 py-2 bg-transparent text-desc cursor-pointer font-lato font-medium text-sm hover:text-white transition-colors"
+                className="h-10 w-full sm:w-auto px-3 rounded-xl text-sm font-semibold"
               >
-                View Community →
-              </button>
+                View
+              </SecondaryButton>
 
-              <button
+              <SecondaryButton
                 onClick={handleFollowToggle}
                 disabled={loading}
-                className={`bh-action-btn px-4 py-2.5 rounded-xl font-lato font-semibold text-sm border transition-all w-full sm:w-auto ${following
-                  ? isOwned
-                    ? "border-periwinkle bg-transparent text-periwinkle cursor-default"
-                    : "border-periwinkle bg-transparent text-periwinkle hover:bg-periwinkle/10"
-                  : requested
-                    ? "border-yellow-500 bg-transparent text-yellow-500 cursor-pointer hover:border-red-500 hover:text-red-400"
-                    : "border-white bg-transparent text-white hover:bg-white/10"
-                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`h-10 w-full sm:w-auto px-3 rounded-xl text-sm font-semibold ${following ? '!bg-transparent !text-periwinkle !border !border-periwinkle/30' : requested ? '!bg-transparent !text-yellow-500 !border !border-yellow-500' : ''} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span className="flex items-center justify-center">
                   <span className="material-icons text-base mr-1">
@@ -275,7 +242,7 @@ const CommunityCard = ({
                   </span>
                   {loading ? "..." : following ? (isOwned ? "Admin" : "Following") : (requested ? "Requested" : "Follow")}
                 </span>
-              </button>
+              </SecondaryButton>
             </div>
           </div>
         </div>
