@@ -3,7 +3,7 @@ import { useAuth } from "../../context/auth";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import InputField from "../../shared/InputField";
-import { PrimaryButton } from "../../components/UI";
+import { PrimaryButton, SecondaryButton } from "../../components/UI";
 import { jwtDecode } from "jwt-decode";
 import { validateEmail, validatePassword } from "../../helpers/validators";
 import { Eye, EyeOff } from "lucide-react";
@@ -169,22 +169,22 @@ const Login = () => {
               </PrimaryButton>
             </form>
 
-            <div className="mt-2 text-start">
-              <PrimaryButton
+            <div className="mt-2 text-center">
+              <SecondaryButton
                 onClick={() => navigate("/forgot-password")}
-                className="text-sm text-gray-400 hover:text-white transition cursor-pointer"
+                className="text-sm text-gray-400 hover:text-white transition cursor-pointer bg-transparent !border-0"
               >
                 Forgot Password?
-              </PrimaryButton>
+              </SecondaryButton>
             </div>
 
             <div className="mt-3 text-center">
-              <PrimaryButton
+              <SecondaryButton
                 onClick={() => navigate("/register")}
-                className="text-sm text-gray-400 hover:text-white transition cursor-pointer"
+                className="text-sm text-gray-400 hover:text-white transition cursor-pointer bg-transparent !border-0"
               >
                 Don't have an account? <span className="underline">Create one</span>
-              </PrimaryButton>
+              </SecondaryButton>
             </div>
 
             <div className="flex items-center my-3">
@@ -193,16 +193,12 @@ const Login = () => {
               <div className="flex-grow border-t border-gray-600"></div>
             </div>
 
-            <PrimaryButton
+            <SecondaryButton
               onClick={() =>
                 (window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/google?mode=login`)
               }
               aria-label="Continue with Google"
-              className="w-full flex items-center justify-center gap-2
-              bg-dark-indigo text-gray-200 border border-faint-greyish-overlay 
-              py-2 px-3 rounded-md font-medium 
-              hover:bg-[#2f2f4a] active:bg-[#181628] 
-              transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+              className="w-full flex items-center justify-center gap-2 text-gray-200 border border-faint-greyish-overlay py-2 px-3 rounded-md font-medium bg-transparent hover:bg-[#1f2138] transition-all duration-200"
             >
               <img
                 src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -210,7 +206,7 @@ const Login = () => {
                 className="w-5 h-5"
               />
               Continue with Google
-            </PrimaryButton>
+            </SecondaryButton>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-import { PrimaryButton } from "../../../components/UI";
+import { PrimaryButton, SecondaryButton } from "../../../components/UI";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/auth";
 import InputField from "../../../shared/InputField";
@@ -165,12 +165,14 @@ const Register = () => {
               </PrimaryButton>
             </form>
 
-            <PrimaryButton
-              onClick={() => navigate("/login")}
-              className="text-sm text-gray-400 hover:text-white cursor-pointer text-center mt-5"
-            >
-              Already have an account? Log in
-            </PrimaryButton>
+            <div className="text-center mt-4">
+              <SecondaryButton
+                onClick={() => navigate("/login")}
+                className="text-sm text-gray-400 hover:text-white cursor-pointer bg-transparent !border-0"
+              >
+                Already have an account? Log in
+              </SecondaryButton>
+            </div>
 
             <div className="flex items-center my-3">
               <div className="flex-grow border-t border-gray-600"></div>
@@ -178,11 +180,11 @@ const Register = () => {
               <div className="flex-grow border-t border-gray-600"></div>
             </div>
 
-            <PrimaryButton
+            <SecondaryButton
               onClick={() =>
                 (window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/google?mode=register`)
               }
-              className="w-full flex items-center justify-center gap-2 bg-dark-indigo text-gray-200 border border-faint-greyish-overlay py-2 px-3 rounded-md font-medium hover:bg-[#2f2f4a] active:bg-[#181628] transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+              className="w-full flex items-center justify-center gap-2 text-gray-200 border border-faint-greyish-overlay py-2 px-3 rounded-md font-medium bg-transparent hover:bg-[#1f2138] transition-all duration-200"
             >
               <img
                 src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -190,7 +192,7 @@ const Register = () => {
                 className="w-5 h-5"
               />
               Continue with Google
-            </PrimaryButton>
+            </SecondaryButton>
           </div>
         )}
 
