@@ -11,16 +11,25 @@ import { getRequiredUrl } from "../../utils/env";
 const VIDEOCALL_SERVER_URL = getRequiredUrl("VITE_VIDEOCALL_SERVER_URL");
 const socket = io(VIDEOCALL_SERVER_URL);
 
-export default function Room({ communityId: propCommunityId }) {
-  // Get communityId from URL params if not provided as prop
-  const [communityId, setCommunityId] = useState(propCommunityId);
+export default function Room({ roomId: propRoomId }) {
+  // Get roomId from props first, then fallback to the current URL.
+  const [communityId, setCommunityId] = useState(propRoomId);
   
   useEffect(() => {
     if (!communityId) {
-      const urlParts = window.location.pathname.split('/');
-      const roomId = urlParts[urlParts.length - 1];
-      if (roomId && roomId !== 'room') {
-        setCommunityId(roomId);
+      const hashPath = window.location.hash.replace(/^#\/?/, "");
+      const hashParts = hashPath.split("/").filter(Boolean);
+      const roomFromHash = hashParts[0] === "room" ? hashParts[1] : null;
+
+      if (roomFromHash) {
+        setCommunityId(roomFromHash);
+        return;
+      }
+
+      const urlParts = window.location.pathname.split("/");
+      const roomFromPath = urlParts[urlParts.length - 1];
+      if (roomFromPath && roomFromPath !== "room") {
+        setCommunityId(roomFromPath);
       }
     }
   }, [communityId]);
