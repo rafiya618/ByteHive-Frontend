@@ -36,6 +36,18 @@ const PostActions = ({
     const [showReportModal, setShowReportModal] = useState(false);
     const postId = post._id || post.id;
 
+    const handleShare = async () => {
+        const postUrl = `${window.location.origin}/#/post/${postId}`;
+
+        try {
+            await navigator.clipboard.writeText(postUrl);
+            toast.success('Post link copied to clipboard');
+        } catch (error) {
+            console.error('Failed to copy post link:', error);
+            toast.error('Could not copy link');
+        }
+    };
+
     const handleDelete = async () => {
         const confirmed = window.confirm('Delete this post? This cannot be undone.');
         if (!confirmed) return;
@@ -75,7 +87,7 @@ const PostActions = ({
     return (
         <div className="flex flex-wrap items-center gap-3">
             {/* Share Button */}
-            <SecondaryButton className="flex items-center space-x-2 px-4 py-2 rounded-full border border-navbar-border bg-white/5 text-columbia-blue hover:bg-white/10 transition-all font-lato">
+            <SecondaryButton onClick={handleShare} className="flex items-center space-x-2 px-4 py-2 rounded-full border border-navbar-border bg-white/5 text-columbia-blue hover:bg-white/10 transition-all font-lato">
                 <span className="material-icons text-lg">share</span>
                 <span>Share</span>
             </SecondaryButton>

@@ -112,7 +112,13 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
 
     try {
       setLoadingBlogs(true);
-      const blogs = await getRelatedBlogs(selectedText);
+      let blogs = await getRelatedBlogs(selectedText);
+
+      // If there is no cached result yet, build it by doing a fresh search.
+      if (!blogs || blogs.length === 0) {
+        blogs = await searchBlogs(selectedText);
+      }
+
       setRelatedBlogs(blogs);
 
       // Cache the result
