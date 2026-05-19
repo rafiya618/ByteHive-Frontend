@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { getMeaning, searchBlogs, chatAboutWord, simplifyPost } from "../../api/smartReadingApi";
+import { getMeaning, searchBlogs, getRelatedBlogs, chatAboutWord, simplifyPost } from "../../api/smartReadingApi";
 import toast from "react-hot-toast";
 import { TEXT_SELECTION } from "../../utils/constants";
 import { validateTextSelection, validateSearchQuery, stripHTML } from "../../utils/validation";
@@ -81,7 +81,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
   }, [selectedText]);
 
   const fetchRelatedBlogs = useCallback(async () => {
-    const cacheKey = `relatedBlogs_${selectedText} `;
+    const cacheKey = `relatedBlogs_${selectedText}`;
     const cachedData = localStorage.getItem(cacheKey);
 
     if (cachedData) {
@@ -112,7 +112,7 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
 
     try {
       setLoadingBlogs(true);
-      const blogs = await searchBlogs(selectedText);
+      const blogs = await getRelatedBlogs(selectedText);
       setRelatedBlogs(blogs);
 
       // Cache the result
@@ -137,7 +137,10 @@ const TextSelectionPopup = ({ selectedText, onClose }) => {
 
   useEffect(() => {
     setShowContent(true);
-    // Fetch meaning and related blogs when popup opens - removed to make instant
+    // Fetch related blogs when popup opens so the Blogs tab has content immediately
+    if (!validationError) {
+      fetchRelatedBlogs();
+    }
   }, [selectedText, fetchMeaning, fetchRelatedBlogs]);
 
   // Fetch meaning when meaning tab is active
