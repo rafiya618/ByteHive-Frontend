@@ -9,7 +9,7 @@ const GoogleAuth = () => {
   const { auth, setAuth } = useAuth();
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search || "");
     const token = urlParams.get("token");
     const error = urlParams.get("error");
     const message = urlParams.get("message");

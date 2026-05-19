@@ -19,6 +19,7 @@ export const NotificationProvider = ({ children }) => {
 
     const fetchNotifications = async () => {
       try {
+        socket.connect();
         // Join personal room
         socket.emit("joinRoom", { type: "user", id: auth.user._id });
 
@@ -77,6 +78,7 @@ export const NotificationProvider = ({ children }) => {
       socket.emit("leaveRoom", { type: "user", id: auth.user._id });
       socket.off("notification:new");
       socket.off("notification:update");
+      socket.disconnect();
     };
   }, [auth?.user?._id, location.pathname]);
 

@@ -8,7 +8,7 @@ import { jwtDecode } from "jwt-decode";
 import { validateEmail, validatePassword } from "../../helpers/validators";
 import { Eye, EyeOff } from "lucide-react";
 import { handleFormError } from "../../helpers/handleFormError";
-import { loginUser, verifyLoginOtp } from "../../api/authApi"; // ✅ import API
+import { loginUser, verifyLoginOtp, resendOtp } from "../../api/authApi"; // ✅ import API
 
 const Login = () => {
   const [step, setStep] = useState(1);
@@ -107,9 +107,9 @@ const Login = () => {
 
     try {
       setIsResending(true);
-      const res = await loginUser(email, password);
-      if (res.data?.otpRequired) {
-        toast.success("OTP resent successfully");
+      const res = await resendOtp(email);
+      if (res.data?.success) {
+        toast.success(res.data.message || "OTP resent successfully");
         setOtp("");
         setTimer(60);
         setVerifyDisabled(false);

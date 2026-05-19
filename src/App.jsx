@@ -51,7 +51,8 @@ function App() {
   const { setAuth } = useAuth();
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
+    const search = window.location.search || location.search || "";
+    const params = new URLSearchParams(search);
     const token = params.get("token");
     const error = params.get("error");
     const message = params.get("message");
