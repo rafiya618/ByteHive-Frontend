@@ -8,6 +8,10 @@ const GoogleAuth = () => {
   const navigate = useNavigate();
   const { auth, setAuth } = useAuth();
 
+  const replaceHashRoute = (path) => {
+    window.history.replaceState({}, "", `${window.location.origin}/#${path}`);
+  };
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search || "");
     const token = urlParams.get("token");
@@ -16,6 +20,7 @@ const GoogleAuth = () => {
 
     if (error) {
       toast.error(message || error);
+      replaceHashRoute("/");
       navigate("/");
     } else if (token) {
       const decoded = jwtDecode(token);
@@ -26,8 +31,9 @@ const GoogleAuth = () => {
       setAuth({ token, user: decoded });
       // console.log('auth', auth)
       
-      if (decoded.onboardingStep == 2) navigate("/setup-profile");
-      else navigate("/");
+      const nextRoute = decoded.onboardingStep == 2 ? "/setup-profile" : "/";
+      replaceHashRoute(nextRoute);
+      navigate(nextRoute);
     }
   }, []);
 

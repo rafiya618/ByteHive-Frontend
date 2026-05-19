@@ -50,6 +50,10 @@ function App() {
   const location = useLocation();
   const { setAuth } = useAuth();
 
+  const replaceHashRoute = (path) => {
+    window.history.replaceState({}, "", `${window.location.origin}/#${path}`);
+  };
+
   useEffect(() => {
     const search = window.location.search || location.search || "";
     const params = new URLSearchParams(search);
@@ -61,6 +65,7 @@ function App() {
 
     if (error) {
       toast.error(message || error);
+      replaceHashRoute("/login");
       navigate("/login", { replace: true });
       return;
     }
@@ -75,9 +80,11 @@ function App() {
         else toast.success("Authentication successful!");
 
         const nextRoute = Number(decoded?.onboardingStep) === 2 ? "/setup-profile" : "/";
+        replaceHashRoute(nextRoute);
         navigate(nextRoute, { replace: true });
       } catch {
         toast.error("Invalid authentication token.");
+        replaceHashRoute("/login");
         navigate("/login", { replace: true });
       }
     }
